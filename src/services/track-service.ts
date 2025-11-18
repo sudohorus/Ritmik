@@ -9,9 +9,9 @@ export class TrackService {
     return response.data;
   }
 
-  static async search(query: string, nextPage?: string): Promise<TrackResponse> {
+  static async search(query: string, nextPageData?: string | null): Promise<TrackResponse> {
     const response = await axios.get<TrackResponse>(`${API_BASE}/search`, {
-      params: { query, nextPage }
+      params: { query, nextPageData }
     });
     return response.data;
   }

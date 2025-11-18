@@ -1,16 +1,46 @@
 import { Track } from '@/types/track';
 import { formatDuration, formatNumber } from '@/utils/format';
+import { usePlayer } from '@/hooks/usePlayer';
 
 interface TrackCardProps {
   track: Track;
+  playlist?: Track[];
 }
 
-export default function TrackCard({ track }: TrackCardProps) {
+export default function TrackCard({ track, playlist }: TrackCardProps) {
+  const { playTrack, currentTrack, isPlaying } = usePlayer();
+  const isCurrentTrack = currentTrack?.videoId === track.videoId;
+
+  const handleClick = () => {
+    playTrack(track, playlist);
+  };
+
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-zinc-700 transition-all group">
+    <div
+      onClick={handleClick}
+      className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all group cursor-pointer"
+    >
       <div className="flex items-center gap-4">
-        <TrackArtwork thumbnail={track.thumbnail} title={track.title} />
-        <TrackInfo track={track} />
+        <div className="relative">
+          <TrackArtwork thumbnail={track.thumbnail} title={track.title} />
+          {isCurrentTrack && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-md">
+              {isPlaying ? (
+                <div className="flex items-end gap-1 h-6">
+                  <div className="w-1 bg-white rounded-sm equalizer-bar-1" />
+                  <div className="w-1 bg-white rounded-sm equalizer-bar-2" />
+                  <div className="w-1 bg-white rounded-sm equalizer-bar-3" />
+                  <div className="w-1 bg-white rounded-sm equalizer-bar-4" />
+                </div>
+              ) : (
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              )}
+            </div>
+          )}
+        </div>
+        <TrackInfo track={track} isPlaying={isCurrentTrack && isPlaying} />
         <TrackStats viewCount={track.viewCount} />
       </div>
     </div>
@@ -34,15 +64,16 @@ function TrackArtwork({ thumbnail, title }: TrackArtworkProps) {
 
 interface TrackInfoProps {
   track: Track;
+  isPlaying?: boolean;
 }
 
-function TrackInfo({ track }: TrackInfoProps) {
+function TrackInfo({ track, isPlaying }: TrackInfoProps) {
   return (
     <div className="flex-1 min-w-0">
-      <h3 className="font-semibold text-zinc-100 truncate group-hover:text-white">
+      <h3 className={`font-semibold truncate group-hover:text-white transition-colors ${isPlaying ? 'text-white' : 'text-zinc-100'}`}>
         {track.title}
       </h3>
-      <p className="text-sm text-zinc-400 truncate">
+      <p className={`text-sm truncate ${isPlaying ? 'text-zinc-300' : 'text-zinc-400'}`}>
         {track.artist}
       </p>
       <div className="flex items-center gap-3 mt-1">

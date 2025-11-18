@@ -5,21 +5,21 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { query, nextPage } = req.query;
+  const { query, nextPageData } = req.query;
 
   if (!query || typeof query !== 'string') {
     return res.status(400).json({ error: 'Query parameter is required' });
   }
 
   try {
-    const options = nextPage ? { nextPage: { nextPageToken: nextPage } } : undefined;
+    let result;
     
-    const result = await youtubesearchapi.GetListByKeyword(
-      query, 
-      false, 
-      20,
-      options
-    );
+    if (nextPageData) {
+      const parsedNextPage = JSON.parse(nextPageData as string);
+      result = await youtubesearchapi.NextPage(parsedNextPage, false, 20);
+    } else {
+      result = await youtubesearchapi.GetListByKeyword(query, false, 20, [{ type: 'video' }]);
+    }
 
     const tracks = result.items
       .filter((item: any) => item.type === 'video' && item.length)
@@ -36,8 +36,8 @@ export default async function handler(
 
     return res.status(200).json({ 
       data: tracks,
-      nextPageToken: result.nextPage?.nextPageToken,
-      hasMore: !!result.nextPage?.nextPageToken
+      nextPageData: result.nextPage ? JSON.stringify(result.nextPage) : null,
+      hasMore: !!result.nextPage
     });
   } catch (err: any) {
     console.error('YouTube API Error:', err.message);

@@ -11,7 +11,7 @@ export function useTracks() {
   const [error, setError] = useState<string>('');
   const [viewMode, setViewMode] = useState<ViewMode>('trending');
   const [hasMore, setHasMore] = useState(false);
-  const [nextPageToken, setNextPageToken] = useState<string | undefined>();
+  const [nextPageData, setNextPageData] = useState<string | null>(null);
   const [lastQuery, setLastQuery] = useState('');
 
   const fetchTrending = async () => {
@@ -23,7 +23,7 @@ export function useTracks() {
       const response = await TrackService.getTrending();
       setTracks(response.data || []);
       setHasMore(false);
-      setNextPageToken(undefined);
+      setNextPageData(null);
     } catch (err: any) {
       setError(err.response?.data?.error || err.message);
     } finally {
@@ -39,13 +39,13 @@ export function useTracks() {
       setViewMode('search');
       setSearchResults([]);
       setLastQuery(query);
-      setNextPageToken(undefined);
+      setNextPageData(null);
     }
 
     try {
       const response = await TrackService.search(
         query, 
-        append ? nextPageToken : undefined
+        append ? nextPageData : null
       );
       const newResults = response.data || [];
       
@@ -57,7 +57,7 @@ export function useTracks() {
         setSearchResults(newResults);
       }
       
-      setNextPageToken(response.nextPageToken);
+      setNextPageData(response.nextPageData || null);
       setHasMore(response.hasMore || false);
     } catch (err: any) {
       setError(err.response?.data?.error || err.message);
@@ -67,7 +67,7 @@ export function useTracks() {
   };
 
   const loadMore = () => {
-    if (lastQuery && !loading && hasMore && nextPageToken) {
+    if (lastQuery && !loading && hasMore && nextPageData) {
       search(lastQuery, true);
     }
   };

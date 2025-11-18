@@ -1,1 +1,71 @@
 @import "tailwindcss";
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-50% - 1rem));
+  }
+}
+
+.marquee-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.marquee-wrapper {
+  display: inline-flex;
+  animation: marquee 15s linear infinite;
+  will-change: transform;
+}
+
+.marquee-content {
+  display: inline-block;
+  padding-right: 2rem;
+}
+
+.marquee-container:hover .marquee-wrapper {
+  animation-play-state: paused;
+}
+
+@keyframes equalizer-1 {
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+}
+
+@keyframes equalizer-2 {
+  0%, 100% { height: 12px; }
+  25% { height: 4px; }
+  75% { height: 20px; }
+}
+
+@keyframes equalizer-3 {
+  0%, 100% { height: 8px; }
+  33% { height: 18px; }
+  66% { height: 6px; }
+}
+
+@keyframes equalizer-4 {
+  0%, 100% { height: 16px; }
+  40% { height: 8px; }
+  80% { height: 22px; }
+}
+
+.equalizer-bar-1 {
+  animation: equalizer-1 0.8s ease-in-out infinite;
+}
+
+.equalizer-bar-2 {
+  animation: equalizer-2 0.9s ease-in-out infinite;
+}
+
+.equalizer-bar-3 {
+  animation: equalizer-3 0.7s ease-in-out infinite;
+}
+
+.equalizer-bar-4 {
+  animation: equalizer-4 1s ease-in-out infinite;
+}

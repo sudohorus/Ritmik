@@ -22,7 +22,7 @@ export default function Home() {
   const isTrendingLoading = loading && viewMode === 'trending';
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">
       <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <h1 className="text-3xl font-bold tracking-tight">Ritmik</h1>

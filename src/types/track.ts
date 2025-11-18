@@ -12,6 +12,6 @@ export interface Track {
 export interface TrackResponse {
   data: Track[];
   hasMore?: boolean;
-  nextPageToken?: string;
+  nextPageData?: string | null;
 }
 
