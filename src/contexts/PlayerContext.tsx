@@ -38,10 +38,7 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
     setIsPlaying(true);
     setProgress(0);
     setDuration(0);
-    
-    if (playlist) {
-      setQueue(playlist);
-    }
+    setQueue(playlist || [track]);
   };
 
   const togglePlay = () => {
