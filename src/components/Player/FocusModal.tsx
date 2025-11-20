@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface FocusModalProps {
   isOpen: boolean;
@@ -21,7 +21,28 @@ export default function FocusModal({
   artist,
   videoId,
 }: FocusModalProps) {
+  const [imageSrc, setImageSrc] = useState(thumbnail);
   const highQualityThumbnail = getHighQualityThumbnail(videoId);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    setImageSrc(thumbnail);
+    
+    const testImage = new Image();
+    testImage.onload = () => {
+      if (testImage.naturalWidth > 120 && testImage.naturalHeight > 90) {
+        setImageSrc(highQualityThumbnail);
+      } else {
+        setImageSrc(thumbnail);
+      }
+    };
+    testImage.onerror = () => {
+      setImageSrc(thumbnail);
+    };
+    testImage.src = highQualityThumbnail;
+  }, [isOpen, thumbnail, highQualityThumbnail]);
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -85,12 +106,14 @@ export default function FocusModal({
             <div className="flex flex-col">
               <div className="relative w-full aspect-square max-w-md mb-6">
                 <img
-                  src={highQualityThumbnail}
+                  src={imageSrc}
                   alt={title}
                   className="w-full h-full object-cover rounded-lg shadow-2xl"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.src = thumbnail;
+                    if (target.src !== thumbnail) {
+                      target.src = thumbnail;
+                    }
                   }}
                 />
               </div>
