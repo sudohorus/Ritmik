@@ -189,7 +189,7 @@ export default function Player() {
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end pr-4">
             <VolumeControl volume={volume} onVolumeChange={setVolume} />
           </div>
         </div>

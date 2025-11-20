@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface VolumeControlProps {
   volume: number;
@@ -20,24 +20,29 @@ export default function VolumeControl({ volume, onVolumeChange }: VolumeControlP
     setIsDragging(true);
     const newVolume = getVolumeFromPosition(e.clientX);
     onVolumeChange(newVolume);
+    e.preventDefault();
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging) {
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
       const newVolume = getVolumeFromPosition(e.clientX);
       onVolumeChange(newVolume);
-    }
-  };
+    };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleMouseLeave = () => {
-    if (isDragging) {
+    const handleMouseUp = () => {
       setIsDragging(false);
-    }
-  };
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, onVolumeChange]);
 
   const getVolumeIcon = () => {
     if (volume === 0) {
@@ -66,21 +71,17 @@ export default function VolumeControl({ volume, onVolumeChange }: VolumeControlP
       <div
         ref={sliderRef}
         onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
         className="relative w-20 h-1 bg-zinc-800 rounded-full cursor-pointer group"
       >
         <div
-          className="absolute h-full bg-white rounded-full"
+          className="absolute h-full bg-white rounded-full transition-all"
           style={{ width: `${volume * 100}%` }}
         />
         
         <div
-          className="absolute top-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg pointer-events-none"
+          className="absolute top-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all shadow-lg pointer-events-none -translate-x-1/2 -translate-y-1/2"
           style={{ 
-            left: `${volume * 100}%`, 
-            transform: 'translate(-50%, -50%)',
+            left: `${volume * 100}%`,
           }}
         />
       </div>
