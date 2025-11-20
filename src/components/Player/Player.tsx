@@ -1,8 +1,9 @@
 import { usePlayer } from '@/hooks/usePlayer';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PlayerControls from './PlayerControls';
 import ProgressBar from './ProgressBar';
 import VolumeControl from './VolumeControl';
+import FocusModal from './FocusModal';
 
 declare global {
   interface Window {
@@ -30,6 +31,7 @@ export default function Player() {
 
   const playerRef = useRef<any>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isFocusModalOpen, setIsFocusModalOpen] = useState(false);
 
   useEffect(() => {
     if (!currentTrack) return;
@@ -151,50 +153,79 @@ export default function Player() {
   if (!currentTrack) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 z-50">
-      <div id="youtube-player" className="hidden" />
+    <>
+      <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 z-50">
+        <div id="youtube-player" className="hidden" />
 
-      <div className="w-full px-4 py-3">
-        <div className="grid grid-cols-[1fr_2fr_1fr] items-center gap-4 max-w-screen-2xl mx-auto">
-          <div className="flex items-center gap-3 min-w-0">
-            <img
-              src={currentTrack.thumbnail}
-              alt={currentTrack.title}
-              className="w-14 h-14 rounded object-cover shrink-0"
-            />
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-white truncate">
-                {currentTrack.title}
+        <div className="w-full px-4 py-3">
+          <div className="grid grid-cols-[1fr_2fr_1fr] items-center gap-4 max-w-screen-2xl mx-auto">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative group shrink-0">
+                <img
+                  src={currentTrack.thumbnail}
+                  alt={currentTrack.title}
+                  className="w-14 h-14 rounded object-cover cursor-pointer transition-opacity group-hover:opacity-70"
+                  onClick={() => setIsFocusModalOpen(!isFocusModalOpen)}
+                />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  <svg
+                    className="w-6 h-6 text-white drop-shadow-lg"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                </div>
               </div>
-              <div className="text-xs text-zinc-400 truncate">
-                {currentTrack.artist}
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium text-white truncate">
+                  {currentTrack.title}
+                </div>
+                <div className="text-xs text-zinc-400 truncate">
+                  {currentTrack.artist}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex flex-col items-center gap-2 min-w-0">
-            <PlayerControls
-              isPlaying={isPlaying}
-              onTogglePlay={togglePlay}
-              onPrevious={playPrevious}
-              onNext={playNext}
-              hasQueue={queue.length > 0}
-            />
-            <div className="w-full max-w-2xl">
-              <ProgressBar
-                progress={progress}
-                duration={duration}
-                onSeek={handleSeek}
+            <div className="flex flex-col items-center gap-2 min-w-0">
+              <PlayerControls
+                isPlaying={isPlaying}
+                onTogglePlay={togglePlay}
+                onPrevious={playPrevious}
+                onNext={playNext}
+                hasQueue={queue.length > 0}
               />
+              <div className="w-full max-w-2xl">
+                <ProgressBar
+                  progress={progress}
+                  duration={duration}
+                  onSeek={handleSeek}
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="flex justify-end pr-4">
-            <VolumeControl volume={volume} onVolumeChange={setVolume} />
+            <div className="flex justify-end pr-4">
+              <VolumeControl volume={volume} onVolumeChange={setVolume} />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <FocusModal
+        isOpen={isFocusModalOpen}
+        onClose={() => setIsFocusModalOpen(false)}
+        thumbnail={currentTrack.thumbnail}
+        title={currentTrack.title}
+        artist={currentTrack.artist}
+        videoId={currentTrack.videoId}
+      />
+    </>
   );
 }
 
