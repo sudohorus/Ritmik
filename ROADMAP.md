@@ -2,12 +2,13 @@
 
 ## Completed
 
-- [x] Music search from YouTube
-- [x] Trending tracks browsing
-- [x] Persistent player with controls
-- [x] Focus mode with high-quality album art
-- [x] Volume control improvements
-- [x] Queue system
+- [X] Music search from YouTube
+- [X] Trending tracks browsing
+- [X] Persistent player with controls
+- [X] Focus mode with high-quality album art
+- [X] Volume control improvements
+- [X] Queue system
+- [X] Keyboard shortcuts
 
 ## Phase 1: Core Features
 
@@ -40,10 +41,6 @@
   - Shuffle mode
   - Repeat mode (off/one/all)
   - Playback speed control
-- [ ] Keyboard shortcuts
-  - Space to play/pause
-  - Arrow keys for seek
-  - Media keys support
 - [ ] History and favorites
   - Playback history
   - Favorite tracks

@@ -127,7 +127,7 @@ export default function FocusModal({
             <div className="flex flex-col">
               <div className="flex items-center justify-center min-h-[400px] text-center">
                 <p className="text-zinc-500 text-lg italic">
-                    Lyrics will appear here
+                  Lyrics will appear here
                 </p>
               </div>
             </div>

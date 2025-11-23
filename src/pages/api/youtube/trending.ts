@@ -1,27 +1,31 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import youtubesearchapi from 'youtube-search-api';
+import { scrapeViewCount } from '@/services/youtube-scraper';
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   try {
-    const result = await youtubesearchapi.GetListByKeyword('music 2024', false, 50, {
-      type: 'video'
-    });
+    const result = await youtubesearchapi.GetListByKeyword('popular music', false, 50, [{ type: 'video' }]);
 
-    const tracks = result.items
-      .filter((item: any) => item.type === 'video')
-      .map((item: any) => ({
-        id: item.id,
-        videoId: item.id,
-        title: item.title,
-        artist: item.channelTitle,
-        channel: item.channelTitle,
-        duration: item.length?.simpleText ? parseDuration(item.length.simpleText) : 0,
-        viewCount: item.viewCount ? parseInt(item.viewCount) : 0,
-        thumbnail: item.thumbnail?.thumbnails?.[0]?.url || ''
-      }));
+    const filteredItems = result.items
+      .filter((item: any) => item.type === 'video');
+    
+    const viewCounts = await Promise.all(
+      filteredItems.map((item: any) => scrapeViewCount(item.id))
+    );
+    
+    const tracks = filteredItems.map((item: any, index: number) => ({
+      id: item.id,
+      videoId: item.id,
+      title: item.title,
+      artist: item.channelTitle,
+      channel: item.channelTitle,
+      duration: item.length?.simpleText ? parseDuration(item.length.simpleText) : 0,
+      viewCount: viewCounts[index],
+      thumbnail: item.thumbnail?.thumbnails?.[0]?.url || ''
+    }));
 
     return res.status(200).json({ data: tracks });
   } catch (err: any) {
@@ -42,4 +46,6 @@ function parseDuration(duration: string): number {
   }
   return parts[0] || 0;
 }
+
+
 

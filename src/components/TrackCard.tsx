@@ -1,6 +1,6 @@
 import { Track } from '@/types/track';
 import { formatDuration, formatNumber } from '@/utils/format';
-import { usePlayer } from '@/hooks/usePlayer';
+import { usePlayer } from '@/hooks/player/usePlayer';
 
 interface TrackCardProps {
   track: Track;

@@ -1,4 +1,5 @@
-import { usePlayer } from '@/hooks/usePlayer';
+import { usePlayer } from '@/hooks/player/usePlayer';
+import { useKeyboardShortcuts } from '@/hooks/player/useKeyboardShortcuts';
 import { useEffect, useRef, useState } from 'react';
 import PlayerControls from './PlayerControls';
 import ProgressBar from './ProgressBar';
@@ -32,6 +33,40 @@ export default function Player() {
   const playerRef = useRef<any>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isFocusModalOpen, setIsFocusModalOpen] = useState(false);
+
+  const handleSeekForward = () => {
+    if (playerRef.current?.seekTo && duration > 0) {
+      const newTime = Math.min(progress + 5, duration);
+      playerRef.current.seekTo(newTime, true);
+      setProgress(newTime);
+    }
+  };
+
+  const handleSeekBackward = () => {
+    if (playerRef.current?.seekTo) {
+      const newTime = Math.max(progress - 5, 0);
+      playerRef.current.seekTo(newTime, true);
+      setProgress(newTime);
+    }
+  };
+
+  const handleVolumeUp = () => {
+    setVolume(Math.min(volume + 0.1, 1));
+  };
+
+  const handleVolumeDown = () => {
+    setVolume(Math.max(volume - 0.1, 0));
+  };
+
+  useKeyboardShortcuts({
+    onPlayPause: togglePlay,
+    onNext: playNext,
+    onPrevious: playPrevious,
+    onSeekForward: handleSeekForward,
+    onSeekBackward: handleSeekBackward,
+    onVolumeUp: handleVolumeUp,
+    onVolumeDown: handleVolumeDown,
+  });
 
   useEffect(() => {
     if (!currentTrack) return;

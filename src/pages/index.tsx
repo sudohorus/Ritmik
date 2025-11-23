@@ -1,4 +1,4 @@
-import { useTracks } from '@/hooks/useTracks';
+import { useTracks } from '@/hooks/tracks/useTracks';
 import SearchBar from '@/components/SearchBar';
 import TrackList from '@/components/TrackList';
 import EmptyState from '@/components/EmptyState';
