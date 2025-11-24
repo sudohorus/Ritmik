@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useState } from 'react';
+import React, { createContext, ReactNode, useState } from 'react';
 import { Track } from '@/types/track';
 
 interface PlayerContextValue {
@@ -8,6 +8,7 @@ interface PlayerContextValue {
   volume: number;
   progress: number;
   duration: number;
+  seekToSeconds: number | null;
   playTrack: (track: Track, playlist?: Track[]) => void;
   togglePlay: () => void;
   playNext: () => void;
@@ -16,6 +17,7 @@ interface PlayerContextValue {
   setProgress: (progress: number) => void;
   setDuration: (duration: number) => void;
   seekTo: (seconds: number) => void;
+  clearSeek: () => void;
 }
 
 export const PlayerContext = createContext<PlayerContextValue | undefined>(undefined);
@@ -34,11 +36,19 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
   const [seekToSeconds, setSeekToSeconds] = useState<number | null>(null);
 
   const playTrack = (track: Track, playlist?: Track[]) => {
-    setCurrentTrack(track);
-    setIsPlaying(true);
-    setProgress(0);
-    setDuration(0);
-    setQueue(playlist || [track]);
+    const isSameTrack = currentTrack?.videoId === track.videoId;
+    
+    if (isSameTrack) {
+      setSeekToSeconds(0);
+      setProgress(0);
+      setIsPlaying(true);
+    } else {
+      setCurrentTrack(track);
+      setIsPlaying(true);
+      setProgress(0);
+      setDuration(0);
+      setQueue(playlist || [track]);
+    }
   };
 
   const togglePlay = () => {
@@ -75,7 +85,10 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
 
   const seekTo = (seconds: number) => {
     setSeekToSeconds(seconds);
-    setTimeout(() => setSeekToSeconds(null), 100);
+  };
+
+  const clearSeek = () => {
+    setSeekToSeconds(null);
   };
 
   return (
@@ -87,6 +100,7 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
         volume,
         progress,
         duration,
+        seekToSeconds,
         playTrack,
         togglePlay,
         playNext,
@@ -94,11 +108,20 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
         setVolume,
         setProgress,
         setDuration,
-        seekTo: seekToSeconds !== null ? () => seekToSeconds : seekTo,
+        seekTo,
+        clearSeek,
       }}
     >
       {children}
     </PlayerContext.Provider>
   );
+}
+
+export function usePlayer() {
+  const context = React.useContext(PlayerContext);
+  if (context === undefined) {
+    throw new Error('usePlayer must be used within a PlayerProvider');
+  }
+  return context;
 }
 

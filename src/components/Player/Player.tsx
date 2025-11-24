@@ -21,13 +21,14 @@ export default function Player() {
     volume,
     progress,
     duration,
+    seekToSeconds,
     togglePlay,
     playNext,
     playPrevious,
     setVolume,
     setProgress,
     setDuration,
-    seekTo,
+    clearSeek,
   } = usePlayer();
 
   const playerRef = useRef<any>(null);
@@ -130,7 +131,9 @@ export default function Player() {
               playNext();
             }
             if (event.data === window.YT.PlayerState.PLAYING) {
-              event.target.setVolume(100);
+              if (event.target && typeof event.target.setVolume === 'function') {
+                event.target.setVolume(100);
+              }
             }
           },
         },
@@ -177,6 +180,14 @@ export default function Player() {
       playerRef.current.setVolume(vol);
     }
   }, [volume]);
+
+  useEffect(() => {
+    if (seekToSeconds !== null && playerRef.current?.seekTo) {
+      playerRef.current.seekTo(seekToSeconds, true);
+      setProgress(seekToSeconds);
+      clearSeek();
+    }
+  }, [seekToSeconds]);
 
   const handleSeek = (seconds: number) => {
     if (playerRef.current?.seekTo) {
