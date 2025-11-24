@@ -9,16 +9,21 @@
 - [X] Volume control improvements
 - [X] Queue system
 - [X] Keyboard shortcuts
-
-## Phase 1: Core Features
-
-- [ ] Playlist creation and management
+- [X] Playlist creation and management
   - Create custom playlists
   - Add/remove tracks from playlists
-- [ ] Lyrics display
-  - Integrate lyrics API
+  - Edit playlist details (name, description, cover, privacy)
+  - Delete playlists
+  - Drag-and-drop track reordering
+  - Public/private playlists
+  - Explore public playlists
+- [X] Lyrics display
+  - Integrated lrclib.net API
   - Display lyrics in focus mode
-  - Sync lyrics with playback
+  - Smart title parsing for better lyrics matching
+  - Lyrics caching
+
+## Phase 1: Core Features
 
 ## Phase 2: Infrastructure
 

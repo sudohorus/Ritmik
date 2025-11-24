@@ -22,6 +22,9 @@ export default function FocusModal({
   videoId,
 }: FocusModalProps) {
   const [imageSrc, setImageSrc] = useState(thumbnail);
+  const [lyrics, setLyrics] = useState<string | null>(null);
+  const [loadingLyrics, setLoadingLyrics] = useState(false);
+  const [cachedVideoId, setCachedVideoId] = useState<string | null>(null);
   const highQualityThumbnail = getHighQualityThumbnail(videoId);
 
   useEffect(() => {
@@ -42,6 +45,42 @@ export default function FocusModal({
     };
     testImage.src = highQualityThumbnail;
   }, [isOpen, thumbnail, highQualityThumbnail]);
+
+  useEffect(() => {
+    const fetchLyrics = async () => {
+      if (!isOpen || !title || !videoId) return;
+      
+      if (cachedVideoId === videoId) {
+        return;
+      }
+      
+      setLoadingLyrics(true);
+      setLyrics(null);
+
+      try {
+        const response = await fetch(
+          `/api/lyrics/fetch?title=${encodeURIComponent(title)}&channel=${encodeURIComponent(artist)}`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          setLyrics(data.lyrics);
+        } else {
+          setLyrics(null);
+        }
+        
+        setCachedVideoId(videoId);
+      } catch (error) {
+        console.error('Failed to fetch lyrics:', error);
+        setLyrics(null);
+        setCachedVideoId(videoId);
+      } finally {
+        setLoadingLyrics(false);
+      }
+    };
+
+    fetchLyrics();
+  }, [isOpen, title, artist, videoId, cachedVideoId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -125,10 +164,18 @@ export default function FocusModal({
             </div>
 
             <div className="flex flex-col">
-              <div className="flex items-center justify-center min-h-[400px] text-center">
-                <p className="text-zinc-500 text-lg italic">
-                  Lyrics will appear here
-                </p>
+              <div className="overflow-y-auto min-h-[400px] max-h-[600px] px-4 py-4">
+                {loadingLyrics ? (
+                  <div className="text-zinc-400 w-full text-center py-8">Loading lyrics...</div>
+                ) : lyrics ? (
+                  <pre className="text-zinc-300 whitespace-pre-wrap text-base leading-loose font-sans w-full">
+                    {lyrics}
+                  </pre>
+                ) : (
+                  <p className="text-zinc-500 text-lg italic w-full text-center py-8">
+                    Lyrics not available
+                  </p>
+                )}
               </div>
             </div>
           </div>

@@ -93,33 +93,6 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
               />
             </div>
 
-            <div>
-              <label htmlFor="coverImage" className="block text-sm font-medium text-zinc-300 mb-2">
-                Cover Image URL (optional)
-              </label>
-              <input
-                id="coverImage"
-                type="url"
-                value={coverImage}
-                onChange={(e) => setCoverImage(e.target.value)}
-                className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-colors"
-                placeholder="https://example.com/image.jpg"
-              />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <input
-                id="isPublic"
-                type="checkbox"
-                checked={isPublic}
-                onChange={(e) => setIsPublic(e.target.checked)}
-                className="w-4 h-4 bg-zinc-800 border-zinc-700 rounded text-white focus:ring-2 focus:ring-zinc-500"
-              />
-              <label htmlFor="isPublic" className="text-sm font-medium text-zinc-300">
-                Make this playlist public
-              </label>
-            </div>
-
             {error && (
               <div className="p-3 bg-red-950/50 border border-red-900/50 rounded-lg text-red-400 text-sm">
                 {error}
