@@ -45,26 +45,36 @@ async function fetchLyricsFromAPI(artist: string, title: string): Promise<string
 }
 
 export async function fetchLyrics(videoTitle: string, channelName: string): Promise<LyricsResult | null> {
+  const cleanedChannel = channelName.replace(/\s*-\s*Topic\s*$/i, '').trim();
+  
   console.log('[Lyrics Service] Fetching lyrics');
   console.log(`  Title: "${videoTitle}"`);
-  console.log(`  Channel: "${channelName}"`);
+  console.log(`  Channel: "${cleanedChannel}"`);
   
-  const variations = parseMusicTitle(videoTitle, channelName);
+  const variations = parseMusicTitle(videoTitle, cleanedChannel);
   console.log(`  Generated ${variations.length} variations to try`);
 
-  for (let i = 0; i < variations.length; i++) {
-    const variation = variations[i];
-    const lyrics = await fetchLyricsFromAPI(variation.artist, variation.title);
+  const batchSize = 10;
+  for (let i = 0; i < variations.length; i += batchSize) {
+    const batch = variations.slice(i, i + batchSize);
     
-    if (lyrics) {
-      console.log(`  [Success] Found lyrics using variation ${i + 1}/${variations.length}`);
-      console.log(`    Artist: "${variation.artist}"`);
-      console.log(`    Title: "${variation.title}"`);
-      console.log(`    Length: ${lyrics.length} characters`);
+    const promises = batch.map(async (variation, index) => {
+      const lyrics = await fetchLyricsFromAPI(variation.artist, variation.title);
+      return lyrics ? { lyrics, variation, index: i + index } : null;
+    });
+
+    const results = await Promise.all(promises);
+    const found = results.find(r => r !== null);
+    
+    if (found) {
+      console.log(`  [Success] Found lyrics using variation ${found.index + 1}/${variations.length}`);
+      console.log(`    Artist: "${found.variation.artist}"`);
+      console.log(`    Title: "${found.variation.title}"`);
+      console.log(`    Length: ${found.lyrics.length} characters`);
       return {
-        lyrics,
-        artist: variation.artist,
-        title: variation.title,
+        lyrics: found.lyrics,
+        artist: found.variation.artist,
+        title: found.variation.title,
       };
     }
   }

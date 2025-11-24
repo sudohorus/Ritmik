@@ -24,6 +24,7 @@ export default function FocusModal({
   const [imageSrc, setImageSrc] = useState(thumbnail);
   const [lyrics, setLyrics] = useState<string | null>(null);
   const [loadingLyrics, setLoadingLyrics] = useState(false);
+  const [lyricsNotFound, setLyricsNotFound] = useState(false);
   const [cachedVideoId, setCachedVideoId] = useState<string | null>(null);
   const highQualityThumbnail = getHighQualityThumbnail(videoId);
 
@@ -47,40 +48,70 @@ export default function FocusModal({
   }, [isOpen, thumbnail, highQualityThumbnail]);
 
   useEffect(() => {
+    if (videoId !== cachedVideoId) {
+      setLyrics(null);
+      setLyricsNotFound(false);
+      setCachedVideoId(null);
+    }
+  }, [videoId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    
     const fetchLyrics = async () => {
-      if (!isOpen || !title || !videoId) return;
+      if (!title || !videoId) return;
       
       if (cachedVideoId === videoId) {
         return;
       }
       
+      if (cancelled) return;
+      
       setLoadingLyrics(true);
-      setLyrics(null);
+      setLyricsNotFound(false);
 
       try {
         const response = await fetch(
           `/api/lyrics/fetch?title=${encodeURIComponent(title)}&channel=${encodeURIComponent(artist)}`
         );
         
+        if (cancelled) return;
+        
         if (response.ok) {
           const data = await response.json();
-          setLyrics(data.lyrics);
+          if (!cancelled) {
+            setLyrics(data.lyrics);
+            setLyricsNotFound(false);
+            setCachedVideoId(videoId);
+          }
         } else {
-          setLyrics(null);
+          if (!cancelled) {
+            setLyrics(null);
+            setLyricsNotFound(true);
+            setCachedVideoId(videoId);
+          }
         }
-        
-        setCachedVideoId(videoId);
       } catch (error) {
+        if (cancelled) return;
         console.error('Failed to fetch lyrics:', error);
-        setLyrics(null);
-        setCachedVideoId(videoId);
+        if (!cancelled) {
+          setLyrics(null);
+          setLyricsNotFound(true);
+          setCachedVideoId(videoId);
+        }
       } finally {
-        setLoadingLyrics(false);
+        if (!cancelled) {
+          setLoadingLyrics(false);
+        }
       }
     };
 
     fetchLyrics();
-  }, [isOpen, title, artist, videoId, cachedVideoId]);
+    
+    return () => {
+      cancelled = true;
+    };
+  }, [title, artist, videoId, cachedVideoId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -171,11 +202,11 @@ export default function FocusModal({
                   <pre className="text-zinc-300 whitespace-pre-wrap text-base leading-loose font-sans w-full">
                     {lyrics}
                   </pre>
-                ) : (
+                ) : lyricsNotFound ? (
                   <p className="text-zinc-500 text-lg italic w-full text-center py-8">
                     Lyrics not available
                   </p>
-                )}
+                ) : null}
               </div>
             </div>
           </div>

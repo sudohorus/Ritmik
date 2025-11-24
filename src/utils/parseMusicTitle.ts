@@ -18,17 +18,30 @@ function removeParenthesesContent(str: string): string {
 export function parseMusicTitle(fullTitle: string, channelName: string): ParsedTitle[] {
   const variations: ParsedTitle[] = [];
   
-  let cleaned = fullTitle
+  const normalized = fullTitle
     .replace(/["'']/g, '"')
     .replace(/[‐‑‒–—]/g, '-');
+  
+  const firstAttemptSplit = normalized.split(/\s*[-–—]\s*/);
+  if (firstAttemptSplit.length >= 2) {
+    variations.push({
+      artist: firstAttemptSplit[0].trim(),
+      title: firstAttemptSplit.slice(1).join(' - ').trim(),
+    });
+  }
+  
+  let cleaned = normalized;
 
   const metadataPatterns = [
     /\s*\|\s*dir\.?\s*@?\w+/gi,
     /\s*dir\.?\s*@?\w+/gi,
+    /\s*-\s*Topic\s*$/gi,
     /\(Official (?:Video|Audio|Music Video|Lyric Video|Visualizer)\)/gi,
     /\[Official (?:Video|Audio|Music Video|Lyric Video|Visualizer)\]/gi,
     /\((?:Official|Audio|Video|Visualizer)\)/gi,
     /\[(?:Official|Audio|Video|Visualizer)\]/gi,
+    /\(CLIPE OFICIAL\)/gi,
+    /\[CLIPE OFICIAL\]/gi,
     /\(HD Remaster(?:ed)?\)/gi,
     /\[HD Remaster(?:ed)?\]/gi,
     /\((?:HD|HQ|4K|1080p|720p)\)/gi,
