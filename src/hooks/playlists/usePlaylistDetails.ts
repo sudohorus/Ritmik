@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlaylistService } from '@/services/playlist-service';
 import { Playlist, PlaylistTrack, CreatePlaylistData } from '@/types/playlist';
@@ -8,14 +8,49 @@ export function usePlaylistDetails(playlistId: string | undefined) {
   const { user } = useAuth();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const hasLoadedRef = useRef(false);
-  const loadedPlaylistIdRef = useRef<string | null>(null);
-  const isLoadingRef = useRef(false);
-  const userIdRef = useRef<string | undefined>(user?.id);
-  
-  userIdRef.current = user?.id;
+  const fetchIdRef = useRef(0);
+
+  const fetchPlaylist = useCallback(async (id: string, userId: string | undefined, fetchId: number) => {
+    try {
+      const foundPlaylist = await PlaylistService.getPlaylistById(id);
+
+      if (fetchIdRef.current !== fetchId) return;
+
+      if (!foundPlaylist) {
+        setError('Playlist not found');
+        setPlaylist(null);
+        setTracks([]);
+        return;
+      }
+
+      if (!foundPlaylist.is_public && (!userId || foundPlaylist.user_id !== userId)) {
+        setError('This playlist is private');
+        setPlaylist(null);
+        setTracks([]);
+        return;
+      }
+
+      const playlistTracks = await PlaylistService.getPlaylistTracks(id);
+
+      if (fetchIdRef.current !== fetchId) return;
+
+      setPlaylist(foundPlaylist);
+      setTracks(playlistTracks);
+      setError(null);
+    } catch (err) {
+      if (fetchIdRef.current === fetchId) {
+        setError(err instanceof Error ? err.message : 'Failed to load playlist');
+        setPlaylist(null);
+        setTracks([]);
+      }
+    } finally {
+      if (fetchIdRef.current === fetchId) {
+        setLoading(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!playlistId) {
@@ -23,84 +58,15 @@ export function usePlaylistDetails(playlistId: string | undefined) {
       setTracks([]);
       setError(null);
       setLoading(false);
-      hasLoadedRef.current = false;
-      loadedPlaylistIdRef.current = null;
       return;
     }
 
-    if (loadedPlaylistIdRef.current === playlistId && hasLoadedRef.current) {
-      return;
-    }
-
-    if (isLoadingRef.current) {
-      return;
-    }
-
-    let cancelled = false;
-    isLoadingRef.current = true;
-    
+    const fetchId = ++fetchIdRef.current;
     setLoading(true);
     setError(null);
 
-    const load = async () => {
-      try {
-        const foundPlaylist = await PlaylistService.getPlaylistById(playlistId);
-
-        if (cancelled) {
-          isLoadingRef.current = false;
-          return;
-        }
-
-        if (!foundPlaylist) {
-          setError('Playlist not found');
-          setPlaylist(null);
-          setTracks([]);
-          setLoading(false);
-          isLoadingRef.current = false;
-          return;
-        }
-
-        const currentUserId = userIdRef.current;
-        if (!foundPlaylist.is_public && (!currentUserId || foundPlaylist.user_id !== currentUserId)) {
-          setError('This playlist is private');
-          setPlaylist(null);
-          setTracks([]);
-          setLoading(false);
-          isLoadingRef.current = false;
-          return;
-        }
-
-        const playlistTracks = await PlaylistService.getPlaylistTracks(playlistId);
-
-        if (!cancelled) {
-          setPlaylist(foundPlaylist);
-          setTracks(playlistTracks);
-          setError(null);
-          setLoading(false);
-          hasLoadedRef.current = true;
-          loadedPlaylistIdRef.current = playlistId;
-          isLoadingRef.current = false;
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load playlist');
-          if (!hasLoadedRef.current) {
-            setPlaylist(null);
-            setTracks([]);
-          }
-          setLoading(false);
-          isLoadingRef.current = false;
-        }
-      }
-    };
-
-    load();
-
-    return () => {
-      cancelled = true;
-      isLoadingRef.current = false;
-    };
-  }, [playlistId]);
+    fetchPlaylist(playlistId, user?.id, fetchId);
+  }, [playlistId, user?.id, fetchPlaylist]);
 
   const removeTrack = async (videoId: string) => {
     if (!playlistId || !user) throw new Error('Not authorized');

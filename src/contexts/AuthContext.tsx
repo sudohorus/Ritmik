@@ -86,19 +86,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (_event === 'TOKEN_REFRESHED') {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
         return;
       }
       
-      setSession(session);
-      if (session?.user) {
-        const profile = await fetchUserProfile(session.user.id);
-        updateUser(profile || mapUserFromAuth(session.user));
-      } else {
+      if (event === 'SIGNED_OUT') {
+        setSession(null);
         updateUser(null);
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+      
+      if (event === 'SIGNED_IN' && newSession?.user) {
+        setSession(newSession);
+        const profile = await fetchUserProfile(newSession.user.id);
+        updateUser(profile || mapUserFromAuth(newSession.user));
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -134,7 +139,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (insertError) {
-        console.error('Failed to insert user into public.users:', insertError);
       }
     }
 
