@@ -52,10 +52,14 @@ export function useProfile() {
   const updateProfile = async (updates: UpdateProfileData) => {
     if (!user?.id) return { error: 'User not authenticated' };
 
-    setUpdating(true);
-    setError(null);
+    if (isMounted.current) {
+      setUpdating(true);
+      setError(null);
+    }
 
     const { data, error: updateError } = await ProfileService.updateProfile(user.id, updates);
+
+    if (!isMounted.current) return { error: null };
 
     if (updateError) {
       setError(updateError.message || 'Failed to update profile');

@@ -16,6 +16,8 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    let active = true;
+
     setLoading(true);
     setError(null);
 
@@ -26,15 +28,20 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
         is_public: isPublic,
         cover_image_url: coverImage || undefined
       });
+      if (!active) return;
       setName('');
       setDescription('');
       setCoverImage('');
       setIsPublic(true);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create playlist');
+      if (active) {
+        setError(err instanceof Error ? err.message : 'Failed to create playlist');
+      }
     } finally {
-      setLoading(false);
+      if (active) {
+        setLoading(false);
+      }
     }
   };
 

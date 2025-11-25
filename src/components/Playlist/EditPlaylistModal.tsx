@@ -27,6 +27,8 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    let active = true;
+
     setLoading(true);
     setError(null);
 
@@ -37,11 +39,16 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
         is_public: isPublic,
         cover_image_url: coverImage || undefined
       });
+      if (!active) return;
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update playlist');
+      if (active) {
+        setError(err instanceof Error ? err.message : 'Failed to update playlist');
+      }
     } finally {
-      setLoading(false);
+      if (active) {
+        setLoading(false);
+      }
     }
   };
 

@@ -21,6 +21,8 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
   useEffect(() => {
     if (!isOpen || playlists.length === 0) return;
 
+    let active = true;
+
     const fetchAllPlaylistTracks = async () => {
       const tracksMap: Record<string, PlaylistTrack[]> = {};
       
@@ -36,10 +38,16 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
         })
       );
 
-      setPlaylistTracks(tracksMap);
+      if (active) {
+        setPlaylistTracks(tracksMap);
+      }
     };
 
     fetchAllPlaylistTracks();
+
+    return () => {
+      active = false;
+    };
   }, [isOpen, playlists]);
 
   const isTrackInPlaylist = (playlistId: string): boolean => {
@@ -56,6 +64,8 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
       return;
     }
 
+    let active = true;
+
     setLoading(true);
     setAddingTo(playlistId);
     setError(null);
@@ -71,6 +81,8 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
         duration: track.duration,
       });
       
+      if (!active) return;
+
       setPlaylistTracks(prev => ({
         ...prev,
         [playlistId]: [
@@ -91,14 +103,20 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
       
       setSuccess(true);
       setTimeout(() => {
-        onClose();
-        setSuccess(false);
+        if (active) {
+          onClose();
+          setSuccess(false);
+        }
       }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add track');
+      if (active) {
+        setError(err instanceof Error ? err.message : 'Failed to add track');
+      }
     } finally {
-      setLoading(false);
-      setAddingTo(null);
+      if (active) {
+        setLoading(false);
+        setAddingTo(null);
+      }
     }
   };
 

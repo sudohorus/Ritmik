@@ -42,12 +42,16 @@ export function usePlaylists() {
   const createPlaylist = async (data: CreatePlaylistData) => {
     if (!user) throw new Error('User not authenticated');
 
-    setLoading(true);
-    setError(null);
+    if (isMounted.current) {
+      setLoading(true);
+      setError(null);
+    }
 
     try {
       const newPlaylist = await PlaylistService.createPlaylist(user.id, data);
-      setPlaylists(prev => [newPlaylist, ...prev]);
+      if (isMounted.current) {
+        setPlaylists(prev => [newPlaylist, ...prev]);
+      }
       return newPlaylist;
     } catch (err) {
       console.error('Error creating playlist:', err);
@@ -61,45 +65,65 @@ export function usePlaylists() {
         }
       }
       
-      setError(message);
+      if (isMounted.current) {
+        setError(message);
+      }
       throw new Error(message);
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   };
 
   const updatePlaylist = async (playlistId: string, data: Partial<CreatePlaylistData>) => {
     if (!user) throw new Error('User not authenticated');
 
-    setLoading(true);
-    setError(null);
+    if (isMounted.current) {
+      setLoading(true);
+      setError(null);
+    }
 
     try {
       const updatedPlaylist = await PlaylistService.updatePlaylist(playlistId, data);
-      setPlaylists(prev => prev.map(p => p.id === playlistId ? updatedPlaylist : p));
+      if (isMounted.current) {
+        setPlaylists(prev => prev.map(p => p.id === playlistId ? updatedPlaylist : p));
+      }
       return updatedPlaylist;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update playlist';
-      setError(message);
+      if (isMounted.current) {
+        setError(message);
+      }
       throw new Error(message);
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   };
 
   const deletePlaylist = async (playlistId: string) => {
-    setLoading(true);
-    setError(null);
+    if (isMounted.current) {
+      setLoading(true);
+      setError(null);
+    }
 
     try {
       await PlaylistService.deletePlaylist(playlistId);
-      setPlaylists(prev => prev.filter(p => p.id !== playlistId));
+      if (isMounted.current) {
+        setPlaylists(prev => prev.filter(p => p.id !== playlistId));
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to delete playlist';
-      setError(message);
+      if (isMounted.current) {
+        setError(message);
+      }
       throw new Error(message);
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   };
 
