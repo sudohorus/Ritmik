@@ -22,9 +22,6 @@
   - Display lyrics in focus mode
   - Smart title parsing for better lyrics matching
   - Lyrics caching
-- [X] Explore & profile UX polish
-  - Prevent nested links inside playlist cards
-  - Keep profile saves responsive while refreshing the auth context
 
 ## Phase 1: Core Features
 
