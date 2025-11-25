@@ -12,23 +12,28 @@ export function usePlaylists() {
   useEffect(() => {
     if (!user?.id) {
       setPlaylists([]);
+      setError(null);
       setLoading(false);
       return;
     }
 
     let cancelled = false;
+    
     setLoading(true);
+    setError(null);
 
     PlaylistService.getUserPlaylists(user.id)
       .then(data => {
         if (!cancelled) {
           setPlaylists(data);
+          setError(null);
           setLoading(false);
         }
       })
       .catch(err => {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to fetch playlists');
+          setPlaylists([]);
           setLoading(false);
         }
       });

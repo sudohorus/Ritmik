@@ -9,6 +9,7 @@ export function usePublicPlaylists() {
 
   useEffect(() => {
     let cancelled = false;
+    
     setLoading(true);
 
     PlaylistService.getPublicPlaylists()
@@ -21,6 +22,7 @@ export function usePublicPlaylists() {
       .catch(err => {
         if (!cancelled) {
           console.error('Error fetching public playlists:', err);
+          setPlaylists([]);
           setLoading(false);
         }
       });

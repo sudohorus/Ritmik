@@ -15,11 +15,13 @@ export function usePlaylistDetails(playlistId: string | undefined) {
     if (!playlistId) {
       setPlaylist(null);
       setTracks([]);
+      setError(null);
       setLoading(false);
       return;
     }
 
     let cancelled = false;
+    
     setLoading(true);
     setError(null);
 
@@ -27,26 +29,41 @@ export function usePlaylistDetails(playlistId: string | undefined) {
       try {
         const foundPlaylist = await PlaylistService.getPlaylistById(playlistId);
 
+        if (cancelled) return;
+
         if (!foundPlaylist) {
-          throw new Error('Playlist not found');
+          if (!cancelled) {
+            setError('Playlist not found');
+            setPlaylist(null);
+            setTracks([]);
+            setLoading(false);
+          }
+          return;
         }
 
         if (!foundPlaylist.is_public && (!user || foundPlaylist.user_id !== user.id)) {
-          throw new Error('This playlist is private');
+          if (!cancelled) {
+            setError('This playlist is private');
+            setPlaylist(null);
+            setTracks([]);
+            setLoading(false);
+          }
+          return;
         }
-
-        if (cancelled) return;
 
         const playlistTracks = await PlaylistService.getPlaylistTracks(playlistId);
 
         if (!cancelled) {
           setPlaylist(foundPlaylist);
           setTracks(playlistTracks);
+          setError(null);
           setLoading(false);
         }
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to load playlist');
+          setPlaylist(null);
+          setTracks([]);
           setLoading(false);
         }
       }
