@@ -64,7 +64,8 @@ export class PlaylistService {
         user_id: userId,
         name: playlistData.name,
         description: playlistData.description,
-        is_public: playlistData.is_public || false,
+        cover_image_url: playlistData.cover_image_url,
+        is_public: playlistData.is_public ?? true,
       })
       .select()
       .single();

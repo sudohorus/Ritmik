@@ -94,7 +94,7 @@ export default function PlaylistsPage() {
             {playlists.map((playlist) => (
               <div
                 key={playlist.id}
-                className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all group"
+                className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all group flex flex-col"
               >
                 <div className="aspect-square bg-zinc-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
                   {playlist.cover_image_url ? (
@@ -109,13 +109,13 @@ export default function PlaylistsPage() {
                     </svg>
                   )}
                 </div>
-                <h3 className="font-semibold text-lg mb-1 truncate group-hover:text-white transition-colors">
+                <h3 className="font-semibold text-lg mb-2 truncate group-hover:text-white transition-colors">
                   {playlist.name}
                 </h3>
-                {playlist.description && (
-                  <p className="text-sm text-zinc-400 mb-4 line-clamp-2">{playlist.description}</p>
-                )}
-                <div className="flex items-center gap-2">
+                <p className="text-sm text-zinc-400 mb-4 line-clamp-2 grow min-h-10">
+                  {playlist.description || '\u00A0'}
+                </p>
+                <div className="flex items-center gap-2 mt-auto">
                   <Link
                     href={`/playlists/${playlist.id}`}
                     className="flex-1 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-sm font-medium transition-colors text-center"

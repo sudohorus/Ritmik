@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import SyncedLyrics from './SyncedLyrics';
+import AddToPlaylistModal from '@/components/Playlist/AddToPlaylistModal';
 import { LyricsLine } from '@/services/lyrics-service';
+import { Track } from '@/types/track';
 
 interface FocusModalProps {
   isOpen: boolean;
@@ -11,6 +13,7 @@ interface FocusModalProps {
   videoId: string;
   currentTime: number;
   onSeek: (time: number) => void;
+  track: Track;
 }
 
 const getHighQualityThumbnail = (videoId: string): string => {
@@ -26,6 +29,7 @@ export default function FocusModal({
   videoId,
   currentTime,
   onSeek,
+  track,
 }: FocusModalProps) {
   const [imageSrc, setImageSrc] = useState(thumbnail);
   const [lyrics, setLyrics] = useState<string | null>(null);
@@ -33,6 +37,7 @@ export default function FocusModal({
   const [loadingLyrics, setLoadingLyrics] = useState(false);
   const [lyricsNotFound, setLyricsNotFound] = useState(false);
   const [cachedVideoId, setCachedVideoId] = useState<string | null>(null);
+  const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
   const highQualityThumbnail = getHighQualityThumbnail(videoId);
 
   useEffect(() => {
@@ -150,30 +155,44 @@ export default function FocusModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed top-0 left-0 right-0 bottom-0 z-40 bg-zinc-950 overflow-y-auto"
-      onClick={onClose}
-    >
-      <button
+    <>
+      <div
+        className="fixed top-0 left-0 right-0 bottom-0 z-40 bg-zinc-950 overflow-y-auto"
         onClick={onClose}
-        className="fixed top-4 right-4 text-zinc-400 hover:text-white transition-colors p-2"
-        style={{ zIndex: 100 }}
-        aria-label="Fechar"
       >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
+        <div className="fixed top-4 right-4 flex items-center gap-2" style={{ zIndex: 100 }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowAddToPlaylist(true);
+            }}
+            className="text-zinc-400 hover:text-white transition-colors p-2 hover:bg-zinc-800 rounded-lg"
+            aria-label="Add to playlist"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+          <button
+            onClick={onClose}
+            className="text-zinc-400 hover:text-white transition-colors p-2 hover:bg-zinc-800 rounded-lg"
+            aria-label="Close"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
 
       <div className="min-h-full flex items-center justify-center p-6 pb-24">
         <div
@@ -228,6 +247,13 @@ export default function FocusModal({
         </div>
       </div>
     </div>
+
+    <AddToPlaylistModal
+      isOpen={showAddToPlaylist}
+      onClose={() => setShowAddToPlaylist(false)}
+      track={track}
+    />
+  </>
   );
 }
 

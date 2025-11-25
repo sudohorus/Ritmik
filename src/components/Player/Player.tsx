@@ -279,6 +279,7 @@ export default function Player() {
         videoId={currentTrack.videoId}
         currentTime={progress}
         onSeek={handleLyricsSeek}
+        track={currentTrack}
       />
     </>
   );
