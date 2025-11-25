@@ -1,19 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PlaylistService } from '@/services/playlist-service';
 import { Playlist } from '@/types/playlist';
-import { useAsyncData } from '@/hooks/useAsyncData';
 
 export function usePublicPlaylists() {
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: playlists, loading } = useAsyncData<Playlist[]>({
-    fetchFn: async () => {
-      return await PlaylistService.getPublicPlaylists();
-    },
-    dependencies: [],
-  });
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
 
-  const filteredPlaylists = (playlists || []).filter(playlist => 
+    PlaylistService.getPublicPlaylists()
+      .then(data => {
+        if (!cancelled) {
+          setPlaylists(data);
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        if (!cancelled) {
+          console.error('Error fetching public playlists:', err);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredPlaylists = playlists.filter(playlist => 
     playlist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     playlist.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );

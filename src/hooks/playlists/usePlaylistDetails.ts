@@ -1,87 +1,104 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlaylistService } from '@/services/playlist-service';
 import { Playlist, PlaylistTrack, CreatePlaylistData } from '@/types/playlist';
 import { arrayMove } from '@dnd-kit/sortable';
-import { useAsyncData } from '@/hooks/useAsyncData';
-
-interface PlaylistData {
-  playlist: Playlist;
-  tracks: PlaylistTrack[];
-}
 
 export function usePlaylistDetails(playlistId: string | undefined) {
   const { user } = useAuth();
-  const [localError, setLocalError] = useState<string | null>(null);
+  const [playlist, setPlaylist] = useState<Playlist | null>(null);
+  const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data, loading, error, refetch } = useAsyncData<PlaylistData | null>({
-    fetchFn: async () => {
-      if (!playlistId) return null;
+  useEffect(() => {
+    if (!playlistId) {
+      setPlaylist(null);
+      setTracks([]);
+      setLoading(false);
+      return;
+    }
 
-      const foundPlaylist = await PlaylistService.getPlaylistById(playlistId);
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
 
-      if (!foundPlaylist) {
-        throw new Error('Playlist not found');
+    const load = async () => {
+      try {
+        const foundPlaylist = await PlaylistService.getPlaylistById(playlistId);
+
+        if (!foundPlaylist) {
+          throw new Error('Playlist not found');
+        }
+
+        if (!foundPlaylist.is_public && (!user || foundPlaylist.user_id !== user.id)) {
+          throw new Error('This playlist is private');
+        }
+
+        if (cancelled) return;
+
+        const playlistTracks = await PlaylistService.getPlaylistTracks(playlistId);
+
+        if (!cancelled) {
+          setPlaylist(foundPlaylist);
+          setTracks(playlistTracks);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load playlist');
+          setLoading(false);
+        }
       }
+    };
 
-      if (!foundPlaylist.is_public && (!user || foundPlaylist.user_id !== user.id)) {
-        throw new Error('This playlist is private');
-      }
+    load();
 
-      const playlistTracks = await PlaylistService.getPlaylistTracks(playlistId);
-
-      return {
-        playlist: foundPlaylist,
-        tracks: playlistTracks,
-      };
-    },
-    dependencies: [playlistId, user?.id],
-    enabled: !!playlistId,
-    onError: (err) => setLocalError(err.message),
-  });
+    return () => {
+      cancelled = true;
+    };
+  }, [playlistId, user?.id]);
 
   const removeTrack = async (videoId: string) => {
     if (!playlistId || !user) throw new Error('Not authorized');
-
     await PlaylistService.removeTrackFromPlaylist(playlistId, videoId);
-    await refetch();
+    setTracks(prev => prev.filter(t => t.video_id !== videoId));
   };
 
-  const updatePlaylist = async (updateData: Partial<CreatePlaylistData>) => {
+  const updatePlaylist = async (data: Partial<CreatePlaylistData>) => {
     if (!playlistId || !user) throw new Error('Not authorized');
-
-    const updated = await PlaylistService.updatePlaylist(playlistId, updateData);
-    await refetch();
+    const updated = await PlaylistService.updatePlaylist(playlistId, data);
+    setPlaylist(updated);
     return updated;
   };
 
   const reorderTracks = async (activeId: string, overId: string) => {
-    if (!playlistId || !data) return;
+    if (!playlistId) return;
 
-    const oldIndex = data.tracks.findIndex((t) => t.video_id === activeId);
-    const newIndex = data.tracks.findIndex((t) => t.video_id === overId);
-
-    const newTracks = arrayMove(data.tracks, oldIndex, newIndex);
+    const oldIndex = tracks.findIndex((t) => t.video_id === activeId);
+    const newIndex = tracks.findIndex((t) => t.video_id === overId);
+    const newTracks = arrayMove(tracks, oldIndex, newIndex);
+    
+    setTracks(newTracks);
 
     try {
       await PlaylistService.reorderPlaylistTracks(
         playlistId,
         newTracks.map((t) => t.video_id)
       );
-      await refetch();
     } catch (err) {
-      console.error('Error reordering tracks:', err);
+      setTracks(tracks);
       throw err;
     }
   };
 
-  const isOwner = user && data?.playlist && data.playlist.user_id === user.id;
+  const isOwner = user && playlist && playlist.user_id === user.id;
 
   return {
-    playlist: data?.playlist || null,
-    tracks: data?.tracks || [],
+    playlist,
+    tracks,
     loading,
-    error: localError || error?.message || null,
+    error,
     isOwner,
     removeTrack,
     updatePlaylist,
