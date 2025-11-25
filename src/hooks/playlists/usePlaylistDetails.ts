@@ -8,15 +8,19 @@ export function usePlaylistDetails(playlistId: string | undefined) {
   const { user } = useAuth();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!playlistId) return;
+    if (!playlistId) {
+      setLoading(false);
+      return;
+    }
 
     const fetchPlaylist = async () => {
       try {
         setLoading(true);
+        setError(null);
         const foundPlaylist = await PlaylistService.getPlaylistById(playlistId);
         
         if (!foundPlaylist) {

@@ -26,7 +26,7 @@ import {
 
 export default function PlaylistPage() {
   const router = useRouter();
-  const { id } = router.query;
+  const playlistId = router.isReady && typeof router.query.id === 'string' ? router.query.id : undefined;
   const { user } = useAuth();
   const { playTrack, currentTrack, isPlaying } = usePlayer();
   
@@ -39,7 +39,7 @@ export default function PlaylistPage() {
     removeTrack,
     updatePlaylist,
     reorderTracks,
-  } = usePlaylistDetails(id as string);
+  } = usePlaylistDetails(playlistId);
 
   const [removeConfirm, setRemoveConfirm] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);

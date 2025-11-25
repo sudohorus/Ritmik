@@ -7,7 +7,9 @@ import UserMenu from '@/components/Auth/UserMenu';
 
 export default function PublicProfilePage() {
   const router = useRouter();
-  const { username } = router.query;
+  const { query, isReady } = router;
+  const { username } = query;
+  const normalizedUsername = Array.isArray(username) ? username[0] : username;
   const { user: currentUser } = useAuth();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [playlists, setPlaylists] = useState<any[]>([]);
@@ -15,30 +17,50 @@ export default function PublicProfilePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (username && typeof username === 'string') {
-      loadProfile(username);
-    }
-  }, [username]);
-
-  const loadProfile = async (usernameParam: string) => {
-    setLoading(true);
-    setError(null);
-
-    const { data: profileData, error: profileError } = await PublicProfileService.getProfileByUsername(usernameParam);
-
-    if (profileError || !profileData) {
-      setError('User not found');
+    if (!isReady || !normalizedUsername) {
       setLoading(false);
       return;
     }
 
-    setProfile(profileData);
+    let active = true;
 
-    const { data: playlistsData } = await PublicProfileService.getUserPlaylists(profileData.id);
-    setPlaylists(playlistsData || []);
+    const fetchProfile = async () => {
+      setLoading(true);
+      setError(null);
+      setPlaylists([]);
 
-    setLoading(false);
-  };
+      const { data: profileData, error: profileError } = await PublicProfileService.getProfileByUsername(normalizedUsername);
+
+      if (!active) return;
+
+      if (profileError || !profileData) {
+        setError('User not found');
+        setProfile(null);
+        setPlaylists([]);
+        setLoading(false);
+        return;
+      }
+
+      setProfile(profileData);
+
+      const { data: playlistsData, error: playlistsError } = await PublicProfileService.getUserPlaylists(profileData.id);
+
+      if (!active) return;
+
+      if (playlistsError) {
+        console.error('Failed to load public playlists:', playlistsError);
+      }
+
+      setPlaylists(playlistsData || []);
+      setLoading(false);
+    };
+
+    fetchProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [isReady, normalizedUsername]);
 
   if (loading) {
     return (
