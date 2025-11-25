@@ -81,51 +81,56 @@ export default function ExplorePage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredPlaylists.map((playlist) => (
-              <Link
-                key={playlist.id}
-                href={`/playlists/${playlist.id}`}
-                className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all group"
-              >
-                <div className="aspect-square bg-zinc-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
-                  {playlist.cover_image_url ? (
-                    <img 
-                      src={playlist.cover_image_url} 
-                      alt={playlist.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <svg className="w-16 h-16 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                    </svg>
+            {filteredPlaylists.map((playlist) => {
+              const owner = playlist.users;
+              const ownerUsername = owner?.username;
+
+              return (
+                <Link
+                  key={playlist.id}
+                  href={`/playlists/${playlist.id}`}
+                  className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all group"
+                >
+                  <div className="aspect-square bg-zinc-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
+                    {playlist.cover_image_url ? (
+                      <img 
+                        src={playlist.cover_image_url} 
+                        alt={playlist.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <svg className="w-16 h-16 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                      </svg>
+                    )}
+                  </div>
+                  <h3 className="font-semibold text-lg mb-1 truncate group-hover:text-white transition-colors">
+                    {playlist.name}
+                  </h3>
+                  {ownerUsername && (
+                    <p className="text-xs text-zinc-500 mb-2">
+                      by{' '}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          router.push(`/u/${ownerUsername}`);
+                        }}
+                        className="hover:text-zinc-400 transition-colors hover:underline text-left"
+                      >
+                        {owner.display_name || ownerUsername}
+                      </button>
+                    </p>
                   )}
-                </div>
-                <h3 className="font-semibold text-lg mb-1 truncate group-hover:text-white transition-colors">
-                  {playlist.name}
-                </h3>
-                {playlist.users && playlist.users.username && (
-                  <p className="text-xs text-zinc-500 mb-2">
-                    by{' '}
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        router.push(`/u/${playlist.users.username}`);
-                      }}
-                      className="hover:text-zinc-400 transition-colors hover:underline text-left"
-                    >
-                      {playlist.users.display_name || playlist.users.username}
-                    </button>
-                  </p>
-                )}
-                {playlist.description && (
-                  <p className="text-sm text-zinc-400 mb-3 line-clamp-2">{playlist.description}</p>
-                )}
-                <div className="text-xs text-zinc-500">
-                  {playlist.track_count || 0} {playlist.track_count === 1 ? 'track' : 'tracks'}
-                </div>
-              </Link>
-            ))}
+                  {playlist.description && (
+                    <p className="text-sm text-zinc-400 mb-3 line-clamp-2">{playlist.description}</p>
+                  )}
+                  <div className="text-xs text-zinc-500">
+                    {playlist.track_count || 0} {playlist.track_count === 1 ? 'track' : 'tracks'}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </main>
