@@ -1,51 +1,54 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlaylistService } from '@/services/playlist-service';
 import { Playlist, PlaylistTrack, CreatePlaylistData } from '@/types/playlist';
 import { arrayMove } from '@dnd-kit/sortable';
+import { useRetryableLoader } from '@/hooks/useRetryableLoader';
 
 export function usePlaylistDetails(playlistId: string | undefined) {
   const { user } = useAuth();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  const loadPlaylist = useCallback(async () => {
+    if (!playlistId) {
+      throw new Error('Playlist ID is required');
+    }
+
+    const foundPlaylist = await PlaylistService.getPlaylistById(playlistId);
+
+    if (!foundPlaylist) {
+      throw new Error('Playlist not found');
+    }
+
+    if (!foundPlaylist.is_public && (!user || foundPlaylist.user_id !== user.id)) {
+      throw new Error('This playlist is private');
+    }
+
+    setPlaylist(foundPlaylist);
+    const playlistTracks = await PlaylistService.getPlaylistTracks(playlistId);
+    setTracks(playlistTracks);
+  }, [playlistId, user?.id]);
+
+  const { loading, error } = useRetryableLoader(loadPlaylist, {
+    deps: [playlistId, user?.id],
+    enabled: !!playlistId,
+    stallMs: 6000,
+    maxRetries: 3,
+  });
+
+  useEffect(() => {
+    setLocalError(error?.message || null);
+  }, [error]);
 
   useEffect(() => {
     if (!playlistId) {
-      setLoading(false);
-      return;
+      setPlaylist(null);
+      setTracks([]);
+      setLocalError(null);
     }
-
-    const fetchPlaylist = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const foundPlaylist = await PlaylistService.getPlaylistById(playlistId);
-        
-        if (!foundPlaylist) {
-          setError('Playlist not found');
-          return;
-        }
-
-        if (!foundPlaylist.is_public && (!user || foundPlaylist.user_id !== user.id)) {
-          setError('This playlist is private');
-          return;
-        }
-
-        setPlaylist(foundPlaylist);
-        const playlistTracks = await PlaylistService.getPlaylistTracks(playlistId);
-        setTracks(playlistTracks);
-      } catch (err) {
-        console.error('Error fetching playlist:', err);
-        setError('Failed to load playlist');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPlaylist();
-  }, [playlistId, user]);
+  }, [playlistId]);
 
   const removeTrack = async (videoId: string) => {
     if (!playlistId || !user) throw new Error('Not authorized');
@@ -89,7 +92,7 @@ export function usePlaylistDetails(playlistId: string | undefined) {
     playlist,
     tracks,
     loading,
-    error,
+    error: localError,
     isOwner,
     removeTrack,
     updatePlaylist,
