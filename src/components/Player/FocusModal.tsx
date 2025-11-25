@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import SyncedLyrics from './SyncedLyrics';
 import AddToPlaylistModal from '@/components/Playlist/AddToPlaylistModal';
 import { LyricsLine } from '@/services/lyrics-service';
@@ -36,7 +36,8 @@ export default function FocusModal({
   const [syncedLyrics, setSyncedLyrics] = useState<LyricsLine[] | null>(null);
   const [loadingLyrics, setLoadingLyrics] = useState(false);
   const [lyricsNotFound, setLyricsNotFound] = useState(false);
-  const [cachedVideoId, setCachedVideoId] = useState<string | null>(null);
+  const cachedVideoIdRef = useRef<string | null>(null);
+  const cachedLyricsRef = useRef<{ lyrics: string | null; syncedLyrics: LyricsLine[] | null } | null>(null);
   const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
   const highQualityThumbnail = getHighQualityThumbnail(videoId);
 
@@ -60,11 +61,12 @@ export default function FocusModal({
   }, [isOpen, thumbnail, highQualityThumbnail]);
 
   useEffect(() => {
-    if (videoId !== cachedVideoId) {
+    if (videoId !== cachedVideoIdRef.current) {
       setLyrics(null);
       setSyncedLyrics(null);
       setLyricsNotFound(false);
-      setCachedVideoId(null);
+      cachedVideoIdRef.current = null;
+      cachedLyricsRef.current = null;
     }
   }, [videoId]);
 
@@ -74,26 +76,34 @@ export default function FocusModal({
       return;
     }
 
+    if (!title || !videoId) {
+      setLoadingLyrics(false);
+      return;
+    }
+
+    if (cachedVideoIdRef.current === videoId && cachedLyricsRef.current) {
+      setLyrics(cachedLyricsRef.current.lyrics);
+      setSyncedLyrics(cachedLyricsRef.current.syncedLyrics);
+      setLyricsNotFound(false);
+      setLoadingLyrics(false);
+      return;
+    }
+
     let cancelled = false;
     const controller = new AbortController();
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    setLoadingLyrics(true);
+    setLyricsNotFound(false);
 
     const fetchLyrics = async () => {
-      if (!title || !videoId) {
-        setLoadingLyrics(false);
-        return;
-      }
-
-      if (cachedVideoId === videoId) {
-        setLoadingLyrics(false);
-        return;
-      }
-
-      if (cancelled) return;
-
-      setLoadingLyrics(true);
-      setLyricsNotFound(false);
-
       try {
+        timeoutId = setTimeout(() => {
+          if (!cancelled) {
+            controller.abort();
+          }
+        }, 15000);
+
         const response = await fetch(
           `/api/lyrics/fetch?title=${encodeURIComponent(title)}&channel=${encodeURIComponent(artist)}`,
           { signal: controller.signal }
@@ -104,27 +114,37 @@ export default function FocusModal({
         if (response.ok) {
           const data = await response.json();
           if (!cancelled) {
+            cachedVideoIdRef.current = videoId;
+            cachedLyricsRef.current = {
+              lyrics: data.lyrics,
+              syncedLyrics: data.syncedLyrics || null,
+            };
             setLyrics(data.lyrics);
             setSyncedLyrics(data.syncedLyrics || null);
             setLyricsNotFound(false);
-            setCachedVideoId(videoId);
           }
         } else {
           if (!cancelled) {
+            cachedVideoIdRef.current = videoId;
+            cachedLyricsRef.current = null;
             setLyrics(null);
             setLyricsNotFound(true);
-            setCachedVideoId(videoId);
           }
         }
       } catch (error) {
-        if (cancelled || controller.signal.aborted) return;
-        console.error('Failed to fetch lyrics:', error);
+        if (cancelled || controller.signal.aborted) {
+          return;
+        }
         if (!cancelled) {
+          cachedVideoIdRef.current = videoId;
+          cachedLyricsRef.current = null;
           setLyrics(null);
           setLyricsNotFound(true);
-          setCachedVideoId(videoId);
         }
       } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
         if (!cancelled) {
           setLoadingLyrics(false);
         }
@@ -135,9 +155,12 @@ export default function FocusModal({
 
     return () => {
       cancelled = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       controller.abort();
     };
-  }, [isOpen, title, artist, videoId, cachedVideoId]);
+  }, [isOpen, title, artist, videoId]);
 
   useEffect(() => {
     if (isOpen) {

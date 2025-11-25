@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlaylistService } from '@/services/playlist-service';
 import { Playlist, CreatePlaylistData } from '@/types/playlist';
@@ -8,24 +8,15 @@ export function usePlaylists() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const fetchIdRef = useRef(0);
+  const mountedRef = useRef(true);
+  const userIdRef = useRef<string | null>(null);
 
-  const fetchPlaylists = useCallback(async (userId: string, fetchId: number) => {
-    try {
-      const data = await PlaylistService.getUserPlaylists(userId);
-      if (fetchIdRef.current === fetchId) {
-        setPlaylists(data);
-        setError(null);
-      }
-    } catch (err) {
-      if (fetchIdRef.current === fetchId) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch playlists');
-      }
-    } finally {
-      if (fetchIdRef.current === fetchId) {
-        setLoading(false);
-      }
-    }
+  useEffect(() => {
+    mountedRef.current = true;
+    
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -35,33 +26,60 @@ export function usePlaylists() {
       setPlaylists([]);
       setLoading(false);
       setError(null);
+      userIdRef.current = null;
       return;
     }
 
-    const fetchId = ++fetchIdRef.current;
+    if (userIdRef.current === userId) {
+      return;
+    }
+
+    userIdRef.current = userId;
     setLoading(true);
     setError(null);
-    
-    fetchPlaylists(userId, fetchId);
-  }, [user?.id, fetchPlaylists]);
+
+    PlaylistService.getUserPlaylists(userId)
+      .then(data => {
+        if (mountedRef.current && userIdRef.current === userId) {
+          setPlaylists(data);
+          setError(null);
+        }
+      })
+      .catch(err => {
+        if (mountedRef.current && userIdRef.current === userId) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch playlists');
+        }
+      })
+      .finally(() => {
+        if (mountedRef.current) {
+          setLoading(false);
+        }
+      });
+  }, [user?.id]);
 
   const createPlaylist = async (data: CreatePlaylistData) => {
     if (!user) throw new Error('User not authenticated');
     await PlaylistService.createPlaylist(user.id, data);
     const updated = await PlaylistService.getUserPlaylists(user.id);
-    setPlaylists(updated);
+    if (mountedRef.current) {
+      setPlaylists(updated);
+    }
   };
 
   const updatePlaylist = async (playlistId: string, data: Partial<CreatePlaylistData>) => {
     if (!user) throw new Error('User not authenticated');
     await PlaylistService.updatePlaylist(playlistId, data);
     const updated = await PlaylistService.getUserPlaylists(user.id);
-    setPlaylists(updated);
+    if (mountedRef.current) {
+      setPlaylists(updated);
+    }
   };
 
   const deletePlaylist = async (playlistId: string) => {
     await PlaylistService.deletePlaylist(playlistId);
-    setPlaylists(prev => prev.filter(p => p.id !== playlistId));
+    if (mountedRef.current) {
+      setPlaylists(prev => prev.filter(p => p.id !== playlistId));
+    }
   };
 
   return {

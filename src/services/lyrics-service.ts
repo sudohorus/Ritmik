@@ -67,35 +67,52 @@ async function fetchLyricsFromAPI(artist: string, title: string): Promise<{ plai
 }
 
 export async function fetchLyrics(videoTitle: string, channelName: string): Promise<LyricsResult | null> {
+  const startTime = Date.now();
+  console.log('[Lyrics Service] fetchLyrics called');
+  console.log(`  videoTitle: "${videoTitle}"`);
+  console.log(`  channelName: "${channelName}"`);
+
   const cleanedChannel = channelName.replace(/\s*-\s*Topic\s*$/i, '').trim();
-  
-  console.log('[Lyrics Service] Fetching lyrics');
-  console.log(`  Title: "${videoTitle}"`);
-  console.log(`  Channel: "${cleanedChannel}"`);
-  
   const variations = parseMusicTitle(videoTitle, cleanedChannel);
-  console.log(`  Generated ${variations.length} variations to try`);
+  console.log(`  Generated ${variations.length} variations`);
 
   const batchSize = 10;
+  let attemptCount = 0;
+  
   for (let i = 0; i < variations.length; i += batchSize) {
     const batch = variations.slice(i, i + batchSize);
+    attemptCount += batch.length;
+    console.log(`[Lyrics Service] Trying batch ${Math.floor(i / batchSize) + 1} (${batch.length} variations)`);
     
+    const batchStartTime = Date.now();
     const promises = batch.map(async (variation, index) => {
-      const result = await fetchLyricsFromAPI(variation.artist, variation.title);
-      return result ? { result, variation, index: i + index } : null;
+      const variationStartTime = Date.now();
+      try {
+        const result = await fetchLyricsFromAPI(variation.artist, variation.title);
+        const duration = Date.now() - variationStartTime;
+        if (result) {
+          console.log(`[Lyrics Service] Found lyrics at variation ${i + index + 1}/${variations.length} (${duration}ms)`);
+          console.log(`  Artist: "${variation.artist}"`);
+          console.log(`  Title: "${variation.title}"`);
+        }
+        return result ? { result, variation, index: i + index } : null;
+      } catch (error) {
+        const duration = Date.now() - variationStartTime;
+        console.log(`[Lyrics Service] Variation ${i + index + 1} failed (${duration}ms)`);
+        return null;
+      }
     });
 
     const results = await Promise.all(promises);
+    const batchDuration = Date.now() - batchStartTime;
+    console.log(`[Lyrics Service] Batch completed in ${batchDuration}ms`);
+    
     const found = results.find(r => r !== null);
     
     if (found) {
       const plainLyrics = found.result.plain || (found.result.synced ? found.result.synced.map(l => l.text).join('\n') : null);
-      
-      console.log(`  [Success] Found lyrics using variation ${found.index + 1}/${variations.length}`);
-      console.log(`    Artist: "${found.variation.artist}"`);
-      console.log(`    Title: "${found.variation.title}"`);
-      console.log(`    Has synced: ${!!found.result.synced}`);
-      console.log(`    Length: ${plainLyrics?.length || 0} characters`);
+      const totalDuration = Date.now() - startTime;
+      console.log(`[Lyrics Service] Success after ${attemptCount} attempts (${totalDuration}ms total)`);
       
       return {
         lyrics: plainLyrics,
@@ -106,7 +123,8 @@ export async function fetchLyrics(videoTitle: string, channelName: string): Prom
     }
   }
 
-  console.log(`  [Failed] No lyrics found after ${variations.length} attempts`);
+  const totalDuration = Date.now() - startTime;
+  console.log(`[Lyrics Service] Failed after ${variations.length} attempts (${totalDuration}ms total)`);
   return null;
 }
 

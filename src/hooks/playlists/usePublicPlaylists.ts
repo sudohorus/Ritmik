@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PlaylistService } from '@/services/playlist-service';
 import { Playlist } from '@/types/playlist';
 
@@ -6,30 +6,43 @@ export function usePublicPlaylists() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const fetchIdRef = useRef(0);
+  const mountedRef = useRef(true);
+  const hasLoadedRef = useRef(false);
 
-  const fetchPlaylists = useCallback(async (fetchId: number) => {
-    try {
-      const data = await PlaylistService.getPublicPlaylists();
-      if (fetchIdRef.current === fetchId) {
-        setPlaylists(data);
-      }
-    } catch {
-      if (fetchIdRef.current === fetchId) {
-        setPlaylists([]);
-      }
-    } finally {
-      if (fetchIdRef.current === fetchId) {
-        setLoading(false);
-      }
-    }
+  useEffect(() => {
+    mountedRef.current = true;
+    
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   useEffect(() => {
-    const fetchId = ++fetchIdRef.current;
+    if (hasLoadedRef.current) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-    fetchPlaylists(fetchId);
-  }, [fetchPlaylists]);
+
+    PlaylistService.getPublicPlaylists()
+      .then(data => {
+        if (mountedRef.current) {
+          setPlaylists(data);
+          hasLoadedRef.current = true;
+        }
+      })
+      .catch(() => {
+        if (mountedRef.current) {
+          setPlaylists([]);
+        }
+      })
+      .finally(() => {
+        if (mountedRef.current) {
+          setLoading(false);
+        }
+      });
+  }, []);
 
   const filteredPlaylists = playlists.filter(playlist => 
     playlist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
