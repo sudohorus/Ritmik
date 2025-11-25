@@ -17,6 +17,6 @@ export async function scrapeViewCount(videoId: string): Promise<number> {
     return 0;
   } catch (error) {
     return 0;
-  }
+  }3
 }
 

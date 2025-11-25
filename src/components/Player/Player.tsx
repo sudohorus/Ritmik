@@ -148,10 +148,12 @@ export default function Player() {
       clearInterval(intervalRef.current);
     }
 
+    if (!currentTrack) return;
+
     intervalRef.current = setInterval(() => {
-      if (playerRef.current && playerRef.current.getCurrentTime) {
+      if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
         const currentTime = playerRef.current.getCurrentTime();
-        if (currentTime >= 0) {
+        if (typeof currentTime === 'number' && !isNaN(currentTime) && currentTime >= 0) {
           setProgress(currentTime);
         }
       }
@@ -162,7 +164,7 @@ export default function Player() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [currentTrack?.videoId]);
+  }, [currentTrack]);
 
   useEffect(() => {
     if (!playerRef.current || !playerRef.current.playVideo) return;

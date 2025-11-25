@@ -45,10 +45,10 @@ export default function PlaylistsPage() {
             </Link>
             {user && (
               <nav className='flex items-center gap-6'>
-                <Link href="/playlists" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+                <Link href="/playlists" className="text-sm font-medium text-white hover:text-white transition-colors">
                   My Playlists
                 </Link>
-                <Link href="/explore" className="text-sm font-medium text-white">
+                <Link href="/explore" className="text-sm font-medium text-zinc-400">
                   Explore
                 </Link>
               </nav>
