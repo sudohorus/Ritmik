@@ -160,14 +160,55 @@ export default function PlaylistPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <div className="mb-12">
-          <div className="flex items-start justify-between mb-3">
-            <h1 className="text-4xl font-bold">{playlist.name}</h1>
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <div className="mb-8">
+          <div className="flex items-end gap-6 mb-8">
+            <div className="shrink-0">
+              {playlist.cover_image_url ? (
+                <img
+                  src={playlist.cover_image_url}
+                  alt={playlist.name}
+                  className="w-52 h-52 rounded-lg object-cover shadow-2xl"
+                />
+              ) : (
+                <div className="w-52 h-52 rounded-lg bg-linear-to-br from-zinc-700 to-zinc-900 shadow-2xl flex items-center justify-center">
+                  <svg className="w-20 h-20 text-zinc-500" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex-1 min-w-0 pb-2">
+              <p className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Playlist</p>
+              <h1 className="text-5xl font-bold mb-4 truncate">{playlist.name}</h1>
+              
+              {playlist.description && (
+                <p className="text-zinc-300 text-base mb-4 line-clamp-2">{playlist.description}</p>
+              )}
+              
+              <div className="flex items-center gap-2 text-sm">
+                {playlist.users && playlist.users.username && (
+                  <>
+                    <Link
+                      href={`/u/${playlist.users.username}`}
+                      className="font-semibold text-white hover:text-zinc-300 transition-colors hover:underline"
+                    >
+                      {playlist.users.display_name || playlist.users.username}
+                    </Link>
+                    <span className="text-zinc-500">•</span>
+                  </>
+                )}
+                <span className="text-zinc-300">{tracks.length} {tracks.length === 1 ? 'song' : 'songs'}</span>
+                <span className="text-zinc-500">•</span>
+                <span className="text-zinc-400">{playlist.is_public ? 'Public' : 'Private'}</span>
+              </div>
+            </div>
+
             {isOwner && (
               <button
                 onClick={() => setShowEditModal(true)}
-                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-2 backdrop-blur-sm border border-white/10"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -175,22 +216,6 @@ export default function PlaylistPage() {
                 Edit
               </button>
             )}
-          </div>
-          {playlist.description && (
-            <p className="text-zinc-400 text-lg">{playlist.description}</p>
-          )}
-          <div className="flex items-center gap-4 mt-4 text-sm text-zinc-500">
-            {playlist.users && (
-              <>
-                <span className="text-zinc-400">
-                  by <span className="text-zinc-300 font-medium">{playlist.users.display_name || playlist.users.username}</span>
-                </span>
-                <span>•</span>
-              </>
-            )}
-            <span>{tracks.length} {tracks.length === 1 ? 'track' : 'tracks'}</span>
-            <span>•</span>
-            <span>{playlist.is_public ? 'Public' : 'Private'}</span>
           </div>
         </div>
 

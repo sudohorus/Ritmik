@@ -1,10 +1,12 @@
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePublicPlaylists } from '@/hooks/playlists/usePublicPlaylists';
 import UserMenu from '@/components/Auth/UserMenu';
 
 export default function ExplorePage() {
   const { user } = useAuth();
+  const router = useRouter();
   const { playlists: filteredPlaylists, loading, searchQuery, setSearchQuery } = usePublicPlaylists();
 
   return (
@@ -101,9 +103,19 @@ export default function ExplorePage() {
                 <h3 className="font-semibold text-lg mb-1 truncate group-hover:text-white transition-colors">
                   {playlist.name}
                 </h3>
-                {playlist.users && (
+                {playlist.users && playlist.users.username && (
                   <p className="text-xs text-zinc-500 mb-2">
-                    by {playlist.users.display_name || playlist.users.username}
+                    by{' '}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        router.push(`/u/${playlist.users.username}`);
+                      }}
+                      className="hover:text-zinc-400 transition-colors hover:underline text-left"
+                    >
+                      {playlist.users.display_name || playlist.users.username}
+                    </button>
                   </p>
                 )}
                 {playlist.description && (

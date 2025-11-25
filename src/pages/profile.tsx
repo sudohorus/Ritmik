@@ -1,0 +1,221 @@
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/profile/useProfile';
+import UserMenu from '@/components/Auth/UserMenu';
+
+export default function ProfilePage() {
+  const { user, loading: authLoading, refreshUser } = useAuth();
+  const router = useRouter();
+  const { profile, loading, error, updating, updateProfile } = useProfile();
+  
+  const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (profile) {
+      setUsername(profile.username || '');
+      setDisplayName(profile.display_name || '');
+      setAvatarUrl(profile.avatar_url || '');
+    }
+  }, [profile]);
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+    setSuccess(false);
+
+    if (username.length < 3) {
+      setFormError('Username must be at least 3 characters');
+      return;
+    }
+
+    const updates: any = {};
+    if (username !== profile?.username) updates.username = username;
+    if (displayName !== profile?.display_name) updates.display_name = displayName;
+    if (avatarUrl !== profile?.avatar_url) updates.avatar_url = avatarUrl || null;
+
+    if (Object.keys(updates).length === 0) {
+      setFormError('No changes to save');
+      return;
+    }
+
+    const { error } = await updateProfile(updates);
+
+    if (error) {
+      if (error.code === 'USERNAME_TAKEN' || error.message?.includes('username') || error.message?.includes('unique constraint')) {
+        setFormError('This username is already taken. Please choose another one.');
+      } else {
+        setFormError(error.message || 'Failed to update profile');
+      }
+    } else {
+      setSuccess(true);
+      refreshUser();
+      setTimeout(() => setSuccess(false), 3000);
+    }
+  };
+
+  const avatarLetter = (username || user.email || 'U')[0].toUpperCase();
+
+  return (
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">
+      <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/" className="text-2xl font-bold tracking-tight hover:text-zinc-300 transition-colors mr-8">
+              Ritmik
+            </Link>
+            {user && (
+              <nav className="flex items-center gap-6">
+                <Link href="/playlists" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+                  My Playlists
+                </Link>
+                <Link href="/explore" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+                  Explore
+                </Link>
+              </nav>
+            )}
+          </div>
+          <UserMenu />
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-6 py-12">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-3">Profile Settings</h1>
+          <p className="text-zinc-400">Customize your profile information</p>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-950/50 border border-red-900/50 rounded-lg text-red-400 text-sm">
+            {error}
+          </div>
+        )}
+
+        <div className="bg-zinc-900/50 rounded-lg p-8 border border-zinc-800">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="flex items-center gap-6 mb-8">
+              <div className="relative">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Avatar"
+                    className="w-24 h-24 rounded-full object-cover border-2 border-zinc-700"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-zinc-700 flex items-center justify-center text-white font-semibold text-3xl border-2 border-zinc-600">
+                    {avatarLetter}
+                  </div>
+                )}
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold mb-1">
+                  {displayName || username || user.email?.split('@')[0] || 'User'}
+                </h2>
+                <p className="text-sm text-zinc-400">{user.email}</p>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-zinc-300 mb-2">
+                Username
+              </label>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-colors"
+                required
+                minLength={3}
+                placeholder="username"
+              />
+              <p className="mt-1 text-xs text-zinc-500">At least 3 characters. This will be your unique identifier.</p>
+            </div>
+
+            <div>
+              <label htmlFor="displayName" className="block text-sm font-medium text-zinc-300 mb-2">
+                Display Name
+              </label>
+              <input
+                id="displayName"
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-colors"
+                placeholder="Your display name"
+              />
+              <p className="mt-1 text-xs text-zinc-500">This is how your name appears to others.</p>
+            </div>
+
+            <div>
+              <label htmlFor="avatarUrl" className="block text-sm font-medium text-zinc-300 mb-2">
+                Avatar URL
+              </label>
+              <input
+                id="avatarUrl"
+                type="url"
+                value={avatarUrl}
+                onChange={(e) => setAvatarUrl(e.target.value)}
+                className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-colors"
+                placeholder="https://example.com/avatar.jpg"
+              />
+              <p className="mt-1 text-xs text-zinc-500">URL to your profile picture.</p>
+            </div>
+
+            {formError && (
+              <div className="p-4 bg-red-950/50 border border-red-900/50 rounded-lg text-red-400 text-sm">
+                {formError}
+              </div>
+            )}
+
+            {success && (
+              <div className="p-4 bg-green-950/50 border border-green-900/50 rounded-lg text-green-400 text-sm">
+                Profile updated successfully!
+              </div>
+            )}
+
+            <div className="flex items-center gap-4 pt-4">
+              <button
+                type="submit"
+                disabled={updating}
+                className="px-6 py-3 bg-white text-black rounded-lg font-semibold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {updating ? 'Saving...' : 'Save Changes'}
+              </button>
+              <Link
+                href="/"
+                className="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Cancel
+              </Link>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  );
+}
+
