@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlaylistService } from '@/services/playlist-service';
 import { Playlist, CreatePlaylistData } from '@/types/playlist';
@@ -8,23 +8,34 @@ export function usePlaylists() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isMounted = useRef(true);
 
   const fetchPlaylists = async () => {
     if (!user) {
-      setPlaylists([]);
+      if (isMounted.current) {
+        setPlaylists([]);
+      }
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    if (isMounted.current) {
+      setLoading(true);
+      setError(null);
+    }
 
     try {
       const data = await PlaylistService.getUserPlaylists(user.id);
-      setPlaylists(data);
+      if (isMounted.current) {
+        setPlaylists(data);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch playlists');
+      if (isMounted.current) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch playlists');
+      }
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -93,7 +104,12 @@ export function usePlaylists() {
   };
 
   useEffect(() => {
+    isMounted.current = true;
     fetchPlaylists();
+    
+    return () => {
+      isMounted.current = false;
+    };
   }, [user?.id]);
 
   return {

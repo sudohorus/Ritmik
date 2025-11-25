@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ProfileService, UpdateProfileData } from '@/services/profile-service';
 import { User } from '@/types/auth';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,22 +9,35 @@ export function useProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
+  const isMounted = useRef(true);
 
   useEffect(() => {
+    isMounted.current = true;
+    
     if (user?.id) {
       loadProfile();
     } else {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
+    
+    return () => {
+      isMounted.current = false;
+    };
   }, [user?.id]);
 
   const loadProfile = async () => {
     if (!user?.id) return;
 
-    setLoading(true);
-    setError(null);
+    if (isMounted.current) {
+      setLoading(true);
+      setError(null);
+    }
 
     const { data, error: fetchError } = await ProfileService.getUserProfile(user.id);
+
+    if (!isMounted.current) return;
 
     if (fetchError) {
       setError(fetchError.message || 'Failed to load profile');
