@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchUserProfile = async (userId: string): Promise<User | null> => {
+    console.log('[AuthContext] fetchUserProfile start', { userId });
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -28,8 +29,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .single();
 
     if (error || !data) {
+      console.error('[AuthContext] fetchUserProfile error or no data', { userId, error });
       return null;
     }
+
+    console.log('[AuthContext] fetchUserProfile success', { userId });
 
     return {
       id: data.id,
@@ -41,7 +45,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    console.log('[AuthContext] initial getSession effect start');
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log('[AuthContext] getSession resolved', { hasSession: !!session });
       setSession(session);
       if (session?.user) {
         const profile = await fetchUserProfile(session.user.id);
@@ -50,9 +56,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
       }
       setLoading(false);
+      console.log('[AuthContext] initial auth state set', { hasUser: !!session?.user });
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log('[AuthContext] onAuthStateChange', { hasSession: !!session, event: _event });
       setSession(session);
       if (session?.user) {
         const profile = await fetchUserProfile(session.user.id);
@@ -61,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
       }
       setLoading(false);
+      console.log('[AuthContext] onAuthStateChange completed', { hasUser: !!session?.user });
     });
 
     return () => subscription.unsubscribe();
@@ -117,14 +126,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    console.log('[AuthContext] signOut called');
     await supabase.auth.signOut();
+    console.log('[AuthContext] signOut finished');
   };
 
   const refreshUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      const profile = await fetchUserProfile(session.user.id);
-      setUser(profile || mapUserFromAuth(session.user));
+    console.log('[AuthContext] refreshUser start');
+    try {
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Refresh timeout')), 5000)
+      );
+      
+      const refreshPromise = (async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('[AuthContext] refreshUser getSession resolved', { hasSession: !!session });
+        if (session?.user) {
+          const profile = await fetchUserProfile(session.user.id);
+          setUser(profile || mapUserFromAuth(session.user));
+          console.log('[AuthContext] refreshUser user updated', { userId: session.user.id });
+        }
+      })();
+
+      await Promise.race([refreshPromise, timeoutPromise]);
+      console.log('[AuthContext] refreshUser finished without timeout');
+    } catch (err) {
+      console.error('[AuthContext] Failed to refresh user', err);
     }
   };
 

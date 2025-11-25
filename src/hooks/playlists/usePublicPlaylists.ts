@@ -12,15 +12,23 @@ export function usePublicPlaylists() {
     
     setLoading(true);
 
+    const timeout = setTimeout(() => {
+      if (!cancelled) {
+        setLoading(false);
+      }
+    }, 10000);
+
     PlaylistService.getPublicPlaylists()
       .then(data => {
         if (!cancelled) {
+          clearTimeout(timeout);
           setPlaylists(data);
           setLoading(false);
         }
       })
       .catch(err => {
         if (!cancelled) {
+          clearTimeout(timeout);
           console.error('Error fetching public playlists:', err);
           setPlaylists([]);
           setLoading(false);
@@ -29,6 +37,7 @@ export function usePublicPlaylists() {
 
     return () => {
       cancelled = true;
+      clearTimeout(timeout);
     };
   }, []);
 

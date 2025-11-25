@@ -25,6 +25,13 @@ export default function PublicProfilePage() {
 
     let active = true;
 
+    const timeout = setTimeout(() => {
+      if (active) {
+        setLoading(false);
+        setError('Request timeout');
+      }
+    }, 10000);
+
     const fetchProfile = async () => {
       setLoading(true);
       setError(null);
@@ -35,6 +42,7 @@ export default function PublicProfilePage() {
       if (!active) return;
 
       if (profileError || !profileData) {
+        clearTimeout(timeout);
         setError('User not found');
         setProfile(null);
         setPlaylists([]);
@@ -52,6 +60,7 @@ export default function PublicProfilePage() {
         console.error('Failed to load public playlists:', playlistsError);
       }
 
+      clearTimeout(timeout);
       setPlaylists(playlistsData || []);
       setLoading(false);
     };
@@ -60,6 +69,7 @@ export default function PublicProfilePage() {
 
     return () => {
       active = false;
+      clearTimeout(timeout);
     };
   }, [isReady, normalizedUsername]);
 

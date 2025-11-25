@@ -25,6 +25,13 @@ export function usePlaylistDetails(playlistId: string | undefined) {
     setLoading(true);
     setError(null);
 
+    const timeout = setTimeout(() => {
+      if (!cancelled) {
+        setLoading(false);
+        setError('Request timeout');
+      }
+    }, 10000);
+
     const load = async () => {
       try {
         const foundPlaylist = await PlaylistService.getPlaylistById(playlistId);
@@ -33,6 +40,7 @@ export function usePlaylistDetails(playlistId: string | undefined) {
 
         if (!foundPlaylist) {
           if (!cancelled) {
+            clearTimeout(timeout);
             setError('Playlist not found');
             setPlaylist(null);
             setTracks([]);
@@ -43,6 +51,7 @@ export function usePlaylistDetails(playlistId: string | undefined) {
 
         if (!foundPlaylist.is_public && (!user || foundPlaylist.user_id !== user.id)) {
           if (!cancelled) {
+            clearTimeout(timeout);
             setError('This playlist is private');
             setPlaylist(null);
             setTracks([]);
@@ -54,6 +63,7 @@ export function usePlaylistDetails(playlistId: string | undefined) {
         const playlistTracks = await PlaylistService.getPlaylistTracks(playlistId);
 
         if (!cancelled) {
+          clearTimeout(timeout);
           setPlaylist(foundPlaylist);
           setTracks(playlistTracks);
           setError(null);
@@ -61,6 +71,7 @@ export function usePlaylistDetails(playlistId: string | undefined) {
         }
       } catch (err) {
         if (!cancelled) {
+          clearTimeout(timeout);
           setError(err instanceof Error ? err.message : 'Failed to load playlist');
           setPlaylist(null);
           setTracks([]);
@@ -73,6 +84,7 @@ export function usePlaylistDetails(playlistId: string | undefined) {
 
     return () => {
       cancelled = true;
+      clearTimeout(timeout);
     };
   }, [playlistId, user?.id]);
 

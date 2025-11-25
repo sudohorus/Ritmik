@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { User } from '@/types/auth';
 export default function ProfilePage() {
   const { user, loading: authLoading, refreshUser } = useAuth();
   const router = useRouter();
+  const initialLoadDone = useRef(false);
   
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -19,16 +20,24 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
+    console.log('[ProfilePage] auth state changed', { authLoading, hasUser: !!user });
     if (!authLoading && !user) {
+      console.log('[ProfilePage] redirecting to /login');
       router.push('/login');
     }
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !initialLoadDone.current) {
+      console.log('[ProfilePage] initial user load into form', {
+        userId: user.id,
+        username: user.username,
+        display_name: user.display_name,
+      });
       setUsername(user.username || '');
       setDisplayName(user.display_name || '');
       setAvatarUrl(user.avatar_url || '');
+      initialLoadDone.current = true;
     }
   }, [user]);
 
@@ -41,6 +50,12 @@ export default function ProfilePage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('[ProfilePage] handleSubmit start', {
+      username,
+      displayName,
+      avatarUrl,
+      userId: user.id,
+    });
     e.preventDefault();
     setError(null);
     setSuccess(false);
@@ -60,29 +75,38 @@ export default function ProfilePage() {
       return;
     }
 
+    console.log('[ProfilePage] handleSubmit updates', updates);
     setSaving(true);
 
     try {
-      const { data, error: updateError } = await ProfileService.updateProfile(user.id, updates);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Update timeout')), 10000)
+      );
+
+      const updatePromise = ProfileService.updateProfile(user.id, updates);
+
+      console.log('[ProfilePage] calling ProfileService.updateProfile');
+      const { data, error: updateError } = await Promise.race([updatePromise, timeoutPromise]) as any;
+      console.log('[ProfilePage] updateProfile response', { hasError: !!updateError, hasData: !!data });
 
       if (updateError) {
-        setSaving(false);
         if (updateError.code === 'USERNAME_TAKEN' || updateError.message?.includes('username')) {
           setError('This username is already taken. Please choose another one.');
         } else {
           setError(updateError.message || 'Failed to update profile');
         }
       } else {
-        setSaving(false);
         setSuccess(true);
-        
-        refreshUser();
-        
+        console.log('[ProfilePage] updateProfile success, calling refreshUser');
+        await refreshUser();
         setTimeout(() => setSuccess(false), 3000);
       }
     } catch (err) {
+      console.error('[ProfilePage] handleSubmit error', err);
+      setError(err instanceof Error ? err.message : 'Failed to update profile');
+    } finally {
+      console.log('[ProfilePage] handleSubmit finished, setSaving(false)');
       setSaving(false);
-      setError('Failed to update profile');
     }
   };
 
