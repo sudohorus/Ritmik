@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import SyncedLyrics from './SyncedLyrics';
+import { LyricsLine } from '@/services/lyrics-service';
 
 interface FocusModalProps {
   isOpen: boolean;
@@ -7,6 +9,8 @@ interface FocusModalProps {
   title: string;
   artist: string;
   videoId: string;
+  currentTime: number;
+  onSeek: (time: number) => void;
 }
 
 const getHighQualityThumbnail = (videoId: string): string => {
@@ -20,9 +24,12 @@ export default function FocusModal({
   title,
   artist,
   videoId,
+  currentTime,
+  onSeek,
 }: FocusModalProps) {
   const [imageSrc, setImageSrc] = useState(thumbnail);
   const [lyrics, setLyrics] = useState<string | null>(null);
+  const [syncedLyrics, setSyncedLyrics] = useState<LyricsLine[] | null>(null);
   const [loadingLyrics, setLoadingLyrics] = useState(false);
   const [lyricsNotFound, setLyricsNotFound] = useState(false);
   const [cachedVideoId, setCachedVideoId] = useState<string | null>(null);
@@ -50,6 +57,7 @@ export default function FocusModal({
   useEffect(() => {
     if (videoId !== cachedVideoId) {
       setLyrics(null);
+      setSyncedLyrics(null);
       setLyricsNotFound(false);
       setCachedVideoId(null);
     }
@@ -81,6 +89,7 @@ export default function FocusModal({
           const data = await response.json();
           if (!cancelled) {
             setLyrics(data.lyrics);
+            setSyncedLyrics(data.syncedLyrics || null);
             setLyricsNotFound(false);
             setCachedVideoId(videoId);
           }
@@ -195,19 +204,25 @@ export default function FocusModal({
             </div>
 
             <div className="flex flex-col">
-              <div className="overflow-y-auto min-h-[400px] max-h-[600px] px-4 py-4">
-                {loadingLyrics ? (
+              {loadingLyrics ? (
+                <div className="overflow-y-auto min-h-[400px] max-h-[600px] px-4 py-4">
                   <div className="text-zinc-400 w-full text-center py-8">Loading lyrics...</div>
-                ) : lyrics ? (
+                </div>
+              ) : syncedLyrics ? (
+                <SyncedLyrics lines={syncedLyrics} currentTime={currentTime} onSeek={onSeek} />
+              ) : lyrics ? (
+                <div className="overflow-y-auto min-h-[400px] max-h-[600px] px-4 py-4">
                   <pre className="text-zinc-300 whitespace-pre-wrap text-base leading-loose font-sans w-full">
                     {lyrics}
                   </pre>
-                ) : lyricsNotFound ? (
+                </div>
+              ) : lyricsNotFound ? (
+                <div className="overflow-y-auto min-h-[400px] max-h-[600px] px-4 py-4">
                   <p className="text-zinc-500 text-lg italic w-full text-center py-8">
                     Lyrics not available
                   </p>
-                ) : null}
-              </div>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

@@ -196,6 +196,13 @@ export default function Player() {
     }
   };
 
+  const handleLyricsSeek = (time: number) => {
+    if (playerRef.current?.seekTo) {
+      playerRef.current.seekTo(time, true);
+      setProgress(time);
+    }
+  };
+
   if (!currentTrack) return null;
 
   return (
@@ -270,6 +277,8 @@ export default function Player() {
         title={currentTrack.title}
         artist={currentTrack.artist}
         videoId={currentTrack.videoId}
+        currentTime={progress}
+        onSeek={handleLyricsSeek}
       />
     </>
   );
