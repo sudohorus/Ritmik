@@ -9,70 +9,93 @@ export function useProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
-  const isMounted = useRef(true);
+  const loadedUserIdRef = useRef<string | null>(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    isMounted.current = true;
-    
-    if (user?.id) {
-      loadProfile();
-    } else {
-      if (isMounted.current) {
-        setLoading(false);
-      }
-    }
-    
+    mountedRef.current = true;
     return () => {
-      isMounted.current = false;
+      mountedRef.current = false;
     };
-  }, [user?.id]);
+  }, []);
 
-  const loadProfile = async () => {
-    if (!user?.id) return;
+  useEffect(() => {
+    // Se não tem user, limpa
+    if (!user?.id) {
+      setProfile(null);
+      setLoading(false);
+      loadedUserIdRef.current = null;
+      return;
+    }
 
-    if (isMounted.current) {
+    // Se já carregou esse user, não recarrega
+    if (user.id === loadedUserIdRef.current) {
+      return;
+    }
+
+    loadedUserIdRef.current = user.id;
+
+    const loadProfile = async () => {
+      if (!mountedRef.current) return;
+      
       setLoading(true);
       setError(null);
-    }
 
-    const { data, error: fetchError } = await ProfileService.getUserProfile(user.id);
+      try {
+        const { data, error: fetchError } = await ProfileService.getUserProfile(user.id);
 
-    if (!isMounted.current) return;
+        if (!mountedRef.current) return;
 
-    if (fetchError) {
-      setError(fetchError.message || 'Failed to load profile');
-      setProfile(null);
-    } else {
-      setProfile(data);
-    }
+        if (fetchError) {
+          setError(fetchError.message || 'Failed to load profile');
+          setProfile(null);
+        } else {
+          setProfile(data);
+        }
+      } catch (err) {
+        if (mountedRef.current) {
+          setError('Failed to load profile');
+          setProfile(null);
+        }
+      } finally {
+        if (mountedRef.current) {
+          setLoading(false);
+        }
+      }
+    };
 
-    setLoading(false);
-  };
+    loadProfile();
+  }, [user?.id]);
 
   const updateProfile = async (updates: UpdateProfileData) => {
-    if (!user?.id) return { error: 'User not authenticated' };
+    if (!user?.id) return { error: { message: 'User not authenticated' } };
 
-    if (isMounted.current) {
-      setUpdating(true);
-      setError(null);
-    }
+    setUpdating(true);
 
-    const { data, error: updateError } = await ProfileService.updateProfile(user.id, updates);
+    try {
+      const { data, error: updateError } = await ProfileService.updateProfile(user.id, updates);
 
-    if (!isMounted.current) return { error: null };
+      if (!mountedRef.current) {
+        return { error: null };
+      }
 
-    if (updateError) {
-      setError(updateError.message || 'Failed to update profile');
+      if (updateError) {
+        setUpdating(false);
+        return { error: updateError };
+      }
+
+      if (data) {
+        setProfile(data);
+      }
+
       setUpdating(false);
-      return { error: updateError };
+      return { error: null, data };
+    } catch (err) {
+      if (mountedRef.current) {
+        setUpdating(false);
+      }
+      return { error: { message: 'Failed to update profile' } };
     }
-
-    if (data) {
-      setProfile(data);
-    }
-
-    setUpdating(false);
-    return { error: null };
   };
 
   return {
@@ -81,7 +104,5 @@ export function useProfile() {
     error,
     updating,
     updateProfile,
-    refreshProfile: loadProfile,
   };
 }
-

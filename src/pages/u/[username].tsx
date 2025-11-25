@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { PublicProfileService, PublicProfile } from '@/services/public-profile-service';
 import { useAuth } from '@/contexts/AuthContext';
 import UserMenu from '@/components/Auth/UserMenu';
+import Loading from '@/components/Loading';
 
 export default function PublicProfilePage() {
   const router = useRouter();
@@ -63,11 +64,7 @@ export default function PublicProfilePage() {
   }, [isReady, normalizedUsername]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
-      </div>
-    );
+    return <Loading fullScreen text="Loading profile..." />;
   }
 
   if (error || !profile) {

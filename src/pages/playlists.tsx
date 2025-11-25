@@ -6,6 +6,7 @@ import { usePlaylists } from '@/hooks/playlists/usePlaylists';
 import CreatePlaylistModal from '@/components/Playlist/CreatePlaylistModal';
 import ConfirmModal from '@/components/Playlist/ConfirmModal';
 import UserMenu from '@/components/Auth/UserMenu';
+import Loading from '@/components/Loading';
 
 export default function PlaylistsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -77,7 +78,7 @@ export default function PlaylistsPage() {
 
         {loading && playlists.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-zinc-400">Loading playlists...</div>
+            <Loading text="Loading playlists..." />
           </div>
         ) : playlists.length === 0 ? (
           <div className="text-center py-12">

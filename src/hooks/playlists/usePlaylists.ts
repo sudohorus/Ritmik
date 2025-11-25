@@ -1,149 +1,71 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlaylistService } from '@/services/playlist-service';
 import { Playlist, CreatePlaylistData } from '@/types/playlist';
+import { useAsyncData } from '@/hooks/useAsyncData';
 
 export function usePlaylists() {
   const { user } = useAuth();
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const isMounted = useRef(true);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchPlaylists = async () => {
-    if (!user) {
-      if (isMounted.current) {
-        setPlaylists([]);
-      }
-      return;
-    }
-
-    if (isMounted.current) {
-      setLoading(true);
-      setError(null);
-    }
-
-    try {
-      const data = await PlaylistService.getUserPlaylists(user.id);
-      if (isMounted.current) {
-        setPlaylists(data);
-      }
-    } catch (err) {
-      if (isMounted.current) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch playlists');
-      }
-    } finally {
-      if (isMounted.current) {
-        setLoading(false);
-      }
-    }
-  };
+  const { data: playlists, loading, error, refetch } = useAsyncData<Playlist[]>({
+    fetchFn: async () => {
+      if (!user?.id) return [];
+      return await PlaylistService.getUserPlaylists(user.id);
+    },
+    dependencies: [user?.id],
+    enabled: !!user?.id,
+  });
 
   const createPlaylist = async (data: CreatePlaylistData) => {
     if (!user) throw new Error('User not authenticated');
 
-    if (isMounted.current) {
-      setLoading(true);
-      setError(null);
-    }
+    setActionLoading(true);
 
     try {
-      const newPlaylist = await PlaylistService.createPlaylist(user.id, data);
-      if (isMounted.current) {
-        setPlaylists(prev => [newPlaylist, ...prev]);
-      }
-      return newPlaylist;
+      await PlaylistService.createPlaylist(user.id, data);
+      await refetch();
+      setActionLoading(false);
     } catch (err) {
-      console.error('Error creating playlist:', err);
-      let message = 'Failed to create playlist';
-      
-      if (err instanceof Error) {
-        if (err.message.includes('JWT')) {
-          message = 'Please configure Supabase environment variables';
-        } else {
-          message = err.message;
-        }
-      }
-      
-      if (isMounted.current) {
-        setError(message);
-      }
-      throw new Error(message);
-    } finally {
-      if (isMounted.current) {
-        setLoading(false);
-      }
+      setActionLoading(false);
+      throw err;
     }
   };
 
   const updatePlaylist = async (playlistId: string, data: Partial<CreatePlaylistData>) => {
     if (!user) throw new Error('User not authenticated');
 
-    if (isMounted.current) {
-      setLoading(true);
-      setError(null);
-    }
+    setActionLoading(true);
 
     try {
-      const updatedPlaylist = await PlaylistService.updatePlaylist(playlistId, data);
-      if (isMounted.current) {
-        setPlaylists(prev => prev.map(p => p.id === playlistId ? updatedPlaylist : p));
-      }
-      return updatedPlaylist;
+      await PlaylistService.updatePlaylist(playlistId, data);
+      await refetch();
+      setActionLoading(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to update playlist';
-      if (isMounted.current) {
-        setError(message);
-      }
-      throw new Error(message);
-    } finally {
-      if (isMounted.current) {
-        setLoading(false);
-      }
+      setActionLoading(false);
+      throw err;
     }
   };
 
   const deletePlaylist = async (playlistId: string) => {
-    if (isMounted.current) {
-      setLoading(true);
-      setError(null);
-    }
+    setActionLoading(true);
 
     try {
       await PlaylistService.deletePlaylist(playlistId);
-      if (isMounted.current) {
-        setPlaylists(prev => prev.filter(p => p.id !== playlistId));
-      }
+      await refetch();
+      setActionLoading(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to delete playlist';
-      if (isMounted.current) {
-        setError(message);
-      }
-      throw new Error(message);
-    } finally {
-      if (isMounted.current) {
-        setLoading(false);
-      }
+      setActionLoading(false);
+      throw err;
     }
   };
 
-  useEffect(() => {
-    isMounted.current = true;
-    fetchPlaylists();
-    
-    return () => {
-      isMounted.current = false;
-    };
-  }, [user?.id]);
-
   return {
-    playlists,
-    loading,
-    error,
+    playlists: playlists || [],
+    loading: loading || actionLoading,
+    error: error?.message || null,
     createPlaylist,
     updatePlaylist,
     deletePlaylist,
-    refreshPlaylists: fetchPlaylists,
   };
 }
-

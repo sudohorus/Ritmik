@@ -3,6 +3,7 @@ import { usePlaylists } from '@/hooks/playlists/usePlaylists';
 import { PlaylistService } from '@/services/playlist-service';
 import { Track } from '@/types/track';
 import { PlaylistTrack } from '@/types/playlist';
+import Loading from '@/components/Loading';
 
 interface AddToPlaylistModalProps {
   isOpen: boolean;
@@ -157,7 +158,9 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
           )}
 
           {loadingPlaylists ? (
-            <div className="text-center py-8 text-zinc-400">Loading playlists...</div>
+            <div className="text-center py-8">
+              <Loading size="sm" text="Loading playlists..." />
+            </div>
           ) : playlists.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-zinc-400 mb-4">You don&apos;t have any playlists yet</p>

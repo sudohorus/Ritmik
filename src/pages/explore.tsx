@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePublicPlaylists } from '@/hooks/playlists/usePublicPlaylists';
 import UserMenu from '@/components/Auth/UserMenu';
+import Loading from '@/components/Loading';
 
 export default function ExplorePage() {
   const { user } = useAuth();
@@ -71,7 +72,7 @@ export default function ExplorePage() {
 
         {loading ? (
           <div className="text-center py-12">
-            <div className="text-zinc-400">Loading playlists...</div>
+            <Loading text="Loading playlists..." />
           </div>
         ) : filteredPlaylists.length === 0 ? (
           <div className="text-center py-12">

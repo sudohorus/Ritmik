@@ -2,19 +2,21 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProfile } from '@/hooks/profile/useProfile';
 import UserMenu from '@/components/Auth/UserMenu';
+import Loading from '@/components/Loading';
+import { ProfileService } from '@/services/profile-service';
+import { User } from '@/types/auth';
 
 export default function ProfilePage() {
   const { user, loading: authLoading, refreshUser } = useAuth();
   const router = useRouter();
-  const { profile, loading, error, updating, updateProfile } = useProfile();
   
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -23,19 +25,15 @@ export default function ProfilePage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (profile) {
-      setUsername(profile.username || '');
-      setDisplayName(profile.display_name || '');
-      setAvatarUrl(profile.avatar_url || '');
+    if (user) {
+      setUsername(user.username || '');
+      setDisplayName(user.display_name || '');
+      setAvatarUrl(user.avatar_url || '');
     }
-  }, [profile]);
+  }, [user]);
 
-  if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
-      </div>
-    );
+  if (authLoading) {
+    return <Loading fullScreen text="Loading..." />;
   }
 
   if (!user) {
@@ -44,36 +42,47 @@ export default function ProfilePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null);
+    setError(null);
     setSuccess(false);
 
     if (username.length < 3) {
-      setFormError('Username must be at least 3 characters');
+      setError('Username must be at least 3 characters');
       return;
     }
 
     const updates: any = {};
-    if (username !== profile?.username) updates.username = username;
-    if (displayName !== profile?.display_name) updates.display_name = displayName;
-    if (avatarUrl !== profile?.avatar_url) updates.avatar_url = avatarUrl || null;
+    if (username !== user.username) updates.username = username;
+    if (displayName !== user.display_name) updates.display_name = displayName;
+    if (avatarUrl !== user.avatar_url) updates.avatar_url = avatarUrl || null;
 
     if (Object.keys(updates).length === 0) {
-      setFormError('No changes to save');
+      setError('No changes to save');
       return;
     }
 
-    const { error } = await updateProfile(updates);
+    setSaving(true);
 
-    if (error) {
-      if (error.code === 'USERNAME_TAKEN' || error.message?.includes('username') || error.message?.includes('unique constraint')) {
-        setFormError('This username is already taken. Please choose another one.');
+    try {
+      const { data, error: updateError } = await ProfileService.updateProfile(user.id, updates);
+
+      if (updateError) {
+        setSaving(false);
+        if (updateError.code === 'USERNAME_TAKEN' || updateError.message?.includes('username')) {
+          setError('This username is already taken. Please choose another one.');
+        } else {
+          setError(updateError.message || 'Failed to update profile');
+        }
       } else {
-        setFormError(error.message || 'Failed to update profile');
+        setSaving(false);
+        setSuccess(true);
+        
+        refreshUser();
+        
+        setTimeout(() => setSuccess(false), 3000);
       }
-    } else {
-      setSuccess(true);
-      refreshUser();
-      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setSaving(false);
+      setError('Failed to update profile');
     }
   };
 
@@ -87,16 +96,14 @@ export default function ProfilePage() {
             <Link href="/" className="text-2xl font-bold tracking-tight hover:text-zinc-300 transition-colors mr-8">
               Ritmik
             </Link>
-            {user && (
-              <nav className="flex items-center gap-6">
-                <Link href="/playlists" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
-                  My Playlists
-                </Link>
-                <Link href="/explore" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
-                  Explore
-                </Link>
-              </nav>
-            )}
+            <nav className="flex items-center gap-6">
+              <Link href="/playlists" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+                My Playlists
+              </Link>
+              <Link href="/explore" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+                Explore
+              </Link>
+            </nav>
           </div>
           <UserMenu />
         </div>
@@ -107,12 +114,6 @@ export default function ProfilePage() {
           <h1 className="text-4xl font-bold mb-3">Profile Settings</h1>
           <p className="text-zinc-400">Customize your profile information</p>
         </div>
-
-        {error && (
-          <div className="mb-6 p-4 bg-red-950/50 border border-red-900/50 rounded-lg text-red-400 text-sm">
-            {error}
-          </div>
-        )}
 
         <div className="bg-zinc-900/50 rounded-lg p-8 border border-zinc-800">
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -151,6 +152,7 @@ export default function ProfilePage() {
                 required
                 minLength={3}
                 placeholder="username"
+                disabled={saving}
               />
               <p className="mt-1 text-xs text-zinc-500">At least 3 characters. This will be your unique identifier.</p>
             </div>
@@ -166,6 +168,7 @@ export default function ProfilePage() {
                 onChange={(e) => setDisplayName(e.target.value)}
                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-colors"
                 placeholder="Your display name"
+                disabled={saving}
               />
               <p className="mt-1 text-xs text-zinc-500">This is how your name appears to others.</p>
             </div>
@@ -181,13 +184,14 @@ export default function ProfilePage() {
                 onChange={(e) => setAvatarUrl(e.target.value)}
                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-colors"
                 placeholder="https://example.com/avatar.jpg"
+                disabled={saving}
               />
               <p className="mt-1 text-xs text-zinc-500">URL to your profile picture.</p>
             </div>
 
-            {formError && (
+            {error && (
               <div className="p-4 bg-red-950/50 border border-red-900/50 rounded-lg text-red-400 text-sm">
-                {formError}
+                {error}
               </div>
             )}
 
@@ -200,10 +204,10 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4 pt-4">
               <button
                 type="submit"
-                disabled={updating}
+                disabled={saving}
                 className="px-6 py-3 bg-white text-black rounded-lg font-semibold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {updating ? 'Saving...' : 'Save Changes'}
+                {saving ? 'Saving...' : 'Save Changes'}
               </button>
               <Link
                 href="/"
@@ -218,4 +222,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
