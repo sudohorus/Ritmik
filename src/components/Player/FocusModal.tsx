@@ -69,27 +69,38 @@ export default function FocusModal({
   }, [videoId]);
 
   useEffect(() => {
+    if (!isOpen) {
+      setLoadingLyrics(false);
+      return;
+    }
+
     let cancelled = false;
-    
+    const controller = new AbortController();
+
     const fetchLyrics = async () => {
-      if (!title || !videoId) return;
-      
-      if (cachedVideoId === videoId) {
+      if (!title || !videoId) {
+        setLoadingLyrics(false);
         return;
       }
-      
+
+      if (cachedVideoId === videoId) {
+        setLoadingLyrics(false);
+        return;
+      }
+
       if (cancelled) return;
-      
+
       setLoadingLyrics(true);
       setLyricsNotFound(false);
 
       try {
         const response = await fetch(
-          `/api/lyrics/fetch?title=${encodeURIComponent(title)}&channel=${encodeURIComponent(artist)}`
+          `/api/lyrics/fetch?title=${encodeURIComponent(title)}&channel=${encodeURIComponent(artist)}`,
+          { signal: controller.signal }
         );
-        
+
         if (cancelled) return;
-        
+
         if (response.ok) {
           const data = await response.json();
           if (!cancelled) {
@@ -106,7 +117,7 @@ export default function FocusModal({
           }
         }
       } catch (error) {
-        if (cancelled) return;
+        if (cancelled || controller.signal.aborted) return;
         console.error('Failed to fetch lyrics:', error);
         if (!cancelled) {
           setLyrics(null);
@@ -121,11 +132,12 @@ export default function FocusModal({
     };
 
     fetchLyrics();
-    
+
     return () => {
       cancelled = true;
+      controller.abort();
     };
-  }, [title, artist, videoId, cachedVideoId]);
+  }, [isOpen, title, artist, videoId, cachedVideoId]);
 
   useEffect(() => {
     if (isOpen) {

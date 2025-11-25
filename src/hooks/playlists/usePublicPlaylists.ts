@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PlaylistService } from '@/services/playlist-service';
 import { Playlist } from '@/types/playlist';
 
@@ -6,38 +6,44 @@ export function usePublicPlaylists() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const hasLoadedRef = useRef(false);
+  const isLoadingRef = useRef(false);
 
   useEffect(() => {
+    if (hasLoadedRef.current) {
+      setLoading(false);
+      return;
+    }
+
+    if (isLoadingRef.current) {
+      return;
+    }
+
     let cancelled = false;
+    isLoadingRef.current = true;
     
     setLoading(true);
-
-    const timeout = setTimeout(() => {
-      if (!cancelled) {
-        setLoading(false);
-      }
-    }, 10000);
 
     PlaylistService.getPublicPlaylists()
       .then(data => {
         if (!cancelled) {
-          clearTimeout(timeout);
           setPlaylists(data);
           setLoading(false);
+          hasLoadedRef.current = true;
+          isLoadingRef.current = false;
         }
       })
       .catch(err => {
         if (!cancelled) {
-          clearTimeout(timeout);
-          console.error('Error fetching public playlists:', err);
           setPlaylists([]);
           setLoading(false);
+          isLoadingRef.current = false;
         }
       });
 
     return () => {
       cancelled = true;
-      clearTimeout(timeout);
+      isLoadingRef.current = false;
     };
   }, []);
 

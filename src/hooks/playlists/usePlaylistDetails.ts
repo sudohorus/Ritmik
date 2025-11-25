@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlaylistService } from '@/services/playlist-service';
 import { Playlist, PlaylistTrack, CreatePlaylistData } from '@/types/playlist';
@@ -10,6 +10,12 @@ export function usePlaylistDetails(playlistId: string | undefined) {
   const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
+  const loadedPlaylistIdRef = useRef<string | null>(null);
+  const isLoadingRef = useRef(false);
+  const userIdRef = useRef<string | undefined>(user?.id);
+  
+  userIdRef.current = user?.id;
 
   useEffect(() => {
     if (!playlistId) {
@@ -17,65 +23,73 @@ export function usePlaylistDetails(playlistId: string | undefined) {
       setTracks([]);
       setError(null);
       setLoading(false);
+      hasLoadedRef.current = false;
+      loadedPlaylistIdRef.current = null;
+      return;
+    }
+
+    if (loadedPlaylistIdRef.current === playlistId && hasLoadedRef.current) {
+      return;
+    }
+
+    if (isLoadingRef.current) {
       return;
     }
 
     let cancelled = false;
+    isLoadingRef.current = true;
     
     setLoading(true);
     setError(null);
-
-    const timeout = setTimeout(() => {
-      if (!cancelled) {
-        setLoading(false);
-        setError('Request timeout');
-      }
-    }, 10000);
 
     const load = async () => {
       try {
         const foundPlaylist = await PlaylistService.getPlaylistById(playlistId);
 
-        if (cancelled) return;
-
-        if (!foundPlaylist) {
-          if (!cancelled) {
-            clearTimeout(timeout);
-            setError('Playlist not found');
-            setPlaylist(null);
-            setTracks([]);
-            setLoading(false);
-          }
+        if (cancelled) {
+          isLoadingRef.current = false;
           return;
         }
 
-        if (!foundPlaylist.is_public && (!user || foundPlaylist.user_id !== user.id)) {
-          if (!cancelled) {
-            clearTimeout(timeout);
-            setError('This playlist is private');
-            setPlaylist(null);
-            setTracks([]);
-            setLoading(false);
-          }
+        if (!foundPlaylist) {
+          setError('Playlist not found');
+          setPlaylist(null);
+          setTracks([]);
+          setLoading(false);
+          isLoadingRef.current = false;
+          return;
+        }
+
+        const currentUserId = userIdRef.current;
+        if (!foundPlaylist.is_public && (!currentUserId || foundPlaylist.user_id !== currentUserId)) {
+          setError('This playlist is private');
+          setPlaylist(null);
+          setTracks([]);
+          setLoading(false);
+          isLoadingRef.current = false;
           return;
         }
 
         const playlistTracks = await PlaylistService.getPlaylistTracks(playlistId);
 
         if (!cancelled) {
-          clearTimeout(timeout);
           setPlaylist(foundPlaylist);
           setTracks(playlistTracks);
           setError(null);
           setLoading(false);
+          hasLoadedRef.current = true;
+          loadedPlaylistIdRef.current = playlistId;
+          isLoadingRef.current = false;
         }
       } catch (err) {
         if (!cancelled) {
-          clearTimeout(timeout);
           setError(err instanceof Error ? err.message : 'Failed to load playlist');
-          setPlaylist(null);
-          setTracks([]);
+          if (!hasLoadedRef.current) {
+            setPlaylist(null);
+            setTracks([]);
+          }
           setLoading(false);
+          isLoadingRef.current = false;
         }
       }
     };
@@ -84,9 +98,9 @@ export function usePlaylistDetails(playlistId: string | undefined) {
 
     return () => {
       cancelled = true;
-      clearTimeout(timeout);
+      isLoadingRef.current = false;
     };
-  }, [playlistId, user?.id]);
+  }, [playlistId]);
 
   const removeTrack = async (videoId: string) => {
     if (!playlistId || !user) throw new Error('Not authorized');

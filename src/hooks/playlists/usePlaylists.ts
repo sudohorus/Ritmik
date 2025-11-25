@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlaylistService } from '@/services/playlist-service';
 import { Playlist, CreatePlaylistData } from '@/types/playlist';
@@ -8,35 +8,55 @@ export function usePlaylists() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const loadedUserIdRef = useRef<string | null>(null);
+  const isLoadingRef = useRef(false);
 
   useEffect(() => {
-    if (!user?.id) {
-      setPlaylists([]);
-      setLoading(false);
+    const userId = user?.id;
+    
+    if (!userId) {
+      if (loadedUserIdRef.current !== null) {
+        setPlaylists([]);
+        setLoading(false);
+        loadedUserIdRef.current = null;
+      }
+      return;
+    }
+
+    if (loadedUserIdRef.current === userId && playlists.length > 0) {
+      return;
+    }
+
+    if (isLoadingRef.current) {
       return;
     }
 
     let cancelled = false;
+    isLoadingRef.current = true;
     setLoading(true);
 
-    PlaylistService.getUserPlaylists(user.id)
+    PlaylistService.getUserPlaylists(userId)
       .then(data => {
         if (!cancelled) {
           setPlaylists(data);
           setLoading(false);
+          loadedUserIdRef.current = userId;
+          isLoadingRef.current = false;
         }
       })
       .catch(err => {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to fetch playlists');
           setLoading(false);
+          isLoadingRef.current = false;
         }
       });
 
     return () => {
       cancelled = true;
+      isLoadingRef.current = false;
     };
-  }, [user?.id]);
+  }, [user?.id, playlists.length]);
 
   const createPlaylist = async (data: CreatePlaylistData) => {
     if (!user) throw new Error('User not authenticated');

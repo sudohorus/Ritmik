@@ -9,6 +9,7 @@ import EditPlaylistModal from '@/components/Playlist/EditPlaylistModal';
 import UserMenu from '@/components/Auth/UserMenu';
 import SortableTrackItem from '@/components/Playlist/SortableTrackItem';
 import Link from 'next/link';
+import Loading from '@/components/Loading';
 import {
   DndContext,
   closestCenter,
@@ -105,40 +106,6 @@ export default function PlaylistPage() {
     }, playlistAsQueue);
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-xl mb-4">Please log in to view playlists</p>
-          <Link href="/login" className="text-blue-500 hover:underline">
-            Go to Login
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-xl">Loading playlist...</div>
-      </div>
-    );
-  }
-
-  if (error || !playlist) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-xl mb-4">{error || 'Playlist not found'}</p>
-          <Link href="/playlists" className="text-blue-500 hover:underline">
-            Back to Playlists
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-32">
       <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-10">
@@ -147,6 +114,7 @@ export default function PlaylistPage() {
             <Link href="/" className="text-2xl font-bold tracking-tight hover:text-zinc-300 transition-colors mr-8">
               Ritmik
             </Link>
+            {user && (
               <nav className='flex items-center gap-6'>
                 <Link href="/playlists" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
                   My Playlists
@@ -155,12 +123,31 @@ export default function PlaylistPage() {
                   Explore
                 </Link>
               </nav>
+            )}
           </div>
-          <UserMenu />
+          {user && <UserMenu />}
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8">
+        {loading && !playlist && !error && (
+          <div className="flex items-center justify-center py-16">
+            <Loading text="Loading playlist..." />
+          </div>
+        )}
+
+        {error && !playlist && (
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <p className="text-xl mb-4">{error}</p>
+              <Link href="/playlists" className="text-blue-500 hover:underline">
+                Back to Playlists
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {playlist && (
         <div className="mb-8">
           <div className="flex items-end gap-6 mb-8">
             <div className="shrink-0">
@@ -218,15 +205,18 @@ export default function PlaylistPage() {
             )}
           </div>
         </div>
+        )}
 
-        {tracks.length === 0 ? (
+        {playlist && tracks.length === 0 && !loading && !error && (
           <div className="text-center py-16">
             <p className="text-zinc-400 text-lg mb-4">No tracks in this playlist yet</p>
             <Link href="/" className="text-blue-500 hover:underline">
               Browse music to add tracks
             </Link>
           </div>
-        ) : (
+        )}
+
+        {playlist && tracks.length > 0 && (
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}

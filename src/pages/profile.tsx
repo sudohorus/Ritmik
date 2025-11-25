@@ -20,20 +20,13 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    console.log('[ProfilePage] auth state changed', { authLoading, hasUser: !!user });
     if (!authLoading && !user) {
-      console.log('[ProfilePage] redirecting to /login');
       router.push('/login');
     }
   }, [user, authLoading, router]);
 
   useEffect(() => {
     if (user && !initialLoadDone.current) {
-      console.log('[ProfilePage] initial user load into form', {
-        userId: user.id,
-        username: user.username,
-        display_name: user.display_name,
-      });
       setUsername(user.username || '');
       setDisplayName(user.display_name || '');
       setAvatarUrl(user.avatar_url || '');
@@ -50,12 +43,6 @@ export default function ProfilePage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log('[ProfilePage] handleSubmit start', {
-      username,
-      displayName,
-      avatarUrl,
-      userId: user.id,
-    });
     e.preventDefault();
     setError(null);
     setSuccess(false);
@@ -75,7 +62,6 @@ export default function ProfilePage() {
       return;
     }
 
-    console.log('[ProfilePage] handleSubmit updates', updates);
     setSaving(true);
 
     try {
@@ -85,9 +71,7 @@ export default function ProfilePage() {
 
       const updatePromise = ProfileService.updateProfile(user.id, updates);
 
-      console.log('[ProfilePage] calling ProfileService.updateProfile');
       const { data, error: updateError } = await Promise.race([updatePromise, timeoutPromise]) as any;
-      console.log('[ProfilePage] updateProfile response', { hasError: !!updateError, hasData: !!data });
 
       if (updateError) {
         if (updateError.code === 'USERNAME_TAKEN' || updateError.message?.includes('username')) {
@@ -97,15 +81,12 @@ export default function ProfilePage() {
         }
       } else {
         setSuccess(true);
-        console.log('[ProfilePage] updateProfile success, calling refreshUser');
         await refreshUser();
         setTimeout(() => setSuccess(false), 3000);
       }
     } catch (err) {
-      console.error('[ProfilePage] handleSubmit error', err);
       setError(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
-      console.log('[ProfilePage] handleSubmit finished, setSaving(false)');
       setSaving(false);
     }
   };
