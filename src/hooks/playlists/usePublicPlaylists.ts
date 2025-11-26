@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { PlaylistService } from '@/services/playlist-service';
 import { Playlist } from '@/types/playlist';
+import { useVisibilityReset } from '@/hooks/useVisibilityReset';
 
 export function usePublicPlaylists() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -8,14 +9,30 @@ export function usePublicPlaylists() {
   const [searchQuery, setSearchQuery] = useState('');
   const mountedRef = useRef(true);
   const hasLoadedRef = useRef(false);
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
     
     return () => {
       mountedRef.current = false;
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
     };
   }, []);
+
+  // ✅ Reset forçado quando volta do alt+tab
+  const forceReset = useCallback(() => {
+    console.log('[usePublicPlaylists] Force reset triggered');
+    if (loading && mountedRef.current) {
+      console.log('[usePublicPlaylists] Resetting stuck loading state');
+      setLoading(false);
+      hasLoadedRef.current = true;
+    }
+  }, [loading]);
+
+  useVisibilityReset(forceReset);
 
   useEffect(() => {
     if (hasLoadedRef.current) {
@@ -25,23 +42,42 @@ export function usePublicPlaylists() {
 
     setLoading(true);
 
+    // Safety timeout
+    fetchTimeoutRef.current = setTimeout(() => {
+      console.warn('[usePublicPlaylists] ⚠️ SAFETY TIMEOUT');
+      if (mountedRef.current) {
+        setLoading(false);
+        hasLoadedRef.current = true;
+      }
+    }, 5000);
+
     PlaylistService.getPublicPlaylists()
       .then(data => {
+        if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
         if (mountedRef.current) {
           setPlaylists(data);
           hasLoadedRef.current = true;
         }
       })
       .catch(() => {
+        if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
         if (mountedRef.current) {
           setPlaylists([]);
+          hasLoadedRef.current = true;
         }
       })
       .finally(() => {
+        if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
         if (mountedRef.current) {
           setLoading(false);
         }
       });
+
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+    };
   }, []);
 
   const filteredPlaylists = playlists.filter(playlist => 

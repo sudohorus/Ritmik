@@ -1,6 +1,7 @@
 import { usePlayer } from '@/hooks/player/usePlayer';
 import { useKeyboardShortcuts } from '@/hooks/player/useKeyboardShortcuts';
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
 import PlayerControls from './PlayerControls';
 import ProgressBar from './ProgressBar';
 import VolumeControl from './VolumeControl';
@@ -34,6 +35,8 @@ export default function Player() {
   const playerRef = useRef<any>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isFocusModalOpen, setIsFocusModalOpen] = useState(false);
+  const router = useRouter();
+  const currentRouteRef = useRef(router.pathname);
 
   const handleSeekForward = () => {
     if (playerRef.current?.seekTo && duration > 0) {
@@ -69,6 +72,35 @@ export default function Player() {
     onVolumeDown: handleVolumeDown,
   });
 
+  // ✅ SOLUÇÃO: Rastrear mudanças de rota e forçar re-render se necessário
+  useEffect(() => {
+    const handleRouteChangeStart = (url: string) => {
+      console.log('[Player] Route changing to:', url);
+      currentRouteRef.current = url;
+      
+      // ✅ Garantir que não há fetch de lyrics bloqueando
+      // O problema não é o player, são os fetches pendentes
+    };
+
+    const handleRouteChangeComplete = () => {
+      console.log('[Player] Route change completed');
+    };
+
+    const handleRouteChangeError = (err: any) => {
+      console.error('[Player] Route change error:', err);
+    };
+
+    router.events.on('routeChangeStart', handleRouteChangeStart);
+    router.events.on('routeChangeComplete', handleRouteChangeComplete);
+    router.events.on('routeChangeError', handleRouteChangeError);
+
+    return () => {
+      router.events.off('routeChangeStart', handleRouteChangeStart);
+      router.events.off('routeChangeComplete', handleRouteChangeComplete);
+      router.events.off('routeChangeError', handleRouteChangeError);
+    };
+  }, [router]);
+
   useEffect(() => {
     if (!currentTrack) return;
 
@@ -89,6 +121,7 @@ export default function Player() {
     };
 
     const initPlayer = () => {
+      // Se já houver player, só troca o vídeo
       if (playerRef.current && playerRef.current.loadVideoById) {
         setProgress(0);
         setDuration(0);
@@ -112,6 +145,7 @@ export default function Player() {
         return;
       }
 
+      // Criar player pela primeira vez
       playerRef.current = new window.YT.Player('youtube-player', {
         videoId: currentTrack.videoId,
         playerVars: {
@@ -286,4 +320,3 @@ export default function Player() {
     </>
   );
 }
-

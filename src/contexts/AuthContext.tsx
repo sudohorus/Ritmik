@@ -21,6 +21,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const userRef = useRef<User | null>(null);
   const isInitializedRef = useRef(false);
+  const sessionIdRef = useRef<string | null>(null);
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const updateUser = useCallback((newUser: User | null) => {
     const currentUser = userRef.current;
@@ -52,46 +54,98 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchUserProfile = async (userId: string): Promise<User | null> => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-    if (error || !data) {
+      if (error || !data) {
+        console.warn('Error fetching user profile:', error);
+        return null;
+      }
+
+      return {
+        id: data.id,
+        email: data.email,
+        username: data.username,
+        display_name: data.display_name,
+        avatar_url: data.avatar_url,
+      };
+    } catch (err) {
+      console.warn('Exception fetching user profile:', err);
       return null;
     }
-
-    return {
-      id: data.id,
-      email: data.email,
-      username: data.username,
-      display_name: data.display_name,
-      avatar_url: data.avatar_url,
-    };
   };
 
   useEffect(() => {
     if (isInitializedRef.current) return;
     isInitializedRef.current = true;
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        const profile = await fetchUserProfile(session.user.id);
-        updateUser(profile || mapUserFromAuth(session.user));
-      } else {
-        updateUser(null);
+    let isMounted = true;
+
+    const initAuth = async () => {
+      try {
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        if (!isMounted) return;
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          setSession(null);
+          updateUser(null);
+          setLoading(false);
+          return;
+        }
+
+        if (currentSession?.user) {
+          sessionIdRef.current = currentSession.access_token;
+          setSession(currentSession);
+          const profile = await fetchUserProfile(currentSession.user.id);
+          if (isMounted) {
+            updateUser(profile || mapUserFromAuth(currentSession.user));
+          }
+        } else {
+          sessionIdRef.current = null;
+          setSession(null);
+          updateUser(null);
+        }
+        
+        if (isMounted) {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+        if (isMounted) {
+          setSession(null);
+          updateUser(null);
+          setLoading(false);
+        }
       }
-      setLoading(false);
-    });
+    };
+
+    initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+      if (!isMounted) return;
+
+      console.log('Auth state change:', event);
+
+      if (event === 'TOKEN_REFRESHED') {
+        if (newSession) {
+          sessionIdRef.current = newSession.access_token;
+          setSession(newSession);
+        }
+        return;
+      }
+
+      if (event === 'INITIAL_SESSION') {
         return;
       }
       
       if (event === 'SIGNED_OUT') {
+        sessionIdRef.current = null;
         setSession(null);
         updateUser(null);
         setLoading(false);
@@ -99,14 +153,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       if (event === 'SIGNED_IN' && newSession?.user) {
+        if (sessionIdRef.current === newSession.access_token) {
+          return;
+        }
+        
+        sessionIdRef.current = newSession.access_token;
         setSession(newSession);
+        
         const profile = await fetchUserProfile(newSession.user.id);
-        updateUser(profile || mapUserFromAuth(newSession.user));
-        setLoading(false);
+        if (isMounted) {
+          updateUser(profile || mapUserFromAuth(newSession.user));
+          setLoading(false);
+        }
+      }
+
+      if (event === 'USER_UPDATED' && newSession?.user) {
+        if (refreshTimeoutRef.current) {
+          clearTimeout(refreshTimeoutRef.current);
+        }
+        
+        refreshTimeoutRef.current = setTimeout(async () => {
+          const profile = await fetchUserProfile(newSession.user.id);
+          if (isMounted) {
+            updateUser(profile || mapUserFromAuth(newSession.user));
+          }
+        }, 500);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
   }, [updateUser]);
 
   const mapUserFromAuth = (authUser: any): User => ({
@@ -118,58 +199,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const signUp = async (email: string, password: string, username: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: undefined,
-        data: {
-          username: username,
-          display_name: username,
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: undefined,
+          data: {
+            username: username,
+            display_name: username,
+          },
         },
-      },
-    });
-
-    if (!error && data.user) {
-      const { error: insertError } = await supabase.from('users').insert({
-        id: data.user.id,
-        email: email,
-        username: username,
-        display_name: username,
       });
 
-      if (insertError) {
-      }
-    }
+      if (!error && data.user) {
+        const { error: insertError } = await supabase.from('users').insert({
+          id: data.user.id,
+          email: email,
+          username: username,
+          display_name: username,
+        });
 
-    return { error };
+        if (insertError) {
+          console.error('Error inserting user:', insertError);
+        }
+      }
+
+      return { error };
+    } catch (err) {
+      console.error('Signup error:', err);
+      return { error: err };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error?.message?.includes('Email not confirmed')) {
-      return { error: { message: 'Please disable email confirmation in Supabase settings.' } };
+      if (error?.message?.includes('Email not confirmed')) {
+        return { error: { message: 'Please disable email confirmation in Supabase settings.' } };
+      }
+
+      return { error };
+    } catch (err) {
+      console.error('Signin error:', err);
+      return { error: err };
     }
-
-    return { error };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      sessionIdRef.current = null;
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Signout error:', err);
+    }
   };
 
   const refreshUser = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const profile = await fetchUserProfile(session.user.id);
-        updateUser(profile || mapUserFromAuth(session.user));
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (currentSession?.user) {
+        const profile = await fetchUserProfile(currentSession.user.id);
+        updateUser(profile || mapUserFromAuth(currentSession.user));
       }
     } catch (err) {
+      console.error('Error refreshing user:', err);
     }
   };
 

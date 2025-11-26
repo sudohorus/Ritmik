@@ -40,6 +40,14 @@ export default function FocusModal({
   const cachedLyricsRef = useRef<{ lyrics: string | null; syncedLyrics: LyricsLine[] | null } | null>(null);
   const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
   const highQualityThumbnail = getHighQualityThumbnail(videoId);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -48,6 +56,7 @@ export default function FocusModal({
     
     const testImage = new Image();
     testImage.onload = () => {
+      if (!mountedRef.current) return;
       if (testImage.naturalWidth > 120 && testImage.naturalHeight > 90) {
         setImageSrc(highQualityThumbnail);
       } else {
@@ -55,6 +64,7 @@ export default function FocusModal({
       }
     };
     testImage.onerror = () => {
+      if (!mountedRef.current) return;
       setImageSrc(thumbnail);
     };
     testImage.src = highQualityThumbnail;
@@ -72,6 +82,7 @@ export default function FocusModal({
 
   useEffect(() => {
     if (!isOpen) {
+      console.log('[FocusModal] Closed, resetting loading');
       setLoadingLyrics(false);
       return;
     }
@@ -82,6 +93,7 @@ export default function FocusModal({
     }
 
     if (cachedVideoIdRef.current === videoId && cachedLyricsRef.current) {
+      console.log('[FocusModal] Using cached lyrics');
       setLyrics(cachedLyricsRef.current.lyrics);
       setSyncedLyrics(cachedLyricsRef.current.syncedLyrics);
       setLyricsNotFound(false);
@@ -92,28 +104,56 @@ export default function FocusModal({
     let cancelled = false;
     const controller = new AbortController();
     let timeoutId: NodeJS.Timeout | null = null;
+    let safetyTimeoutId: NodeJS.Timeout | null = null;
 
+    console.log('[FocusModal] Starting lyrics fetch for:', title);
     setLoadingLyrics(true);
     setLyricsNotFound(false);
+
+    // ✅ TIMEOUT DE SEGURANÇA: força o reset após 8 segundos
+    safetyTimeoutId = setTimeout(() => {
+      console.warn('[FocusModal] ⚠️ SAFETY TIMEOUT - Forcing loading reset');
+      if (!cancelled && mountedRef.current) {
+        setLoadingLyrics(false);
+        setLyricsNotFound(true);
+      }
+      controller.abort();
+    }, 8000);
 
     const fetchLyrics = async () => {
       try {
         timeoutId = setTimeout(() => {
-          if (!cancelled) {
-            controller.abort();
-          }
-        }, 15000);
+          console.log('[FocusModal] Request timeout, aborting');
+          controller.abort();
+        }, 7000);
 
+        console.log('[FocusModal] Fetching lyrics...');
         const response = await fetch(
           `/api/lyrics/fetch?title=${encodeURIComponent(title)}&channel=${encodeURIComponent(artist)}`,
           { signal: controller.signal }
         );
 
-        if (cancelled) return;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+
+        if (safetyTimeoutId) {
+          clearTimeout(safetyTimeoutId);
+          safetyTimeoutId = null;
+        }
+
+        if (cancelled || !mountedRef.current) {
+          console.log('[FocusModal] Fetch cancelled or unmounted');
+          return;
+        }
+
+        console.log('[FocusModal] Response received:', response.status);
 
         if (response.ok) {
           const data = await response.json();
-          if (!cancelled) {
+          if (!cancelled && mountedRef.current) {
+            console.log('[FocusModal] ✅ Lyrics found');
             cachedVideoIdRef.current = videoId;
             cachedLyricsRef.current = {
               lyrics: data.lyrics,
@@ -124,18 +164,33 @@ export default function FocusModal({
             setLyricsNotFound(false);
           }
         } else {
-          if (!cancelled) {
+          if (!cancelled && mountedRef.current) {
+            console.log('[FocusModal] ❌ Lyrics not found');
             cachedVideoIdRef.current = videoId;
             cachedLyricsRef.current = null;
             setLyrics(null);
             setLyricsNotFound(true);
           }
         }
-      } catch (error) {
-        if (cancelled || controller.signal.aborted) {
+      } catch (error: any) {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        
+        if (safetyTimeoutId) {
+          clearTimeout(safetyTimeoutId);
+          safetyTimeoutId = null;
+        }
+        
+        if (error.name === 'AbortError' || cancelled) {
+          console.log('[FocusModal] Fetch aborted');
           return;
         }
-        if (!cancelled) {
+        
+        console.error('[FocusModal] Fetch error:', error);
+        
+        if (!cancelled && mountedRef.current) {
           cachedVideoIdRef.current = videoId;
           cachedLyricsRef.current = null;
           setLyrics(null);
@@ -145,7 +200,11 @@ export default function FocusModal({
         if (timeoutId) {
           clearTimeout(timeoutId);
         }
-        if (!cancelled) {
+        if (safetyTimeoutId) {
+          clearTimeout(safetyTimeoutId);
+        }
+        if (!cancelled && mountedRef.current) {
+          console.log('[FocusModal] Fetch complete, resetting loading');
           setLoadingLyrics(false);
         }
       }
@@ -154,11 +213,17 @@ export default function FocusModal({
     fetchLyrics();
 
     return () => {
+      console.log('[FocusModal] Cleanup: cancelling fetch');
       cancelled = true;
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
+      if (safetyTimeoutId) {
+        clearTimeout(safetyTimeoutId);
+      }
       controller.abort();
+      // ✅ CRÍTICO: Forçar reset do loading no cleanup
+      setLoadingLyrics(false);
     };
   }, [isOpen, title, artist, videoId]);
 
@@ -291,4 +356,3 @@ export default function FocusModal({
   </>
   );
 }
-
