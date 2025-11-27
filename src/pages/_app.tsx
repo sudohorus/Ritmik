@@ -1,4 +1,4 @@
-import "@/styles/globals.css";
+import "@/styles/globals.css"
 import type { AppProps } from "next/app";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -13,20 +13,16 @@ export default function App({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     const handleRouteChangeStart = (url: string) => {
-      console.log('[APP] ⏳ Route change START:', url);
       setIsNavigating(true);
     };
 
     const handleRouteChangeComplete = (url: string) => {
-      console.log('[APP] ✅ Route change COMPLETE:', url);
-      // ✅ Pequeno delay para garantir que o componente montou completamente
       setTimeout(() => {
         setIsNavigating(false);
       }, 100);
     };
 
     const handleRouteChangeError = (err: any, url: string) => {
-      console.error('[APP] ❌ Route change ERROR:', url, err);
       setIsNavigating(false);
     };
 

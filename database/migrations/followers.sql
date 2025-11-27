@@ -21,10 +21,10 @@ CREATE POLICY "Anyone can view followers"
   ON public.followers FOR SELECT
   USING (true);
 
--- Users can follow other users
+-- Users can follow other users (automatically set follower_id)
 CREATE POLICY "Users can follow others"
   ON public.followers FOR INSERT
-  WITH CHECK (auth.uid() = follower_id);
+  WITH CHECK (auth.uid() = follower_id AND follower_id != following_id);
 
 -- Users can unfollow (delete their own follows)
 CREATE POLICY "Users can unfollow"

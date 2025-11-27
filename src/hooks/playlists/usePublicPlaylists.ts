@@ -22,11 +22,8 @@ export function usePublicPlaylists() {
     };
   }, []);
 
-  // ✅ Reset forçado quando volta do alt+tab
   const forceReset = useCallback(() => {
-    console.log('[usePublicPlaylists] Force reset triggered');
     if (loading && mountedRef.current) {
-      console.log('[usePublicPlaylists] Resetting stuck loading state');
       setLoading(false);
       hasLoadedRef.current = true;
     }
@@ -42,9 +39,7 @@ export function usePublicPlaylists() {
 
     setLoading(true);
 
-    // Safety timeout
     fetchTimeoutRef.current = setTimeout(() => {
-      console.warn('[usePublicPlaylists] ⚠️ SAFETY TIMEOUT');
       if (mountedRef.current) {
         setLoading(false);
         hasLoadedRef.current = true;

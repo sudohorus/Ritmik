@@ -22,6 +22,7 @@
   - Display lyrics in focus mode
   - Smart title parsing for better lyrics matching
   - Lyrics caching
+- [X] Follow users
 
 ## Phase 1: Core Features
 
@@ -96,7 +97,7 @@
 ## Future Ideas
 
 - [ ] User accounts and cloud sync
-- [ ] Social features (share playlists, follow users)
+- [ ] Social features (share playlists)
 - [ ] Mobile app
 - [ ] Recommendations engine
 - [ ] Radio mode (auto-play similar tracks)

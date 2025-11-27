@@ -62,7 +62,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (error || !data) {
-        console.warn('Error fetching user profile:', error);
         return null;
       }
 
@@ -74,7 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         avatar_url: data.avatar_url,
       };
     } catch (err) {
-      console.warn('Exception fetching user profile:', err);
       return null;
     }
   };
@@ -92,7 +90,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!isMounted) return;
         
         if (error) {
-          console.error('Error getting session:', error);
           setSession(null);
           updateUser(null);
           setLoading(false);
@@ -116,7 +113,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setLoading(false);
         }
       } catch (err) {
-        console.error('Error initializing auth:', err);
         if (isMounted) {
           setSession(null);
           updateUser(null);
@@ -129,8 +125,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!isMounted) return;
-
-      console.log('Auth state change:', event);
 
       if (event === 'TOKEN_REFRESHED') {
         if (newSession) {
@@ -221,13 +215,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (insertError) {
-          console.error('Error inserting user:', insertError);
         }
       }
 
       return { error };
     } catch (err) {
-      console.error('Signup error:', err);
       return { error: err };
     }
   };
@@ -245,7 +237,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { error };
     } catch (err) {
-      console.error('Signin error:', err);
       return { error: err };
     }
   };
@@ -255,7 +246,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionIdRef.current = null;
       await supabase.auth.signOut();
     } catch (err) {
-      console.error('Signout error:', err);
     }
   };
 
@@ -267,7 +257,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updateUser(profile || mapUserFromAuth(currentSession.user));
       }
     } catch (err) {
-      console.error('Error refreshing user:', err);
     }
   };
 

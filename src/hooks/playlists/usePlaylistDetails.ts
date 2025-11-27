@@ -26,11 +26,8 @@ export function usePlaylistDetails(playlistId: string | undefined) {
     };
   }, []);
 
-  // ✅ Reset forçado quando volta do alt+tab
   const forceReset = useCallback(() => {
-    console.log('[usePlaylistDetails] Force reset triggered');
     if (loading && mountedRef.current) {
-      console.log('[usePlaylistDetails] Resetting stuck loading state');
       setLoading(false);
     }
   }, [loading]);
@@ -56,9 +53,7 @@ export function usePlaylistDetails(playlistId: string | undefined) {
     setLoading(true);
     setError(null);
 
-    // Safety timeout
     fetchTimeoutRef.current = setTimeout(() => {
-      console.warn('[usePlaylistDetails] ⚠️ SAFETY TIMEOUT');
       if (mountedRef.current) {
         setLoading(false);
         setError('Request timeout - please refresh the page');

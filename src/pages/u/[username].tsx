@@ -1,10 +1,13 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { PublicProfileService, PublicProfile } from '@/services/public-profile-service';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFollowers } from '@/hooks/followers/useFollowers';
 import UserMenu from '@/components/Auth/UserMenu';
 import Loading from '@/components/Loading';
+import FollowButton from '@/components/Followers/FollowButton';
+import FollowersList from '@/components/Followers/FollowersList';
 
 export default function PublicProfilePage() {
   const router = useRouter();
@@ -16,6 +19,13 @@ export default function PublicProfilePage() {
   const [playlists, setPlaylists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showFollowersModal, setShowFollowersModal] = useState<'followers' | 'following' | null>(null);
+  
+  const { stats: followerStats, refresh: refreshFollowers } = useFollowers(profile?.id);
+
+  const handleFollowChange = useCallback(() => {
+    refreshFollowers();
+  }, [refreshFollowers]);
 
   useEffect(() => {
     if (!isReady || !normalizedUsername) {
@@ -44,7 +54,7 @@ export default function PublicProfilePage() {
 
       setProfile(profileData);
 
-      const { data: playlistsData, error: playlistsError } = await PublicProfileService.getUserPlaylists(profileData.id);
+      const { data: playlistsData } = await PublicProfileService.getUserPlaylists(profileData.id);
 
       if (!active) return;
 
@@ -136,21 +146,46 @@ export default function PublicProfilePage() {
             <div className="flex-1 min-w-0 pb-2">
               <h1 className="text-5xl font-bold mb-2 truncate">{displayName}</h1>
               <p className="text-zinc-400 text-lg mb-4">@{profile.username}</p>
-              <div className="flex items-center gap-4 text-sm text-zinc-400">
-                <span>{playlists.length} {playlists.length === 1 ? 'playlist' : 'playlists'}</span>
+              
+              <div className="flex items-center gap-4 text-sm text-zinc-400 mb-4">
+                <button
+                  onClick={() => setShowFollowersModal('followers')}
+                  className="hover:text-white transition-colors"
+                >
+                  <span className="font-semibold text-white">{followerStats.followerCount}</span> {followerStats.followerCount === 1 ? 'follower' : 'followers'}
+                </button>
                 <span>•</span>
-                <span>Joined {new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
+                <button
+                  onClick={() => setShowFollowersModal('following')}
+                  className="hover:text-white transition-colors"
+                >
+                  <span className="font-semibold text-white">{followerStats.followingCount}</span> following
+                </button>
+                <span>•</span>
+                <span>{playlists.length} {playlists.length === 1 ? 'playlist' : 'playlists'}</span>
+              </div>
+              
+              <div className="text-xs text-zinc-500">
+                Joined {new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </div>
             </div>
 
-            {isOwnProfile && (
-              <Link
-                href="/profile"
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-all backdrop-blur-sm border border-white/10"
-              >
-                Edit Profile
-              </Link>
-            )}
+            <div className="flex items-center gap-2">
+              {isOwnProfile ? (
+                <Link
+                  href="/profile"
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-all backdrop-blur-sm border border-white/10"
+                >
+                  Edit Profile
+                </Link>
+              ) : (
+                <FollowButton 
+                  userId={profile.id} 
+                  username={profile.username || undefined}
+                  onFollowChange={handleFollowChange}
+                />
+              )}
+            </div>
           </div>
         </div>
 
@@ -194,8 +229,13 @@ export default function PublicProfilePage() {
           )}
         </div>
       </main>
+
+      <FollowersList
+        isOpen={showFollowersModal !== null}
+        onClose={() => setShowFollowersModal(null)}
+        userId={profile.id}
+        type={showFollowersModal || 'followers'}
+      />
     </div>
   );
 }
-
-
