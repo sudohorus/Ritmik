@@ -49,6 +49,9 @@ export default function PlaylistsPage() {
                 <Link href="/playlists" className="text-sm font-medium text-white hover:text-white transition-colors">
                   My Playlists
                 </Link>
+                <Link href="/following" className="text-sm font-medium text-zinc-400">
+                Following
+                </Link>
                 <Link href="/explore" className="text-sm font-medium text-zinc-400">
                   Explore
                 </Link>
