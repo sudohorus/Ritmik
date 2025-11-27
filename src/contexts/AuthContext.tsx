@@ -182,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearTimeout(refreshTimeoutRef.current);
       }
     };
-  }, [updateUser]);
+  }, []);
 
   const mapUserFromAuth = (authUser: any): User => ({
     id: authUser.id,

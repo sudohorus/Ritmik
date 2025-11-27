@@ -98,6 +98,15 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">
       <Navbar />
       <main className="max-w-4xl mx-auto px-6 py-12">
+        <div className="flex items-center gap-2 text-sm text-zinc-500 mb-8">
+          <Link href="/settings" className="hover:text-white transition-colors">
+            Settings
+          </Link>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          <span className="text-white">Account</span>
+        </div>
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-3">Profile Settings</h1>
           <p className="text-zinc-400">Customize your profile information</p>
