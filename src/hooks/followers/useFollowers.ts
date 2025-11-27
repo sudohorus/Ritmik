@@ -8,6 +8,8 @@ export function useFollowers(targetUserId: string | undefined) {
     followerCount: 0,
     followingCount: 0,
     isFollowing: false,
+    followersVisible: true,
+    followingVisible: true,
   });
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
