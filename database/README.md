@@ -19,6 +19,7 @@ Execute the SQL files in order:
 3. playlist_tracks.sql
 4. triggers.sql
 5. followers.sql
+6. user_settings.sql
 ```
 
 ### 3. Configure Environment Variables
@@ -67,6 +68,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 - `added_at` (TIMESTAMP)
 
 #### `followers`
+
 - `id` (UUID, PK) — Relationship entry ID
 - `follower_id` (UUID, FK → users.id) — User who follows
 - `following_id` (UUID, FK → users.id) — User being followed

@@ -1,4 +1,3 @@
-// src/pages/settings/privacy.tsx
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -14,7 +13,6 @@ export default function PrivacySettingsPage() {
   const [settings, setSettings] = useState<UserSettings>({
     followers_public: true,
     following_public: true,
-    playlists_default_public: true,
     show_activity: true,
   });
   
@@ -42,7 +40,6 @@ export default function PrivacySettingsPage() {
           setSettings(data);
         }
       } catch (err) {
-        console.error('Error loading settings:', err);
       } finally {
         if (mounted) {
           setLoading(false);
@@ -77,10 +74,12 @@ export default function PrivacySettingsPage() {
     }
   };
 
-  const toggleSetting = (key: keyof UserSettings) => {
+  const toggleSocialConnections = () => {
+    const newValue = !settings.followers_public;
     setSettings(prev => ({
       ...prev,
-      [key]: !prev[key]
+      followers_public: newValue,
+      following_public: newValue
     }));
   };
 
@@ -118,26 +117,27 @@ export default function PrivacySettingsPage() {
                 {/* Social Connections Public */}
                 <div className="flex items-start justify-between p-4 bg-zinc-800/50 rounded-lg border border-zinc-800">
                   <div className="flex-1 pr-4">
-                    <label htmlFor="followers_public" className="text-base font-medium text-zinc-200 cursor-pointer block mb-1">
+                    <label htmlFor="social_connections_public" className="text-base font-medium text-zinc-200 cursor-pointer block mb-1">
                       Public Social Connections
                     </label>
                     <p className="text-sm text-zinc-500">
                       When enabled, anyone can see your followers and who you follow. When disabled, only you can see this information.
                     </p>
+                    {!settings.followers_public && (
+                      <div className="mt-2 flex items-center gap-2 text-xs text-amber-500">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span>Your followers and following lists are now private</span>
+                      </div>
+                    )}
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer shrink-0">
                     <input
-                      id="followers_public"
+                      id="social_connections_public"
                       type="checkbox"
                       checked={settings.followers_public}
-                      onChange={() => {
-                        const newValue = !settings.followers_public;
-                        setSettings(prev => ({
-                          ...prev,
-                          followers_public: newValue,
-                          following_public: newValue
-                        }));
-                      }}
+                      onChange={toggleSocialConnections}
                       className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-zinc-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>

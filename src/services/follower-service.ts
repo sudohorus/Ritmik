@@ -1,9 +1,12 @@
 import { supabase } from '@/lib/supabase';
+import { SettingsService } from './settings-service';
 
 export interface FollowerStats {
   followerCount: number;
   followingCount: number;
   isFollowing: boolean;
+  followersVisible: boolean;
+  followingVisible: boolean;
 }
 
 export interface FollowerUser {
@@ -51,6 +54,20 @@ export class FollowerService {
 
   static async getFollowerStats(userId: string, currentUserId?: string): Promise<FollowerStats> {
     try {
+      const isOwnProfile = currentUserId === userId;
+
+      let followersPublic = true;
+      let followingPublic = true;
+
+      if (!isOwnProfile) {
+        const settings = await SettingsService.getUserSettings(userId);
+        followersPublic = settings?.followers_public ?? true;
+        followingPublic = settings?.following_public ?? true;
+      }
+
+      const followersVisible = isOwnProfile || followersPublic;
+      const followingVisible = isOwnProfile || followingPublic;
+
       const [followerResult, followingResult, isFollowingResult] = await Promise.all([
         supabase
           .from('followers')
@@ -75,21 +92,33 @@ export class FollowerService {
       const isFollowing = !isFollowingResult.error && !!isFollowingResult.data;
 
       return {
-        followerCount: followerResult.count || 0,
-        followingCount: followingResult.count || 0,
+        followerCount: followersVisible ? (followerResult.count || 0) : 0,
+        followingCount: followingVisible ? (followingResult.count || 0) : 0,
         isFollowing,
+        followersVisible,
+        followingVisible,
       };
     } catch (err) {
-      console.error('Error fetching follower stats:', err);
       return {
         followerCount: 0,
         followingCount: 0,
         isFollowing: false,
+        followersVisible: true,
+        followingVisible: true,
       };
     }
   }
 
-  static async getFollowers(userId: string): Promise<FollowerUser[]> {
+  static async getFollowers(userId: string, currentUserId?: string): Promise<FollowerUser[]> {
+    const isOwnProfile = currentUserId === userId;
+
+    if (!isOwnProfile) {
+      const followersPublic = await SettingsService.checkFollowersPublic(userId);
+      if (!followersPublic) {
+        throw new Error('This user\'s followers list is private');
+      }
+    }
+
     const { data, error } = await supabase
       .from('followers')
       .select(`
@@ -106,7 +135,6 @@ export class FollowerService {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching followers:', error);
       throw error;
     }
 
@@ -121,7 +149,16 @@ export class FollowerService {
       }));
   }
 
-  static async getFollowing(userId: string): Promise<FollowerUser[]> {
+  static async getFollowing(userId: string, currentUserId?: string): Promise<FollowerUser[]> {
+    const isOwnProfile = currentUserId === userId;
+
+    if (!isOwnProfile) {
+      const followingPublic = await SettingsService.checkFollowingPublic(userId);
+      if (!followingPublic) {
+        throw new Error('This user\'s following list is private');
+      }
+    }
+
     const { data, error } = await supabase
       .from('followers')
       .select(`
@@ -138,7 +175,6 @@ export class FollowerService {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching following:', error);
       throw error;
     }
 
@@ -155,30 +191,21 @@ export class FollowerService {
 
   static async getFollowingPlaylists(userId: string) {
     try {
-      console.log('[FollowerService] Getting following playlists for user:', userId);
-      
-      // First, get all users that the current user is following
       const { data: followingData, error: followingError } = await supabase
         .from('followers')
         .select('following_id')
         .eq('follower_id', userId);
 
       if (followingError) {
-        console.error('[FollowerService] Error fetching following:', followingError);
         throw followingError;
       }
 
-      console.log('[FollowerService] Following data:', followingData);
-
       if (!followingData || followingData.length === 0) {
-        console.log('[FollowerService] User is not following anyone');
         return [];
       }
 
       const followingIds = followingData.map(f => f.following_id);
-      console.log('[FollowerService] Following user IDs:', followingIds);
 
-      // Then, get all public playlists from those users
       const { data: playlistsData, error: playlistsError } = await supabase
         .from('playlists')
         .select(`
@@ -196,15 +223,11 @@ export class FollowerService {
         .limit(100);
 
       if (playlistsError) {
-        console.error('[FollowerService] Error fetching playlists:', playlistsError);
         throw playlistsError;
       }
 
-      console.log('[FollowerService] Found playlists:', playlistsData?.length || 0);
-
       return playlistsData || [];
     } catch (err) {
-      console.error('[FollowerService] Unexpected error:', err);
       return [];
     }
   }

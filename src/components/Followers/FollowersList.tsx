@@ -17,6 +17,8 @@ export default function FollowersList({ isOpen, onClose, userId, type }: Followe
   const [users, setUsers] = useState<FollowerUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isPrivate, setIsPrivate] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -25,17 +27,28 @@ export default function FollowersList({ isOpen, onClose, userId, type }: Followe
 
     const loadUsers = async () => {
       setLoading(true);
+      setError(null);
+      setIsPrivate(false);
+      
       try {
         const data = type === 'followers' 
-          ? await FollowerService.getFollowers(userId)
-          : await FollowerService.getFollowing(userId);
-        
+          ? await FollowerService.getFollowers(userId, currentUser?.id)
+          : await FollowerService.getFollowing(userId, currentUser?.id);
         
         if (mounted) {
           setUsers(data);
         }
       } catch (err) {
-
+        if (mounted) {
+          const errorMessage = err instanceof Error ? err.message : 'Failed to load users';
+          
+          if (errorMessage.includes('private')) {
+            setIsPrivate(true);
+            setError(errorMessage);
+          } else {
+            setError(errorMessage);
+          }
+        }
       } finally {
         if (mounted) {
           setLoading(false);
@@ -48,7 +61,7 @@ export default function FollowersList({ isOpen, onClose, userId, type }: Followe
     return () => {
       mounted = false;
     };
-  }, [isOpen, userId, type]);
+  }, [isOpen, userId, type, currentUser?.id]);
 
   if (!isOpen) return null;
 
@@ -93,9 +106,11 @@ export default function FollowersList({ isOpen, onClose, userId, type }: Followe
             <div className="flex justify-between items-center mb-4">
               <div>
                 <h2 className="text-2xl font-bold text-white capitalize">{type}</h2>
-                <p className="text-sm text-zinc-400 mt-1">
-                  {users.length} {users.length === 1 ? 'person' : 'people'}
-                </p>
+                {!isPrivate && !loading && (
+                  <p className="text-sm text-zinc-400 mt-1">
+                    {users.length} {users.length === 1 ? 'person' : 'people'}
+                  </p>
+                )}
               </div>
               <button
                 onClick={onClose}
@@ -108,8 +123,8 @@ export default function FollowersList({ isOpen, onClose, userId, type }: Followe
               </button>
             </div>
 
-            {/* Search Bar */}
-            {users.length > 0 && (
+            {/* Search Bar - only show if not private and has users */}
+            {!isPrivate && !loading && users.length > 0 && (
               <div className="relative">
                 <svg 
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-zinc-500" 
@@ -134,6 +149,29 @@ export default function FollowersList({ isOpen, onClose, userId, type }: Followe
             {loading ? (
               <div className="text-center py-12">
                 <Loading size="sm" text={`Loading ${type}...`} />
+              </div>
+            ) : isPrivate ? (
+              <div className="text-center py-12">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-zinc-800 mb-4">
+                  <svg className="w-8 h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-zinc-300 mb-2">
+                  Private {type === 'followers' ? 'Followers' : 'Following'} List
+                </h3>
+                <p className="text-zinc-400">
+                  This user has chosen to keep their {type} list private.
+                </p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-900/20 mb-4">
+                  <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <p className="text-red-400">{error}</p>
               </div>
             ) : filteredUsers.length === 0 ? (
               <div className="text-center py-12">

@@ -41,7 +41,6 @@ export default function SettingsPage() {
       ),
       href: '/settings/privacy',
       items: ['Followers visibility', 'Following visibility', 'Playlist defaults', 'Activity'],
-      badge: 'Coming Soon',
     },
     {
       title: 'Appearance',

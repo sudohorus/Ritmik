@@ -32,6 +32,20 @@ export default function PublicProfilePage() {
     refreshFollowers();
   }, [refreshFollowers]);
 
+  const handleFollowersClick = () => {
+    // Only open modal if followers are visible
+    if (followerStats.followersVisible) {
+      setShowFollowersModal('followers');
+    }
+  };
+
+  const handleFollowingClick = () => {
+    // Only open modal if following is visible
+    if (followerStats.followingVisible) {
+      setShowFollowersModal('following');
+    }
+  };
+
   useEffect(() => {
     if (!isReady || !normalizedUsername) {
       setLoading(false);
@@ -125,19 +139,41 @@ export default function PublicProfilePage() {
               <p className="text-zinc-400 text-lg mb-4">@{profile.username}</p>
               
               <div className="flex items-center gap-4 text-sm text-zinc-400 mb-4">
-                <button
-                  onClick={() => setShowFollowersModal('followers')}
-                  className="hover:text-white transition-colors"
-                >
-                  <span className="font-semibold text-white">{followerStats.followerCount}</span> {followerStats.followerCount === 1 ? 'follower' : 'followers'}
-                </button>
+                {followerStats.followersVisible ? (
+                  <button
+                    onClick={handleFollowersClick}
+                    className="hover:text-white transition-colors"
+                  >
+                    <span className="font-semibold text-white">{followerStats.followerCount}</span>{' '}
+                    {followerStats.followerCount === 1 ? 'follower' : 'followers'}
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-zinc-500 cursor-not-allowed" title="This user's followers list is private">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span>Private followers</span>
+                  </div>
+                )}
+                
                 <span>•</span>
-                <button
-                  onClick={() => setShowFollowersModal('following')}
-                  className="hover:text-white transition-colors"
-                >
-                  <span className="font-semibold text-white">{followerStats.followingCount}</span> following
-                </button>
+                
+                {followerStats.followingVisible ? (
+                  <button
+                    onClick={handleFollowingClick}
+                    className="hover:text-white transition-colors"
+                  >
+                    <span className="font-semibold text-white">{followerStats.followingCount}</span> following
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-zinc-500 cursor-not-allowed" title="This user's following list is private">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span>Private following</span>
+                  </div>
+                )}
+                
                 <span>•</span>
                 <span>{playlists.length} {playlists.length === 1 ? 'playlist' : 'playlists'}</span>
               </div>
