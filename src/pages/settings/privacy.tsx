@@ -1,0 +1,189 @@
+// src/pages/settings/privacy.tsx
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import Navbar from '@/components/Navbar';
+import Loading from '@/components/Loading';
+import { SettingsService, UserSettings } from '@/services/settings-service';
+
+export default function PrivacySettingsPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+  
+  const [settings, setSettings] = useState<UserSettings>({
+    followers_public: true,
+    following_public: true,
+    playlists_default_public: true,
+    show_activity: true,
+  });
+  
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    let mounted = true;
+
+    const loadSettings = async () => {
+      setLoading(true);
+      try {
+        const data = await SettingsService.getUserSettings(user.id);
+        if (mounted && data) {
+          setSettings(data);
+        }
+      } catch (err) {
+        console.error('Error loading settings:', err);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadSettings();
+
+    return () => {
+      mounted = false;
+    };
+  }, [user]);
+
+  if (authLoading || !user) {
+    return <Loading fullScreen text="Loading..." />;
+  }
+
+  const handleSave = async () => {
+    setError(null);
+    setSuccess(false);
+    setSaving(true);
+
+    try {
+      await SettingsService.updateUserSettings(user.id, settings);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleSetting = (key: keyof UserSettings) => {
+    setSettings(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">
+      <Navbar />
+
+      <main className="max-w-4xl mx-auto px-6 py-12">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-sm text-zinc-500 mb-8">
+          <Link href="/settings" className="hover:text-white transition-colors">
+            Settings
+          </Link>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          <span className="text-white">Privacy</span>
+        </div>
+
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-3">Privacy Settings</h1>
+          <p className="text-zinc-400">Control who can see your information and activity</p>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-12">
+            <Loading text="Loading privacy settings..." />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="bg-zinc-900/50 rounded-lg p-6 border border-zinc-800">
+              <h2 className="text-xl font-bold mb-6">Social Privacy</h2>
+
+              <div className="space-y-4">
+                {/* Social Connections Public */}
+                <div className="flex items-start justify-between p-4 bg-zinc-800/50 rounded-lg border border-zinc-800">
+                  <div className="flex-1 pr-4">
+                    <label htmlFor="followers_public" className="text-base font-medium text-zinc-200 cursor-pointer block mb-1">
+                      Public Social Connections
+                    </label>
+                    <p className="text-sm text-zinc-500">
+                      When enabled, anyone can see your followers and who you follow. When disabled, only you can see this information.
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                    <input
+                      id="followers_public"
+                      type="checkbox"
+                      checked={settings.followers_public}
+                      onChange={() => {
+                        const newValue = !settings.followers_public;
+                        setSettings(prev => ({
+                          ...prev,
+                          followers_public: newValue,
+                          following_public: newValue
+                        }));
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-zinc-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Messages */}
+            {error && (
+              <div className="p-4 bg-red-950/50 border border-red-900/50 rounded-lg text-red-400 text-sm flex items-start gap-2">
+                <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{error}</span>
+              </div>
+            )}
+
+            {success && (
+              <div className="p-4 bg-green-950/50 border border-green-900/50 rounded-lg text-green-400 text-sm flex items-start gap-2">
+                <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Privacy settings saved successfully!</span>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-6 py-3 bg-white text-black rounded-lg font-semibold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+              <Link
+                href="/settings"
+                className="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Cancel
+              </Link>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

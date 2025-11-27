@@ -150,7 +150,7 @@ export default function PublicProfilePage() {
             <div className="flex items-center gap-2">
               {isOwnProfile ? (
                 <Link
-                  href="/profile"
+                  href="/settings/account"
                   className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-all backdrop-blur-sm border border-white/10"
                 >
                   Edit Profile

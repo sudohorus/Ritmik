@@ -70,8 +70,9 @@ export default function UserMenu() {
               View Profile
             </Link>
           )}
+          
           <Link
-            href="/profile"
+            href="/settings"
             onClick={() => setIsOpen(false)}
             className="w-full px-4 py-3 text-left text-sm text-zinc-300 hover:bg-zinc-800 transition-colors flex items-center gap-2"
           >
