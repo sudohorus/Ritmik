@@ -80,6 +80,7 @@ export class FollowerService {
         isFollowing,
       };
     } catch (err) {
+      console.error('Error fetching follower stats:', err);
       return {
         followerCount: 0,
         followingCount: 0,
@@ -105,6 +106,7 @@ export class FollowerService {
       .order('created_at', { ascending: false });
 
     if (error) {
+      console.error('Error fetching followers:', error);
       throw error;
     }
 
@@ -136,6 +138,7 @@ export class FollowerService {
       .order('created_at', { ascending: false });
 
     if (error) {
+      console.error('Error fetching following:', error);
       throw error;
     }
 
@@ -152,21 +155,30 @@ export class FollowerService {
 
   static async getFollowingPlaylists(userId: string) {
     try {
+      console.log('[FollowerService] Getting following playlists for user:', userId);
+      
+      // First, get all users that the current user is following
       const { data: followingData, error: followingError } = await supabase
         .from('followers')
         .select('following_id')
         .eq('follower_id', userId);
 
       if (followingError) {
+        console.error('[FollowerService] Error fetching following:', followingError);
         throw followingError;
       }
 
+      console.log('[FollowerService] Following data:', followingData);
+
       if (!followingData || followingData.length === 0) {
+        console.log('[FollowerService] User is not following anyone');
         return [];
       }
 
       const followingIds = followingData.map(f => f.following_id);
+      console.log('[FollowerService] Following user IDs:', followingIds);
 
+      // Then, get all public playlists from those users
       const { data: playlistsData, error: playlistsError } = await supabase
         .from('playlists')
         .select(`
@@ -181,14 +193,18 @@ export class FollowerService {
         .in('user_id', followingIds)
         .eq('is_public', true)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (playlistsError) {
+        console.error('[FollowerService] Error fetching playlists:', playlistsError);
         throw playlistsError;
       }
 
+      console.log('[FollowerService] Found playlists:', playlistsData?.length || 0);
+
       return playlistsData || [];
     } catch (err) {
+      console.error('[FollowerService] Unexpected error:', err);
       return [];
     }
   }

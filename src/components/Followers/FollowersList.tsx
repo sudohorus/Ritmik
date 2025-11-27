@@ -30,11 +30,12 @@ export default function FollowersList({ isOpen, onClose, userId, type }: Followe
           ? await FollowerService.getFollowers(userId)
           : await FollowerService.getFollowing(userId);
         
+        
         if (mounted) {
           setUsers(data);
         }
       } catch (err) {
-        console.error('Error loading users:', err);
+
       } finally {
         if (mounted) {
           setLoading(false);
@@ -67,6 +68,14 @@ export default function FollowersList({ isOpen, onClose, userId, type }: Followe
     if (diffDays < 30) return `Joined ${diffDays} days ago`;
     if (diffDays < 365) return `Joined ${Math.floor(diffDays / 30)} months ago`;
     return `Joined ${date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
+  };
+
+  const handleFollowChange = (targetUserId: string, isNowFollowing: boolean) => {
+    if (type === 'following' && 
+        currentUser?.id === userId && 
+        !isNowFollowing) {
+      setUsers(prev => prev.filter(u => u.id !== targetUserId));
+    }
   };
 
   return (
@@ -182,11 +191,7 @@ export default function FollowersList({ isOpen, onClose, userId, type }: Followe
                           <FollowButton 
                             userId={user.id} 
                             username={user.username || undefined}
-                            onFollowChange={(isFollowing) => {
-                              if (!isFollowing && type === 'following') {
-                                setUsers(prev => prev.filter(u => u.id !== user.id));
-                              }
-                            }}
+                            onFollowChange={(isFollowing) => handleFollowChange(user.id, isFollowing)}
                           />
                         </div>
                       )}

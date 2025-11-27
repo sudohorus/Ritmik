@@ -16,7 +16,7 @@ export default function FollowButton({ userId, username, onFollowChange }: Follo
     if (!loading && onFollowChange) {
       onFollowChange(stats.isFollowing);
     }
-  }, [stats.isFollowing, loading, onFollowChange]);
+  }, [stats.isFollowing, loading]);
 
   if (!user || user.id === userId) {
     return null;
