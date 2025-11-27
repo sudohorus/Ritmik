@@ -24,6 +24,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import Navbar from '@/components/Navbar';
 
 export default function PlaylistPage() {
   const router = useRouter();
@@ -108,26 +109,7 @@ export default function PlaylistPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-32">
-      <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-2xl font-bold tracking-tight hover:text-zinc-300 transition-colors mr-8">
-              Ritmik
-            </Link>
-            {user && (
-              <nav className='flex items-center gap-6'>
-                <Link href="/playlists" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
-                  My Playlists
-                </Link>
-                <Link href="/explore" className="text-sm font-medium text-white">
-                  Explore
-                </Link>
-              </nav>
-            )}
-          </div>
-          {user && <UserMenu />}
-        </div>
-      </header>
+      <Navbar />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {loading && !playlist && !error && (

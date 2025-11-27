@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePublicPlaylists } from '@/hooks/playlists/usePublicPlaylists';
 import UserMenu from '@/components/Auth/UserMenu';
 import Loading from '@/components/Loading';
+import Navbar from '@/components/Navbar';
 
 export default function ExplorePage() {
   const { user } = useAuth();
@@ -12,41 +13,7 @@ export default function ExplorePage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">
-      <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-2xl font-bold tracking-tight hover:text-zinc-300 transition-colors mr-8">
-              Ritmik
-            </Link>
-            {user && (
-              <nav className='flex items-center gap-6'>
-                <Link href="/playlists" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
-                  My Playlists
-                </Link>
-                <Link href="/following" className="text-sm font-medium text-zinc-400">
-                Following
-                </Link>
-                <Link href="/explore" className="text-sm font-medium text-white">
-                  Explore
-                </Link>
-              </nav>
-            )}
-          </div>
-          {user ? (
-            <UserMenu />
-          ) : (
-            <div className="flex items-center gap-4">
-              <Link href="/login" className="text-sm text-zinc-400 hover:text-white transition-colors">
-                Login
-              </Link>
-              <Link href="/signup" className="px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-zinc-200 transition-colors">
-                Sign Up
-              </Link>
-            </div>
-          )}
-        </div>
-      </header>
-
+      <Navbar />
       <main className="max-w-7xl mx-auto px-6 py-12">
         <div className="mb-12">
           <h1 className="text-4xl font-bold mb-3">Explore Public Playlists</h1>

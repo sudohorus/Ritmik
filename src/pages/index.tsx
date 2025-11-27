@@ -6,6 +6,7 @@ import ErrorMessage from '@/components/ErrorMessage';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import UserMenu from '@/components/Auth/UserMenu';
+import Navbar from '@/components/Navbar';
 
 export default function Home() {
   const { 
@@ -27,48 +28,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">
-      <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold tracking-tight mr-8">Ritmik</h1>
-            {user && (
-              <nav className="flex items-center gap-6">
-                <Link href="/playlists" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
-                  My Playlists
-                </Link>
-                <Link href="/following" className="text-sm font-medium text-zinc-400">
-                Following
-                </Link>
-                <Link href="/explore" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
-                  Explore
-                </Link>
-              </nav>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {user ? (
-              <UserMenu />
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/signup"
-                  className="px-4 py-2 bg-white hover:bg-zinc-200 text-black rounded-lg font-medium transition-colors text-sm"
-                >
-                  Sign Up
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
-
+      <Navbar />
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-8">
           <div className="flex gap-3">

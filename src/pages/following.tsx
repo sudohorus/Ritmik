@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FollowerService } from '@/services/follower-service';
 import UserMenu from '@/components/Auth/UserMenu';
 import Loading from '@/components/Loading';
+import Navbar from '@/components/Navbar';
 
 export default function FollowingPage() {
   const { user, loading: authLoading } = useAuth();
@@ -51,27 +52,7 @@ export default function FollowingPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">
-      <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-2xl font-bold tracking-tight hover:text-zinc-300 transition-colors mr-8">
-              Ritmik
-            </Link>
-            <nav className="flex items-center gap-6">
-              <Link href="/playlists" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
-                My Playlists
-              </Link>
-              <Link href="/following" className="text-sm font-medium text-white">
-                Following
-              </Link>
-              <Link href="/explore" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
-                Explore
-              </Link>
-            </nav>
-          </div>
-          <UserMenu />
-        </div>
-      </header>
+      <Navbar />
 
       <main className="max-w-7xl mx-auto px-6 py-12">
         <div className="mb-12">
