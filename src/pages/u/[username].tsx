@@ -4,11 +4,10 @@ import Link from 'next/link';
 import { PublicProfileService, PublicProfile } from '@/services/public-profile-service';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFollowers } from '@/hooks/followers/useFollowers';
-import UserMenu from '@/components/Auth/UserMenu';
+import Navbar from '@/components/Navbar';
 import Loading from '@/components/Loading';
 import FollowButton from '@/components/Followers/FollowButton';
 import FollowersList from '@/components/Followers/FollowersList';
-import Navbar from '@/components/Navbar';
 
 export default function PublicProfilePage() {
   const router = useRouter();
@@ -25,6 +24,11 @@ export default function PublicProfilePage() {
   const { stats: followerStats, refresh: refreshFollowers } = useFollowers(profile?.id);
 
   const handleFollowChange = useCallback(() => {
+    refreshFollowers();
+  }, [refreshFollowers]);
+
+  const handleCloseModal = useCallback(() => {
+    setShowFollowersModal(null);
     refreshFollowers();
   }, [refreshFollowers]);
 
@@ -77,16 +81,7 @@ export default function PublicProfilePage() {
   if (error || !profile) {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">
-        <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/" className="text-2xl font-bold tracking-tight hover:text-zinc-300 transition-colors mr-8">
-                Ritmik
-              </Link>
-            </div>
-            {currentUser && <UserMenu />}
-          </div>
-        </header>
+        <Navbar />
 
         <main className="max-w-4xl mx-auto px-6 py-12">
           <div className="text-center">
@@ -214,7 +209,7 @@ export default function PublicProfilePage() {
 
       <FollowersList
         isOpen={showFollowersModal !== null}
-        onClose={() => setShowFollowersModal(null)}
+        onClose={handleCloseModal}
         userId={profile.id}
         type={showFollowersModal || 'followers'}
       />
