@@ -11,54 +11,106 @@ CREATE TABLE IF NOT EXISTS public.playlist_tracks (
   added_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create indexes for faster queries
-CREATE INDEX idx_playlist_tracks_playlist_id ON public.playlist_tracks(playlist_id);
-CREATE INDEX idx_playlist_tracks_position ON public.playlist_tracks(playlist_id, position);
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_playlist_tracks_playlist_id 
+  ON public.playlist_tracks(playlist_id);
 
--- Enable Row Level Security
+CREATE INDEX IF NOT EXISTS idx_playlist_tracks_position 
+  ON public.playlist_tracks(playlist_id, position);
+
+-- Enable RLS
 ALTER TABLE public.playlist_tracks ENABLE ROW LEVEL SECURITY;
 
+
+
 -- Users can view tracks from public playlists and their own playlists
-CREATE POLICY "Users can view playlist tracks"
-  ON public.playlist_tracks FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.playlists
-      WHERE playlists.id = playlist_tracks.playlist_id
-      AND (playlists.is_public = true OR playlists.user_id = auth.uid())
-    )
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE policyname = 'Users can view playlist tracks'
+      AND tablename = 'playlist_tracks'
+  ) THEN
+    CREATE POLICY "Users can view playlist tracks"
+      ON public.playlist_tracks FOR SELECT
+      USING (
+        EXISTS (
+          SELECT 1 
+          FROM public.playlists
+          WHERE public.playlists.id = public.playlist_tracks.playlist_id
+          AND (public.playlists.is_public = true OR public.playlists.user_id = auth.uid())
+        )
+      );
+  END IF;
+END $$;
 
 -- Users can add tracks to their own playlists
-CREATE POLICY "Users can add tracks to own playlists"
-  ON public.playlist_tracks FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.playlists
-      WHERE playlists.id = playlist_tracks.playlist_id
-      AND playlists.user_id = auth.uid()
-    )
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE policyname = 'Users can add tracks to own playlists'
+      AND tablename = 'playlist_tracks'
+  ) THEN
+    CREATE POLICY "Users can add tracks to own playlists"
+      ON public.playlist_tracks FOR INSERT
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 
+          FROM public.playlists
+          WHERE public.playlists.id = public.playlist_tracks.playlist_id
+          AND public.playlists.user_id = auth.uid()
+        )
+      );
+  END IF;
+END $$;
 
 -- Users can update tracks in their own playlists
-CREATE POLICY "Users can update tracks in own playlists"
-  ON public.playlist_tracks FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.playlists
-      WHERE playlists.id = playlist_tracks.playlist_id
-      AND playlists.user_id = auth.uid()
-    )
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE policyname = 'Users can update tracks in own playlists'
+      AND tablename = 'playlist_tracks'
+  ) THEN
+    CREATE POLICY "Users can update tracks in own playlists"
+      ON public.playlist_tracks FOR UPDATE
+      USING (
+        EXISTS (
+          SELECT 1 
+          FROM public.playlists
+          WHERE public.playlists.id = public.playlist_tracks.playlist_id
+          AND public.playlists.user_id = auth.uid()
+        )
+      )
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 
+          FROM public.playlists
+          WHERE public.playlists.id = public.playlist_tracks.playlist_id
+          AND public.playlists.user_id = auth.uid()
+        )
+      );
+  END IF;
+END $$;
 
 -- Users can delete tracks from their own playlists
-CREATE POLICY "Users can delete tracks from own playlists"
-  ON public.playlist_tracks FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.playlists
-      WHERE playlists.id = playlist_tracks.playlist_id
-      AND playlists.user_id = auth.uid()
-    )
-  );
-
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE policyname = 'Users can delete tracks from own playlists'
+      AND tablename = 'playlist_tracks'
+  ) THEN
+    CREATE POLICY "Users can delete tracks from own playlists"
+      ON public.playlist_tracks FOR DELETE
+      USING (
+        EXISTS (
+          SELECT 1 
+          FROM public.playlists
+          WHERE public.playlists.id = public.playlist_tracks.playlist_id
+          AND public.playlists.user_id = auth.uid()
+        )
+      );
+  END IF;
+END $$;

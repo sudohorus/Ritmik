@@ -1,5 +1,5 @@
 -- Create a table for public profiles
-create table users (
+create table if not exists public.users (
   id uuid references auth.users on delete cascade not null primary key,
   email text unique,
   username text unique,
@@ -9,11 +9,36 @@ create table users (
   updated_at timestamp with time zone default now() not null
 );
 
--- Set up Row Level Security (RLS)
-alter table users enable row level security;
+-- Auto-update updated_at column
+create or replace function public.update_updated_at_column()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
 
-create policy "Public profiles are viewable by everyone." on users for select using (true);
+create trigger set_timestamp
+before update on public.users
+for each row
+execute function public.update_updated_at_column();
 
-create policy "Users can insert their own profile." on users for insert with check (auth.uid() = id);
+-- Enable Row Level Security
+alter table public.users enable row level security;
 
-create policy "Users can update own profile." on users for update using (auth.uid() = id);
+-- Policies
+create policy "Public profiles are viewable by everyone."
+on public.users
+for select
+using (true);
+
+create policy "Users can insert their own profile."
+on public.users
+for insert
+with check (auth.uid() = id);
+
+create policy "Users can update own profile."
+on public.users
+for update
+using (auth.uid() = id)
+with check (auth.uid() = id);

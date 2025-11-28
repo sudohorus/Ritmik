@@ -8,46 +8,87 @@ CREATE TABLE IF NOT EXISTS public.followers (
   CHECK (follower_id != following_id)
 );
 
--- Create indexes for faster queries
-CREATE INDEX idx_followers_follower_id ON public.followers(follower_id);
-CREATE INDEX idx_followers_following_id ON public.followers(following_id);
-CREATE INDEX idx_followers_created_at ON public.followers(created_at DESC);
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_followers_follower_id ON public.followers(follower_id);
+CREATE INDEX IF NOT EXISTS idx_followers_following_id ON public.followers(following_id);
+CREATE INDEX IF NOT EXISTS idx_followers_created_at ON public.followers(created_at DESC);
 
--- Enable Row Level Security
+-- Enable RLS
 ALTER TABLE public.followers ENABLE ROW LEVEL SECURITY;
 
--- Anyone can view followers relationships
-CREATE POLICY "Anyone can view followers"
-  ON public.followers FOR SELECT
-  USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE policyname = 'Anyone can view followers' 
+      AND tablename = 'followers'
+  ) THEN
+    CREATE POLICY "Anyone can view followers"
+      ON public.followers FOR SELECT
+      USING (true);
+  END IF;
+END $$;
 
--- Users can follow other users (automatically set follower_id)
-CREATE POLICY "Users can follow others"
-  ON public.followers FOR INSERT
-  WITH CHECK (auth.uid() = follower_id AND follower_id != following_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE policyname = 'Users can follow others' 
+      AND tablename = 'followers'
+  ) THEN
+    CREATE POLICY "Users can follow others"
+      ON public.followers FOR INSERT
+      WITH CHECK (auth.uid() = follower_id AND follower_id != following_id);
+  END IF;
+END $$;
 
--- Users can unfollow (delete their own follows)
-CREATE POLICY "Users can unfollow"
-  ON public.followers FOR DELETE
-  USING (auth.uid() = follower_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE policyname = 'Users can unfollow' 
+      AND tablename = 'followers'
+  ) THEN
+    CREATE POLICY "Users can unfollow"
+      ON public.followers FOR DELETE
+      USING (auth.uid() = follower_id);
+  END IF;
+END $$;
 
--- Create function to get follower count
-CREATE OR REPLACE FUNCTION get_follower_count(user_id UUID)
-RETURNS INTEGER AS $$
-  SELECT COUNT(*)::INTEGER FROM public.followers WHERE following_id = user_id;
-$$ LANGUAGE SQL STABLE;
 
--- Create function to get following count
-CREATE OR REPLACE FUNCTION get_following_count(user_id UUID)
-RETURNS INTEGER AS $$
-  SELECT COUNT(*)::INTEGER FROM public.followers WHERE follower_id = user_id;
-$$ LANGUAGE SQL STABLE;
+-- (fixed search_path)
+CREATE OR REPLACE FUNCTION public.get_follower_count(user_id UUID)
+RETURNS INTEGER
+LANGUAGE sql
+STABLE
+SET search_path = public
+AS $$
+  SELECT COUNT(*)::INTEGER 
+  FROM public.followers 
+  WHERE following_id = user_id;
+$$;
 
--- Create function to check if user A follows user B
-CREATE OR REPLACE FUNCTION is_following(follower UUID, following UUID)
-RETURNS BOOLEAN AS $$
+CREATE OR REPLACE FUNCTION public.get_following_count(user_id UUID)
+RETURNS INTEGER
+LANGUAGE sql
+STABLE
+SET search_path = public
+AS $$
+  SELECT COUNT(*)::INTEGER 
+  FROM public.followers 
+  WHERE follower_id = user_id;
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_following(follower UUID, following UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SET search_path = public
+AS $$
   SELECT EXISTS(
-    SELECT 1 FROM public.followers 
-    WHERE follower_id = follower AND following_id = following
+    SELECT 1 
+    FROM public.followers 
+    WHERE follower_id = follower 
+      AND following_id = following
   );
-$$ LANGUAGE SQL STABLE;
+$$;
