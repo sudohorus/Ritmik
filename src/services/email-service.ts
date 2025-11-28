@@ -95,6 +95,8 @@ const loginEmailTemplate = (location: string, device: string, time: string) => (
         .info-label {
           color: #71717a;
           font-size: 14px;
+          display: inline-block;
+          width: 90px;
         }
 
         .info-value {
@@ -156,15 +158,15 @@ const loginEmailTemplate = (location: string, device: string, time: string) => (
 
           <div class="info-card">
             <div class="info-row">
-              <span class="info-label">Time: </span>
+              <span class="info-label">Time:</span>
               <span class="info-value">${time}</span>
             </div>
             <div class="info-row">
-              <span class="info-label">Device: </span>
+              <span class="info-label">Device:</span>
               <span class="info-value">${device}</span>
             </div>
             <div class="info-row">
-              <span class="info-label">Location: </span>
+              <span class="info-label">IP:</span>
               <span class="info-value">${location}</span>
             </div>
           </div>

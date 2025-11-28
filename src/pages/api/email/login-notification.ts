@@ -21,25 +21,13 @@ export default async function handler(
       req.socket.remoteAddress ||
       '0.0.0.0';
 
-    console.log('IP detectado:', ip);
-
     let userLocation = 'Unknown location';
-
-    try {
-      const response = await fetch(`https://ipapi.co/${ip}/json/`);
-      const data = await response.json();
-
-      if (data && data.city) {
-        userLocation = `${data.city}, ${data.region}, ${data.country_name}`;
-      }
-    } catch (err) {
-    }
 
     const userDevice = device || 'Unknown device';
 
     await EmailService.sendLoginNotificationEmail(
       email,
-      userLocation,
+      ip,
       userDevice
     );
 
