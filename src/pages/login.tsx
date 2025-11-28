@@ -22,6 +22,21 @@ export default function Login() {
       setError(error.message || 'Failed to sign in');
       setLoading(false);
     } else {
+      const device = navigator.userAgent;
+
+      const location = "Unknown location";
+
+      await fetch("/api/email/login-notification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email,
+          location,
+          device
+        })
+      });
       router.push('/');
     }
   };
