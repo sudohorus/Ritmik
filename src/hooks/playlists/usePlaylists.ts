@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlaylistService } from '@/services/playlist-service';
 import { Playlist, CreatePlaylistData } from '@/types/playlist';
@@ -11,12 +11,16 @@ export function usePlaylists() {
   const mountedRef = useRef(true);
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isFetchingRef = useRef(false);
+  const isCreatingRef = useRef(false); 
 
   useEffect(() => {
     mountedRef.current = true;
     
     return () => {
       mountedRef.current = false;
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -42,8 +46,9 @@ export function usePlaylists() {
       isFetchingRef.current = false;
       if (mountedRef.current) {
         setLoading(false);
+        setError('Request timeout - please refresh the page');
       }
-    }, 5000);
+    }, 10000);
 
     PlaylistService.getUserPlaylists(userId)
       .then(data => {
@@ -58,7 +63,8 @@ export function usePlaylists() {
         if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
         isFetchingRef.current = false;
         if (mountedRef.current) {
-          setError(err instanceof Error ? err.message : 'Failed to fetch playlists');
+          const errorMsg = err instanceof Error ? err.message : 'Failed to fetch playlists';
+          setError(errorMsg);
         }
       })
       .finally(() => {
@@ -73,18 +79,52 @@ export function usePlaylists() {
   }, [user?.id]);
 
   const createPlaylist = async (data: CreatePlaylistData) => {
-    if (!user) throw new Error('User not authenticated');
-    await PlaylistService.createPlaylist(user.id, data);
-    const updated = await PlaylistService.getUserPlaylists(user.id);
-    if (mountedRef.current) {
-      setPlaylists(updated);
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    if (isCreatingRef.current) {
+      throw new Error('Please wait for the current operation to complete');
+    }
+
+    isCreatingRef.current = true;
+
+    try {
+      await PlaylistService.createPlaylist(user.id, data);
+      
+      let retries = 3;
+      let updated: Playlist[] | null = null;
+      
+      while (retries > 0 && !updated) {
+        try {
+          updated = await PlaylistService.getUserPlaylists(user.id);
+          break;
+        } catch (err) {
+          retries--;
+          if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } else {
+            throw err;
+          }
+        }
+      }
+      
+      if (mountedRef.current && updated) {
+        setPlaylists(updated);
+      }
+    } catch (err) {
+      throw err;
+    } finally {
+      isCreatingRef.current = false;
     }
   };
 
   const updatePlaylist = async (playlistId: string, data: Partial<CreatePlaylistData>) => {
     if (!user) throw new Error('User not authenticated');
+    
     await PlaylistService.updatePlaylist(playlistId, data);
     const updated = await PlaylistService.getUserPlaylists(user.id);
+    
     if (mountedRef.current) {
       setPlaylists(updated);
     }
@@ -92,6 +132,7 @@ export function usePlaylists() {
 
   const deletePlaylist = async (playlistId: string) => {
     await PlaylistService.deletePlaylist(playlistId);
+    
     if (mountedRef.current) {
       setPlaylists(prev => prev.filter(p => p.id !== playlistId));
     }

@@ -58,11 +58,14 @@ export function usePlaylistDetails(playlistId: string | undefined) {
         setLoading(false);
         setError('Request timeout - please refresh the page');
       }
-    }, 5000);
+    }, 10000); 
 
     const load = async () => {
       try {
-        const foundPlaylist = await PlaylistService.getPlaylistById(playlistId);
+        const [foundPlaylist, playlistTracks] = await Promise.all([
+          PlaylistService.getPlaylistById(playlistId),
+          PlaylistService.getPlaylistTracks(playlistId)
+        ]);
 
         if (!mountedRef.current || loadedIdRef.current !== playlistId) {
           if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
@@ -88,8 +91,6 @@ export function usePlaylistDetails(playlistId: string | undefined) {
           return;
         }
 
-        const playlistTracks = await PlaylistService.getPlaylistTracks(playlistId);
-
         if (mountedRef.current && loadedIdRef.current === playlistId) {
           if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
           setPlaylist(foundPlaylist);
@@ -99,7 +100,8 @@ export function usePlaylistDetails(playlistId: string | undefined) {
       } catch (err) {
         if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
         if (mountedRef.current && loadedIdRef.current === playlistId) {
-          setError(err instanceof Error ? err.message : 'Failed to load playlist');
+          const errorMsg = err instanceof Error ? err.message : 'Failed to load playlist';
+          setError(errorMsg);
           setPlaylist(null);
           setTracks([]);
         }
@@ -122,7 +124,9 @@ export function usePlaylistDetails(playlistId: string | undefined) {
 
   const removeTrack = async (videoId: string) => {
     if (!playlistId || !user) throw new Error('Not authorized');
+    
     await PlaylistService.removeTrackFromPlaylist(playlistId, videoId);
+    
     if (mountedRef.current) {
       setTracks(prev => prev.filter(t => t.video_id !== videoId));
     }
@@ -130,7 +134,9 @@ export function usePlaylistDetails(playlistId: string | undefined) {
 
   const updatePlaylist = async (data: Partial<CreatePlaylistData>) => {
     if (!playlistId || !user) throw new Error('Not authorized');
+    
     const updated = await PlaylistService.updatePlaylist(playlistId, data);
+    
     if (mountedRef.current) {
       setPlaylist(updated);
     }

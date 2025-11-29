@@ -13,22 +13,37 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
   const [isPublic, setIsPublic] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    let active = true;
+    
+    if (isSubmitting || loading) {
+      return;
+    }
 
+    let active = true;
+    setIsSubmitting(true);
     setLoading(true);
     setError(null);
 
     try {
-      await onCreate({ 
+      const createPromise = onCreate({ 
         name, 
         description: description || undefined,
         is_public: isPublic,
         cover_image_url: coverImage || undefined
       });
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout - please try again')), 15000)
+      );
+
+      await Promise.race([createPromise, timeoutPromise]);
+
       if (!active) return;
+
       setName('');
       setDescription('');
       setCoverImage('');
@@ -36,13 +51,30 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
       onClose();
     } catch (err) {
       if (active) {
-        setError(err instanceof Error ? err.message : 'Failed to create playlist');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to create playlist';
+        
+        if (errorMessage.includes('timeout')) {
+          setError('Connection timeout. Please check your internet and try again.');
+        } else if (errorMessage.includes('network')) {
+          setError('Network error. Please check your connection and try again.');
+        } else if (errorMessage.includes('permission')) {
+          setError('Permission denied. Please try logging out and back in.');
+        } else {
+          setError(errorMessage);
+        }
       }
     } finally {
       if (active) {
         setLoading(false);
+        setTimeout(() => {
+          setIsSubmitting(false);
+        }, 1000);
       }
     }
+
+    return () => {
+      active = false;
+    };
   };
 
   if (!isOpen) return null;
@@ -61,7 +93,8 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
             <h2 className="text-2xl font-bold text-white">Create Playlist</h2>
             <button
               onClick={onClose}
-              className="text-zinc-400 hover:text-white transition-colors p-1 hover:bg-zinc-800 rounded-lg"
+              disabled={loading}
+              className="text-zinc-400 hover:text-white transition-colors p-1 hover:bg-zinc-800 rounded-lg disabled:opacity-50"
               aria-label="Close"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,6 +118,7 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
                 autoFocus
                 placeholder="My awesome playlist"
                 maxLength={100}
+                disabled={loading}
               />
             </div>
 
@@ -100,6 +134,7 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
                 rows={3}
                 placeholder="Describe your playlist..."
                 maxLength={500}
+                disabled={loading}
               />
             </div>
 
@@ -114,6 +149,7 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
                 onChange={(e) => setCoverImage(e.target.value)}
                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 focus:ring-2 focus:ring-zinc-600/50 transition-all"
                 placeholder="https://example.com/image.jpg"
+                disabled={loading}
               />
             </div>
 
@@ -133,8 +169,9 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
                   checked={isPublic}
                   onChange={(e) => setIsPublic(e.target.checked)}
                   className="sr-only peer"
+                  disabled={loading}
                 />
-                <div className="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-zinc-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-zinc-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-disabled:opacity-50"></div>
               </label>
             </div>
 
@@ -143,7 +180,15 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
                 <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>{error}</span>
+                <div>
+                  <div className="font-medium mb-1">Error creating playlist</div>
+                  <div>{error}</div>
+                  {error.includes('timeout') && (
+                    <div className="mt-2 text-xs">
+                      Tip: Try using a shorter name/description or check your internet connection
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -151,16 +196,24 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-3 bg-zinc-800 text-zinc-300 rounded-lg font-medium hover:bg-zinc-700 transition-colors"
+                disabled={loading}
+                className="flex-1 py-3 bg-zinc-800 text-zinc-300 rounded-lg font-medium hover:bg-zinc-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={loading || !name.trim()}
-                className="flex-1 py-3 bg-white text-black rounded-lg font-semibold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                disabled={loading || !name.trim() || isSubmitting}
+                className="flex-1 py-3 bg-white text-black rounded-lg font-semibold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white flex items-center justify-center gap-2"
               >
-                {loading ? 'Creating...' : 'Create'}
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create'
+                )}
               </button>
             </div>
           </form>
@@ -169,4 +222,3 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
     </div>
   );
 }
-

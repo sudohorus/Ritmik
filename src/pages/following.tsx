@@ -146,11 +146,7 @@ export default function FollowingPage() {
                     <p className="text-sm text-zinc-400 mb-3 line-clamp-2">{playlist.description}</p>
                   )}
                   <div className="text-xs text-zinc-500">
-                    {new Date(playlist.created_at).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
+                    {playlist.track_count || 0} {playlist.track_count === 1 ? 'track' : 'tracks'}
                   </div>
                 </Link>
               );

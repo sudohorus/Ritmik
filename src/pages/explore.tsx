@@ -2,9 +2,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePublicPlaylists } from '@/hooks/playlists/usePublicPlaylists';
-import UserMenu from '@/components/Auth/UserMenu';
-import Loading from '@/components/Loading';
 import Navbar from '@/components/Navbar';
+import Loading from '@/components/Loading';
 
 export default function ExplorePage() {
   const { user } = useAuth();
@@ -108,4 +107,3 @@ export default function ExplorePage() {
     </div>
   );
 }
-

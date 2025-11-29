@@ -15,7 +15,10 @@ export interface FollowerUser {
   display_name: string | null;
   avatar_url: string | null;
   created_at: string;
+  isFollowedByCurrentUser?: boolean; 
 }
+
+
 
 export class FollowerService {
   static async followUser(followingId: string): Promise<void> {
@@ -47,9 +50,7 @@ export class FollowerService {
       .eq('follower_id', user.id)
       .eq('following_id', followingId);
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
   }
 
   static async getFollowerStats(userId: string, currentUserId?: string): Promise<FollowerStats> {
@@ -123,7 +124,7 @@ export class FollowerService {
       .from('followers')
       .select(`
         created_at,
-        users!followers_follower_id_fkey (
+        follower_user:users!followers_follower_id_fkey (
           id,
           username,
           display_name,
@@ -134,19 +135,36 @@ export class FollowerService {
       .eq('following_id', userId)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      throw error;
+    if (error) throw error;
+
+    const followerUsers = (data || [])
+      .filter((item: any) => item.follower_user)
+      .map((item: any) => ({
+        id: item.follower_user.id,
+        username: item.follower_user.username,
+        display_name: item.follower_user.display_name,
+        avatar_url: item.follower_user.avatar_url,
+        created_at: item.follower_user.created_at,
+      }));
+
+    if (currentUserId && followerUsers.length > 0) {
+      const userIds = followerUsers.map(u => u.id);
+      
+      const { data: followData } = await supabase
+        .from('followers')
+        .select('following_id')
+        .eq('follower_id', currentUserId)
+        .in('following_id', userIds);
+
+      const followedIds = new Set((followData || []).map(f => f.following_id));
+
+      return followerUsers.map(user => ({
+        ...user,
+        isFollowedByCurrentUser: followedIds.has(user.id)
+      }));
     }
 
-    return (data || [])
-      .filter((item: any) => item.users)
-      .map((item: any) => ({
-        id: item.users.id,
-        username: item.users.username,
-        display_name: item.users.display_name,
-        avatar_url: item.users.avatar_url,
-        created_at: item.users.created_at,
-      }));
+    return followerUsers;
   }
 
   static async getFollowing(userId: string, currentUserId?: string): Promise<FollowerUser[]> {
@@ -163,7 +181,7 @@ export class FollowerService {
       .from('followers')
       .select(`
         created_at,
-        users!followers_following_id_fkey (
+        following_user:users!followers_following_id_fkey (
           id,
           username,
           display_name,
@@ -174,61 +192,117 @@ export class FollowerService {
       .eq('follower_id', userId)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      throw error;
+    if (error) throw error;
+
+    const followingUsers = (data || [])
+      .filter((item: any) => item.following_user)
+      .map((item: any) => ({
+        id: item.following_user.id,
+        username: item.following_user.username,
+        display_name: item.following_user.display_name,
+        avatar_url: item.following_user.avatar_url,
+        created_at: item.following_user.created_at,
+      }));
+
+    if (currentUserId && followingUsers.length > 0) {
+      const userIds = followingUsers.map(u => u.id);
+      
+      const { data: followData } = await supabase
+        .from('followers')
+        .select('following_id')
+        .eq('follower_id', currentUserId)
+        .in('following_id', userIds);
+
+      const followedIds = new Set((followData || []).map(f => f.following_id));
+
+      return followingUsers.map(user => ({
+        ...user,
+        isFollowedByCurrentUser: followedIds.has(user.id)
+      }));
     }
 
-    return (data || [])
-      .filter((item: any) => item.users)
-      .map((item: any) => ({
-        id: item.users.id,
-        username: item.users.username,
-        display_name: item.users.display_name,
-        avatar_url: item.users.avatar_url,
-        created_at: item.users.created_at,
-      }));
+    return followingUsers;
   }
 
-  static async getFollowingPlaylists(userId: string) {
+  static async getFollowingPlaylists(userId: string): Promise<any[]> {
     try {
       const { data: followingData, error: followingError } = await supabase
         .from('followers')
         .select('following_id')
         .eq('follower_id', userId);
 
-      if (followingError) {
-        throw followingError;
-      }
-
-      if (!followingData || followingData.length === 0) {
-        return [];
-      }
+      if (followingError) throw followingError;
+      if (!followingData || followingData.length === 0) return [];
 
       const followingIds = followingData.map(f => f.following_id);
 
       const { data: playlistsData, error: playlistsError } = await supabase
         .from('playlists')
         .select(`
-          *,
-          users (
+          id,
+          name,
+          description,
+          cover_image_url,
+          created_at,
+          user_id,
+          users!inner (
             id,
             username,
-            display_name,
-            avatar_url
-          )
+            display_name
+          ),
+          playlist_tracks (count)
         `)
         .in('user_id', followingIds)
         .eq('is_public', true)
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (playlistsError) {
-        throw playlistsError;
-      }
+      if (playlistsError) throw playlistsError;
 
-      return playlistsData || [];
+      return (playlistsData || []).map((playlist: any) => ({
+        id: playlist.id,
+        name: playlist.name,
+        description: playlist.description,
+        cover_image_url: playlist.cover_image_url,
+        created_at: playlist.created_at,
+        user_id: playlist.user_id,
+        users: {
+          id: playlist.users.id,
+          username: playlist.users.username,
+          display_name: playlist.users.display_name,
+        },
+        track_count: playlist.playlist_tracks?.[0]?.count || 0,
+      }));
     } catch (err) {
       return [];
     }
+  }
+
+  static async getBulkFollowStatus(
+    currentUserId: string,
+    targetUserIds: string[]
+  ): Promise<Map<string, boolean>> {
+    if (!currentUserId || targetUserIds.length === 0) {
+      return new Map();
+    }
+
+    const { data, error } = await supabase
+      .from('followers')
+      .select('following_id')
+      .eq('follower_id', currentUserId)
+      .in('following_id', targetUserIds);
+
+    if (error) {
+      return new Map();
+    }
+
+    const followedIds = new Set((data || []).map(f => f.following_id));
+    const statusMap = new Map<string, boolean>();
+    
+    targetUserIds.forEach(id => {
+      statusMap.set(id, followedIds.has(id));
+    });
+
+    return statusMap;
   }
 }
