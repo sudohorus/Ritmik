@@ -1,11 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import youtubesearchapi from 'youtube-search-api';
 import { scrapeViewCount } from '@/services/youtube-scraper';
+import { withRateLimit } from '@/middleware/rate-limit';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const result = await youtubesearchapi.GetListByKeyword('popular music', false, 50, [{ type: 'video' }]);
 
@@ -47,5 +45,7 @@ function parseDuration(duration: string): number {
   return parts[0] || 0;
 }
 
-
-
+export default withRateLimit(handler, {
+  interval: 60000,
+  maxRequests: 60
+});

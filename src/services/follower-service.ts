@@ -18,12 +18,14 @@ export interface FollowerUser {
   isFollowedByCurrentUser?: boolean; 
 }
 
-
-
 export class FollowerService {
   static async followUser(followingId: string): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
+
+    if (user.id === followingId) {
+      throw new Error('You cannot follow yourself');
+    }
 
     const { error } = await supabase
       .from('followers')
@@ -226,10 +228,19 @@ export class FollowerService {
 
   static async getFollowingPlaylists(userId: string): Promise<any[]> {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Authentication required');
+      }
+
+      if (user.id !== userId) {
+        throw new Error('Unauthorized: You can only view your own following feed');
+      }
+
       const { data: followingData, error: followingError } = await supabase
         .from('followers')
         .select('following_id')
-        .eq('follower_id', userId);
+        .eq('follower_id', userId); 
 
       if (followingError) throw followingError;
       if (!followingData || followingData.length === 0) return [];
@@ -274,7 +285,7 @@ export class FollowerService {
         track_count: playlist.playlist_tracks?.[0]?.count || 0,
       }));
     } catch (err) {
-      return [];
+      throw err;
     }
   }
 

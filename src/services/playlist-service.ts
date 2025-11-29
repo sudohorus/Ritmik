@@ -3,6 +3,15 @@ import { Playlist, CreatePlaylistData, AddTrackToPlaylistData } from '@/types/pl
 
 export class PlaylistService {
   static async getUserPlaylists(userId: string): Promise<Playlist[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Authentication required');
+    }
+
+    if (user.id !== userId) {
+      throw new Error('Unauthorized: You can only view your own playlists');
+    }
+
     const { data, error } = await supabase
       .from('playlists')
       .select('*')
@@ -37,6 +46,8 @@ export class PlaylistService {
   }
 
   static async getPlaylistById(playlistId: string): Promise<Playlist | null> {
+    const { data: { user } } = await supabase.auth.getUser();
+
     const { data, error } = await supabase
       .from('playlists')
       .select(`
@@ -53,11 +64,26 @@ export class PlaylistService {
       if (error.code === 'PGRST116') return null;
       throw error;
     }
+
+    if (!data.is_public) {
+      if (!user || data.user_id !== user.id) {
+        throw new Error('This playlist is private');
+      }
+    }
     
     return data;
   }
 
   static async createPlaylist(userId: string, playlistData: CreatePlaylistData): Promise<Playlist> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Authentication required');
+    }
+
+    if (user.id !== userId) {
+      throw new Error('Unauthorized: You can only create playlists for yourself');
+    }
+
     const { data, error } = await supabase
       .from('playlists')
       .insert({
@@ -71,13 +97,31 @@ export class PlaylistService {
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
       throw error;
     }
     return data;
   }
 
   static async updatePlaylist(playlistId: string, data: Partial<CreatePlaylistData>): Promise<Playlist> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Authentication required');
+    }
+
+    const { data: existingPlaylist, error: fetchError } = await supabase
+      .from('playlists')
+      .select('user_id')
+      .eq('id', playlistId)
+      .single();
+
+    if (fetchError || !existingPlaylist) {
+      throw new Error('Playlist not found');
+    }
+
+    if (existingPlaylist.user_id !== user.id) {
+      throw new Error('Unauthorized: You can only update your own playlists');
+    }
+
     const updateData: Record<string, any> = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
@@ -96,6 +140,25 @@ export class PlaylistService {
   }
 
   static async deletePlaylist(playlistId: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Authentication required');
+    }
+
+    const { data: existingPlaylist, error: fetchError } = await supabase
+      .from('playlists')
+      .select('user_id')
+      .eq('id', playlistId)
+      .single();
+
+    if (fetchError || !existingPlaylist) {
+      throw new Error('Playlist not found');
+    }
+
+    if (existingPlaylist.user_id !== user.id) {
+      throw new Error('Unauthorized: You can only delete your own playlists');
+    }
+
     const { error } = await supabase
       .from('playlists')
       .delete()
@@ -105,6 +168,24 @@ export class PlaylistService {
   }
 
   static async getPlaylistTracks(playlistId: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data: playlist, error: playlistError } = await supabase
+      .from('playlists')
+      .select('user_id, is_public')
+      .eq('id', playlistId)
+      .single();
+
+    if (playlistError) {
+      throw new Error('Playlist not found');
+    }
+
+    if (!playlist.is_public) {
+      if (!user || playlist.user_id !== user.id) {
+        throw new Error('This playlist is private');
+      }
+    }
+
     const { data, error } = await supabase
       .from('playlist_tracks')
       .select('*')
@@ -116,6 +197,25 @@ export class PlaylistService {
   }
 
   static async addTrackToPlaylist(trackData: AddTrackToPlaylistData): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Authentication required');
+    }
+
+    const { data: playlist, error: fetchError } = await supabase
+      .from('playlists')
+      .select('user_id')
+      .eq('id', trackData.playlist_id)
+      .single();
+
+    if (fetchError || !playlist) {
+      throw new Error('Playlist not found');
+    }
+
+    if (playlist.user_id !== user.id) {
+      throw new Error('Unauthorized: You can only add tracks to your own playlists');
+    }
+
     const tracks = await this.getPlaylistTracks(trackData.playlist_id);
     const nextPosition = tracks.length;
 
@@ -140,6 +240,25 @@ export class PlaylistService {
   }
 
   static async removeTrackFromPlaylist(playlistId: string, trackId: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Authentication required');
+    }
+
+    const { data: playlist, error: fetchError } = await supabase
+      .from('playlists')
+      .select('user_id')
+      .eq('id', playlistId)
+      .single();
+
+    if (fetchError || !playlist) {
+      throw new Error('Playlist not found');
+    }
+
+    if (playlist.user_id !== user.id) {
+      throw new Error('Unauthorized: You can only remove tracks from your own playlists');
+    }
+
     const { error } = await supabase
       .from('playlist_tracks')
       .delete()
@@ -150,6 +269,25 @@ export class PlaylistService {
   }
 
   static async reorderPlaylistTracks(playlistId: string, trackIds: string[]): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Authentication required');
+    }
+
+    const { data: playlist, error: fetchError } = await supabase
+      .from('playlists')
+      .select('user_id')
+      .eq('id', playlistId)
+      .single();
+
+    if (fetchError || !playlist) {
+      throw new Error('Playlist not found');
+    }
+
+    if (playlist.user_id !== user.id) {
+      throw new Error('Unauthorized: You can only reorder your own playlists');
+    }
+
     const updates = trackIds.map((videoId, index) => ({
       playlist_id: playlistId,
       video_id: videoId,
@@ -167,4 +305,3 @@ export class PlaylistService {
     }
   }
 }
-

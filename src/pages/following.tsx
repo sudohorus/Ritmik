@@ -36,7 +36,13 @@ export default function FollowingPage() {
         }
       } catch (err) {
         if (mounted) {
-          setError(err instanceof Error ? err.message : 'Failed to load playlists');
+          const errorMessage = err instanceof Error ? err.message : 'Failed to load playlists';
+          
+          if (errorMessage.includes('Unauthorized') || errorMessage.includes('Authentication required')) {
+            setError('You need to be logged in to view this page');
+          } else {
+            setError(errorMessage);
+          }
         }
       } finally {
         if (mounted) {
@@ -50,7 +56,7 @@ export default function FollowingPage() {
     return () => {
       mounted = false;
     };
-  }, [user]);
+  }, [user]); 
 
   if (authLoading || !user) {
     return <Loading fullScreen text="Loading..." />;
