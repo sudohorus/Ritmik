@@ -51,9 +51,9 @@ export default function TrackCard({ track, playlist }: TrackCardProps) {
           <div onClick={handleClick} className="flex-1 min-w-0">
             <TrackInfo track={track} isPlaying={isCurrentTrack && isPlaying} />
           </div>
-          <div onClick={handleClick}>
+          {/* <div onClick={handleClick}>
             <TrackStats viewCount={track.viewCount} />
-          </div>
+          </div> */}
           {user && (
             <button
               onClick={handleAddToPlaylist}
