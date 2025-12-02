@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { PlayerModeProvider } from "@/contexts/PlayerModeContext";
 import Player from "@/components/Player/Player";
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -40,8 +41,10 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <AuthProvider>
       <PlayerProvider>
-        <Component {...pageProps} />
-        {!hidePlayer && <Player />}
+        <PlayerModeProvider>
+          <Component {...pageProps} />
+          {!hidePlayer && <Player />}
+        </PlayerModeProvider>
       </PlayerProvider>
     </AuthProvider>
   );

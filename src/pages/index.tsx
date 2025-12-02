@@ -32,13 +32,13 @@ export default function Home() {
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-8">
           <div className="flex gap-3">
-            <button
+            {/* <button
               onClick={fetchTrending}
               disabled={loading}
               className="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-800/50 disabled:text-zinc-500 border border-zinc-700 rounded-lg transition-all font-medium text-sm"
-            >
+            > 
               {isTrendingLoading ? 'Loading...' : 'Trending'}
-            </button>
+            </button>*/}
             
             <div className="flex-1">
               <SearchBar onSearch={search} loading={loading} />
