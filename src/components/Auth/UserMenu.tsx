@@ -27,22 +27,24 @@ export default function UserMenu() {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 px-4 py-2 bg-zinc-800/50 hover:bg-zinc-800 rounded-lg transition-colors border border-zinc-700/50"
+        className="flex items-center gap-2 sm:gap-3 px-1.5 py-1 sm:px-3 sm:py-1.5 bg-transparent hover:bg-zinc-800/60 rounded-full transition-colors"
       >
         {user.avatar_url ? (
           <img
             src={user.avatar_url}
             alt={displayName}
-            className="w-9 h-9 rounded-full object-cover shadow-lg border border-zinc-600"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover shadow-md ring-1 ring-zinc-500/60"
           />
         ) : (
-          <div className="w-9 h-9 rounded-full bg-zinc-700 flex items-center justify-center text-white font-semibold text-sm shadow-lg border border-zinc-600">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-zinc-700 flex items-center justify-center text-white font-semibold text-xs sm:text-sm shadow-md ring-1 ring-zinc-500/60">
             {avatarLetter}
           </div>
         )}
-        <span className="text-sm font-medium text-white hidden sm:block">{displayName}</span>
+        <span className="text-xs sm:text-sm font-medium text-white hidden sm:block max-w-[140px] truncate">
+          {displayName}
+        </span>
         <svg
-          className={`w-4 h-4 text-zinc-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -52,7 +54,7 @@ export default function UserMenu() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden z-50">
+        <div className="absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl overflow-hidden z-50">
           <div className="px-4 py-3 border-b border-zinc-800">
             <p className="text-sm font-medium text-white">{displayName}</p>
             <p className="text-xs text-zinc-500 truncate">{user.email}</p>

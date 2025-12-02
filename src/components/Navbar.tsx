@@ -15,73 +15,151 @@ export default function Navbar() {
   };
 
   return (
-    <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-10">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/" 
-            className="text-2xl font-bold tracking-tight hover:text-zinc-300 transition-colors mr-8"
-          >
-            Ritmik
-          </Link>
-          
-          {user && (
-            <nav className="flex items-center gap-6">
-              <Link 
-                href="/playlists" 
-                className={`text-sm font-medium transition-colors ${
-                  isActive('/playlists') 
-                    ? 'text-white' 
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                My Playlists
-              </Link>
-              <Link 
-                href="/following" 
-                className={`text-sm font-medium transition-colors ${
-                  isActive('/following') 
-                    ? 'text-white' 
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                Following
-              </Link>
-              <Link 
-                href="/explore" 
-                className={`text-sm font-medium transition-colors ${
-                  isActive('/explore') 
-                    ? 'text-white' 
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                Explore
-              </Link>
-            </nav>
-          )}
-        </div>
+    <>
+      <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link 
+              href="/" 
+              className="text-2xl font-bold tracking-tight hover:text-zinc-300 transition-colors mr-8"
+            >
+              Ritmik
+            </Link>
+            
+            {user && (
+              <nav className="hidden md:flex items-center gap-6">
+                <Link 
+                  href="/playlists" 
+                  className={`text-sm font-medium transition-colors ${
+                    isActive('/playlists') 
+                      ? 'text-white' 
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  My Playlists
+                </Link>
+                <Link 
+                  href="/following" 
+                  className={`text-sm font-medium transition-colors ${
+                    isActive('/following') 
+                      ? 'text-white' 
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  Following
+                </Link>
+                <Link 
+                  href="/explore" 
+                  className={`text-sm font-medium transition-colors ${
+                    isActive('/explore') 
+                      ? 'text-white' 
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  Explore
+                </Link>
+              </nav>
+            )}
+          </div>
 
-        <div className="flex items-center gap-3">
-          {user ? (
-            <UserMenu />
-          ) : (
-            <>
-              <Link
-                href="/login"
-                className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
-              >
-                Login
-              </Link>
-              <Link
-                href="/signup"
-                className="px-4 py-2 bg-white hover:bg-zinc-200 text-black rounded-lg font-medium transition-colors text-sm"
-              >
-                Sign Up
-              </Link>
-            </>
-          )}
+          <div className="flex items-center gap-3">
+            {user ? (
+              <UserMenu />
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/signup"
+                  className="px-4 py-2 bg-white hover:bg-zinc-200 text-black rounded-lg font-medium transition-colors text-sm"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {user && (
+        <nav className="fixed bottom-0 inset-x-0 md:hidden border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-sm z-20">
+          <div className="max-w-7xl mx-auto px-6 py-2.5 flex items-center justify-between text-[11px] font-medium">
+            <Link
+              href="/playlists"
+              className={`flex flex-col items-center gap-0.5 flex-1 ${
+                isActive('/playlists')
+                  ? 'text-white'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <svg
+                className="w-5 h-5 mb-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 6h10M9 12h10M9 18h4M5 6h.01M5 12h.01M5 18h.01"
+                />
+              </svg>
+              <span>Playlists</span>
+            </Link>
+            <Link
+              href="/following"
+              className={`flex flex-col items-center gap-0.5 flex-1 ${
+                isActive('/following')
+                  ? 'text-white'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <svg
+                className="w-5 h-5 mb-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 20h5v-1a6 6 0 00-9-5.197M9 11a4 4 0 100-8 4 4 0 000 8zm0 2c-4.418 0-8 2.239-8 5v2h9"
+                />
+              </svg>
+              <span>Following</span>
+            </Link>
+            <Link
+              href="/explore"
+              className={`flex flex-col items-center gap-0.5 flex-1 ${
+                isActive('/explore')
+                  ? 'text-white'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <svg
+                className="w-5 h-5 mb-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 3v18m9-9H3"
+                />
+              </svg>
+              <span>Explore</span>
+            </Link>
+          </div>
+        </nav>
+      )}
+    </>
   );
 }
