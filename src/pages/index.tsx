@@ -29,9 +29,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="mb-8">
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             {/* <button
               onClick={fetchTrending}
               disabled={loading}
@@ -40,7 +40,7 @@ export default function Home() {
               {isTrendingLoading ? 'Loading...' : 'Trending'}
             </button>*/}
             
-            <div className="flex-1">
+            <div className="w-full sm:flex-1">
               <SearchBar onSearch={search} loading={loading} />
             </div>
           </div>

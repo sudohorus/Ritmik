@@ -27,8 +27,8 @@ export default function TrackCard({ track, playlist }: TrackCardProps) {
 
   return (
     <>
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all group cursor-pointer">
-        <div className="flex items-center gap-4">
+      <div className="w-full max-w-full bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all group cursor-pointer overflow-hidden">
+        <div className="flex items-center gap-3 sm:gap-4 w-full">
           <div className="relative" onClick={handleClick}>
             <TrackArtwork thumbnail={track.thumbnail} title={track.title} />
             {isCurrentTrack && (
@@ -48,7 +48,7 @@ export default function TrackCard({ track, playlist }: TrackCardProps) {
               </div>
             )}
           </div>
-          <div onClick={handleClick} className="flex-1 min-w-0">
+          <div onClick={handleClick} className="flex-1 min-w-0 w-full overflow-hidden">
             <TrackInfo track={track} isPlaying={isCurrentTrack && isPlaying} />
           </div>
           {/* <div onClick={handleClick}>
@@ -57,7 +57,7 @@ export default function TrackCard({ track, playlist }: TrackCardProps) {
           {user && (
             <button
               onClick={handleAddToPlaylist}
-              className="opacity-0 group-hover:opacity-100 p-2 hover:bg-zinc-700 rounded-lg transition-all"
+              className="self-end sm:self-auto opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-2 hover:bg-zinc-700 rounded-lg transition-all shrink-0"
               title="Add to playlist"
             >
               <svg className="w-5 h-5 text-zinc-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +87,7 @@ function TrackArtwork({ thumbnail, title }: TrackArtworkProps) {
     <img
       src={thumbnail}
       alt={title}
-      className="w-16 h-16 rounded-md object-cover bg-zinc-800"
+      className="w-14 h-14 sm:w-16 sm:h-16 rounded-md object-cover bg-zinc-800 shadow-sm"
     />
   );
 }
@@ -99,15 +99,15 @@ interface TrackInfoProps {
 
 function TrackInfo({ track, isPlaying }: TrackInfoProps) {
   return (
-    <div className="flex-1 min-w-0">
-      <h3 className={`font-semibold truncate group-hover:text-white transition-colors ${isPlaying ? 'text-white' : 'text-zinc-100'}`}>
+    <div className="flex-1 min-w-0 overflow-hidden">
+      <h3 className={`font-semibold text-sm sm:text-base truncate group-hover:text-white transition-colors ${isPlaying ? 'text-white' : 'text-zinc-100'}`}>
         {track.title}
       </h3>
-      <p className={`text-sm truncate ${isPlaying ? 'text-zinc-300' : 'text-zinc-400'}`}>
+      <p className={`text-xs sm:text-sm truncate ${isPlaying ? 'text-zinc-300' : 'text-zinc-400'}`}>
         {track.artist}
       </p>
-      <div className="flex items-center gap-3 mt-1">
-        <span className="text-xs text-zinc-600">
+      <div className="flex items-center gap-2 sm:gap-3 mt-1">
+        <span className="text-[12px] sm:text-[11px] text-zinc-600">
           {formatDuration(track.duration)}
         </span>
       </div>
