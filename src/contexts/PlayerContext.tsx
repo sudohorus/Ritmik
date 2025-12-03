@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useState, useRef } from 'react';
+import React, { createContext, ReactNode, useState, useRef, useEffect } from 'react';
 import { Track } from '@/types/track';
 
 interface PlayerContextValue {
@@ -39,6 +39,21 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
   
   const queueRef = useRef<Track[]>([]);
   const currentIndexRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const saved = window.localStorage.getItem('ritmik_player_volume');
+      if (saved !== null) {
+        const parsed = parseFloat(saved);
+        if (!Number.isNaN(parsed)) {
+          const clamped = Math.max(0, Math.min(1, parsed));
+          setVolumeState(clamped);
+        }
+      }
+    } catch {
+    }
+  }, []);
 
   const playTrack = (track: Track, playlist?: Track[]) => {
     const isSameTrack = currentTrack?.videoId === track.videoId;
@@ -130,7 +145,16 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
   };
 
   const setVolume = (newVolume: number) => {
-    setVolumeState(Math.max(0, Math.min(1, newVolume)));
+    const clamped = Math.max(0, Math.min(1, newVolume));
+    setVolumeState(clamped);
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem('ritmik_player_volume', String(clamped));
+      } catch {
+
+      }
+    }
   };
 
   const seekTo = (seconds: number) => {

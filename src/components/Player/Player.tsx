@@ -92,6 +92,8 @@ export default function Player() {
     };
 
     const initPlayer = () => {
+      const initialVolumePercent = Math.round(volume * 100);
+
       if (playerRef.current && playerRef.current.loadVideoById) {
         setProgress(0);
         setDuration(0);
@@ -101,7 +103,9 @@ export default function Player() {
           startSeconds: 0,
         });
         
-        playerRef.current.setVolume(100);
+        if (playerRef.current.setVolume) {
+          playerRef.current.setVolume(initialVolumePercent);
+        }
         
         setTimeout(() => {
           if (playerRef.current && playerRef.current.getDuration) {
@@ -123,7 +127,10 @@ export default function Player() {
         },
         events: {
           onReady: (event: any) => {
-            event.target.setVolume(100);
+            const initialVol = Math.round(volume * 100);
+            if (event.target && typeof event.target.setVolume === 'function') {
+              event.target.setVolume(initialVol);
+            }
             const dur = event.target.getDuration();
             if (dur > 0) {
               setDuration(dur);
@@ -132,11 +139,6 @@ export default function Player() {
           onStateChange: (event: any) => {
             if (event.data === window.YT.PlayerState.ENDED) {
               playNext();
-            }
-            if (event.data === window.YT.PlayerState.PLAYING) {
-              if (event.target && typeof event.target.setVolume === 'function') {
-                event.target.setVolume(100);
-              }
             }
           },
         },
