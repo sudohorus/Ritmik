@@ -2,35 +2,34 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import youtubesearchapi from 'youtube-search-api';
 import { scrapeViewCount } from '@/services/youtube-scraper';
 import { withRateLimit } from '@/middleware/rate-limit';
+import { sanitizeString } from '@/utils/sanitize';
+import { handleApiError } from '@/utils/error-handler';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const result = await youtubesearchapi.GetListByKeyword('popular music', false, 50, [{ type: 'video' }]);
+    const result = await youtubesearchapi.GetListByKeyword('music', false, 20, [{ type: 'video' }]);
 
     const filteredItems = result.items
-      .filter((item: any) => item.type === 'video');
-    
+      .filter((item: any) => item.type === 'video' && item.length);
+
     const viewCounts = await Promise.all(
       filteredItems.map((item: any) => scrapeViewCount(item.id))
     );
-    
+
     const tracks = filteredItems.map((item: any, index: number) => ({
       id: item.id,
       videoId: item.id,
-      title: item.title,
-      artist: item.channelTitle,
-      channel: item.channelTitle,
+      title: sanitizeString(item.title || ''),
+      artist: sanitizeString(item.channelTitle || 'Unknown'),
+      channel: sanitizeString(item.channelTitle || 'Unknown'),
       duration: item.length?.simpleText ? parseDuration(item.length.simpleText) : 0,
       viewCount: viewCounts[index],
       thumbnail: item.thumbnail?.thumbnails?.[0]?.url || ''
     }));
 
     return res.status(200).json({ data: tracks });
-  } catch (err: any) {
-    console.error('YouTube API Error:', err.message);
-    return res.status(500).json({ 
-      error: err.message || 'Failed to fetch trending from YouTube' 
-    });
+  } catch (error) {
+    handleApiError(error, res);
   }
 }
 
