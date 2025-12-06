@@ -5,24 +5,23 @@ import { withRateLimit } from '@/middleware/rate-limit';
 import { sanitizeString, parseJsonSafely } from '@/utils/sanitize';
 import { handleApiError, ValidationError } from '@/utils/error-handler';
 
+import { z } from 'zod';
+
+const searchSchema = z.object({
+  query: z.string().min(1).max(100),
+  nextPageData: z.string().optional(),
+});
+
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { query, nextPageData } = req.query;
-
-    if (!query || typeof query !== 'string') {
-      throw new ValidationError('Query parameter is required');
-    }
+    const { query, nextPageData } = searchSchema.parse(req.query);
 
     const sanitizedQuery = sanitizeString(query);
-
-    if (!sanitizedQuery) {
-      throw new ValidationError('Invalid query parameter');
-    }
 
     let result;
 
     if (nextPageData) {
-      const parsedNextPage = parseJsonSafely(nextPageData as string);
+      const parsedNextPage = parseJsonSafely(nextPageData);
       if (!parsedNextPage) {
         throw new ValidationError('Invalid nextPageData parameter');
       }

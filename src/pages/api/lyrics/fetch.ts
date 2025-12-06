@@ -4,16 +4,19 @@ import { withRateLimit } from '@/middleware/rate-limit';
 import { sanitizeString } from '@/utils/sanitize';
 import { handleApiError, ValidationError } from '@/utils/error-handler';
 
+import { z } from 'zod';
+
+const lyricsSchema = z.object({
+  title: z.string().min(1).max(200),
+  channel: z.string().optional().default(''),
+});
+
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { title, channel } = req.query;
-
-    if (!title || typeof title !== 'string') {
-      throw new ValidationError('Title parameter is required');
-    }
+    const { title, channel } = lyricsSchema.parse(req.query);
 
     const sanitizedTitle = sanitizeString(title);
-    const sanitizedChannel = typeof channel === 'string' ? sanitizeString(channel) : '';
+    const sanitizedChannel = sanitizeString(channel);
 
     if (!sanitizedTitle) {
       throw new ValidationError('Invalid title parameter');

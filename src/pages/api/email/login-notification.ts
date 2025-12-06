@@ -1,51 +1,41 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import youtubesearchapi from 'youtube-search-api';
-import { scrapeViewCount } from '@/services/youtube-scraper';
+import { EmailService } from '@/services/email-service';
 import { withRateLimit } from '@/middleware/rate-limit';
+import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
+import { handleApiError, ValidationError } from '@/utils/error-handler';
 
-async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' });
+  }
+
   try {
-    const result = await youtubesearchapi.GetListByKeyword('popular music', false, 50, [{ type: 'video' }]);
+    const userEmail = req.user?.email;
 
-    const filteredItems = result.items
-      .filter((item: any) => item.type === 'video');
-    
-    const viewCounts = await Promise.all(
-      filteredItems.map((item: any) => scrapeViewCount(item.id))
+    if (!userEmail) {
+      throw new ValidationError('User email not found in token');
+    }
+
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Unknown IP';
+    const userAgent = req.headers['user-agent'] || 'Unknown Device';
+
+    const location = Array.isArray(ip) ? ip[0] : ip;
+
+    await EmailService.sendLoginNotificationEmail(
+      userEmail,
+      location,
+      userAgent
     );
-    
-    const tracks = filteredItems.map((item: any, index: number) => ({
-      id: item.id,
-      videoId: item.id,
-      title: item.title,
-      artist: item.channelTitle,
-      channel: item.channelTitle,
-      duration: item.length?.simpleText ? parseDuration(item.length.simpleText) : 0,
-      viewCount: viewCounts[index],
-      thumbnail: item.thumbnail?.thumbnails?.[0]?.url || ''
-    }));
 
-    return res.status(200).json({ data: tracks });
-  } catch (err: any) {
-    console.error('YouTube API Error:', err.message);
-    return res.status(500).json({ 
-      error: err.message || 'Failed to fetch trending from YouTube' 
-    });
+    return res.status(200).json({ success: true, message: 'Notification sent' });
+  } catch (error) {
+    handleApiError(error, res);
   }
 }
 
-function parseDuration(duration: string): number {
-  const parts = duration.split(':').map(Number);
-  if (parts.length === 3) {
-    return parts[0] * 3600 + parts[1] * 60 + parts[2];
-  }
-  if (parts.length === 2) {
-    return parts[0] * 60 + parts[1];
-  }
-  return parts[0] || 0;
-}
+const authenticatedHandler = requireAuth(handler);
 
-export default withRateLimit(handler, {
-  interval: 60000,
-  maxRequests: 60
+export default withRateLimit(authenticatedHandler, {
+  interval: 60 * 60 * 1000,
+  maxRequests: 5
 });
