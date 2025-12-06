@@ -27,17 +27,17 @@ export default function FollowingPage() {
     const loadPlaylists = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         const data = await FollowerService.getFollowingPlaylists(user.id);
-        
+
         if (mounted) {
           setPlaylists(data);
         }
       } catch (err) {
         if (mounted) {
           const errorMessage = err instanceof Error ? err.message : 'Failed to load playlists';
-          
+
           if (errorMessage.includes('Unauthorized') || errorMessage.includes('Authentication required')) {
             setError('You need to be logged in to view this page');
           } else {
@@ -56,20 +56,20 @@ export default function FollowingPage() {
     return () => {
       mounted = false;
     };
-  }, [user]); 
+  }, [user]);
 
   if (authLoading || !user) {
     return <Loading fullScreen text="Loading..." />;
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-40">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold mb-3">Following</h1>
-          <p className="text-zinc-400">Playlists from people you follow</p>
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
+        <div className="mb-8 md:mb-12">
+          <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-3">Following</h1>
+          <p className="text-sm md:text-base text-zinc-400">Playlists from people you follow</p>
         </div>
 
         {loading ? (
@@ -98,8 +98,8 @@ export default function FollowingPage() {
             <p className="text-sm text-zinc-500 mb-6">
               Follow users to see their public playlists here
             </p>
-            <Link 
-              href="/explore" 
+            <Link
+              href="/explore"
               className="inline-block px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-zinc-200 transition-colors"
             >
               Explore public playlists
@@ -119,8 +119,8 @@ export default function FollowingPage() {
                 >
                   <div className="aspect-square bg-zinc-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
                     {playlist.cover_image_url ? (
-                      <img 
-                        src={playlist.cover_image_url} 
+                      <img
+                        src={playlist.cover_image_url}
                         alt={playlist.name}
                         className="w-full h-full object-cover"
                       />

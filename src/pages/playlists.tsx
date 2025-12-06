@@ -38,18 +38,18 @@ export default function PlaylistsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-40">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <div className="flex items-start justify-between mb-12">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8 md:mb-12">
           <div>
-            <h1 className="text-4xl font-bold mb-3">My Playlists</h1>
-            <p className="text-zinc-400">Manage your music collections</p>
+            <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-3">My Playlists</h1>
+            <p className="text-sm md:text-base text-zinc-400">Manage your music collections</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-5 py-2.5 bg-white text-black rounded-lg font-medium hover:bg-zinc-200 transition-colors flex items-center gap-2"
+            className="w-full md:w-auto px-5 py-2.5 bg-white text-black rounded-lg font-medium hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -81,8 +81,8 @@ export default function PlaylistsPage() {
               >
                 <div className="aspect-square bg-zinc-800 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
                   {playlist.cover_image_url ? (
-                    <img 
-                      src={playlist.cover_image_url} 
+                    <img
+                      src={playlist.cover_image_url}
                       alt={playlist.name}
                       className="w-full h-full object-cover"
                     />

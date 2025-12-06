@@ -97,16 +97,16 @@ export default function Player() {
       if (playerRef.current && playerRef.current.loadVideoById) {
         setProgress(0);
         setDuration(0);
-        
+
         playerRef.current.loadVideoById({
           videoId: currentTrack.videoId,
           startSeconds: 0,
         });
-        
+
         if (playerRef.current.setVolume) {
           playerRef.current.setVolume(initialVolumePercent);
         }
-        
+
         setTimeout(() => {
           if (playerRef.current && playerRef.current.getDuration) {
             const dur = playerRef.current.getDuration();
@@ -115,7 +115,7 @@ export default function Player() {
             }
           }
         }, 1000);
-        
+
         return;
       }
 
@@ -214,9 +214,70 @@ export default function Player() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 z-50">
-        <div id="youtube-player" className="hidden" />
+      <div id="youtube-player" className="hidden" />
 
+      {!isFocusModalOpen && (
+        <div className="md:hidden fixed left-0 right-0 bg-zinc-900 z-50" style={{ bottom: 'calc(env(safe-area-inset-bottom) + 56px)' }}>
+          <div className="w-full px-4 py-2.5">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <img
+                  src={currentTrack.thumbnail}
+                  alt={currentTrack.title}
+                  className="w-12 h-12 rounded object-cover cursor-pointer"
+                  onClick={() => setIsFocusModalOpen(!isFocusModalOpen)}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium text-white truncate">
+                    {currentTrack.title}
+                  </div>
+                  <div className="text-xs text-zinc-400 truncate">
+                    {currentTrack.artist}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  onClick={togglePlay}
+                  className="p-2 hover:bg-zinc-800 rounded-full transition-colors"
+                >
+                  {isPlaying ? (
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  )}
+                </button>
+
+                <button
+                  onClick={playNext}
+                  disabled={queue.length === 0}
+                  className="p-2 hover:bg-zinc-800 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div key={currentTrack.videoId} className="absolute bottom-0 left-0 right-0 h-0.5 bg-zinc-800">
+              {duration > 0 && (
+                <div
+                  className="h-full bg-white transition-none"
+                  style={{ width: `${(progress / duration) * 100}%` }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="hidden md:block fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 z-50">
         <div className="w-full px-4 py-3">
           <div className="grid grid-cols-[1fr_2fr_1fr] items-center gap-4 max-w-screen-2xl mx-auto">
             <div className="flex items-center gap-3 min-w-0">
@@ -287,6 +348,11 @@ export default function Player() {
         currentTime={progress}
         onSeek={handleLyricsSeek}
         track={currentTrack}
+        isPlaying={isPlaying}
+        onTogglePlay={togglePlay}
+        onNext={playNext}
+        onPrevious={playPrevious}
+        hasQueue={queue.length > 0}
       />
     </>
   );
