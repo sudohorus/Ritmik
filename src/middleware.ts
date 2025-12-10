@@ -3,6 +3,29 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
     const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+    const origin = request.headers.get('origin');
+
+    const allowedOrigins = [
+        'http://localhost:3000',
+        process.env.NEXT_PUBLIC_SITE_URL,
+        'https://ritmik.vercel.app'
+    ].filter(Boolean);
+
+    const isAllowedOrigin = origin && allowedOrigins.includes(origin);
+    const isApiRoute = request.nextUrl.pathname.startsWith('/api');
+
+    if (isApiRoute) {
+        if (request.method === 'OPTIONS') {
+            const response = new NextResponse(null, { status: 200 });
+            if (isAllowedOrigin) {
+                response.headers.set('Access-Control-Allow-Origin', origin);
+                response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+                response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+                response.headers.set('Access-Control-Max-Age', '86400');
+            }
+            return response;
+        }
+    }
 
     const cspHeader = `
     default-src 'self';
@@ -30,6 +53,10 @@ export function middleware(request: NextRequest) {
         },
     });
 
+    if (isApiRoute && isAllowedOrigin) {
+        response.headers.set('Access-Control-Allow-Origin', origin);
+    }
+
     response.headers.set('Content-Security-Policy', cspHeader);
     response.headers.set('X-Frame-Options', 'DENY');
     response.headers.set('X-Content-Type-Options', 'nosniff');
@@ -42,8 +69,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        {
-            source: '/((?!api|_next/static|_next/image|favicon.ico).*)',
-        },
+        '/((?!_next/static|_next/image|favicon.ico).*)',
     ],
 };
