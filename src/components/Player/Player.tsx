@@ -37,6 +37,7 @@ export default function Player() {
   const [isFocusModalOpen, setIsFocusModalOpen] = useState(false);
   const router = useRouter();
   const currentRouteRef = useRef(router.pathname);
+  const mountedRef = useRef(true);
 
   const handleSeekForward = () => {
     if (playerRef.current?.seekTo && duration > 0) {
@@ -73,7 +74,29 @@ export default function Player() {
   });
 
   useEffect(() => {
-    if (!currentTrack) return;
+    mountedRef.current = true;
+
+    return () => {
+      mountedRef.current = false;
+
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+
+      if (playerRef.current) {
+        try {
+          if (typeof playerRef.current.pauseVideo === 'function') {
+            playerRef.current.pauseVideo();
+          }
+        } catch (err) {
+        }
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!currentTrack || !mountedRef.current) return;
 
     setProgress(0);
 
@@ -92,57 +115,83 @@ export default function Player() {
     };
 
     const initPlayer = () => {
+      if (!mountedRef.current) return;
+
       const initialVolumePercent = Math.round(volume * 100);
 
       if (playerRef.current && playerRef.current.loadVideoById) {
-        setProgress(0);
-        setDuration(0);
+        try {
+          setProgress(0);
+          setDuration(0);
 
-        playerRef.current.loadVideoById({
-          videoId: currentTrack.videoId,
-          startSeconds: 0,
-        });
+          playerRef.current.loadVideoById({
+            videoId: currentTrack.videoId,
+            startSeconds: 0,
+          });
 
-        if (playerRef.current.setVolume) {
-          playerRef.current.setVolume(initialVolumePercent);
-        }
-
-        setTimeout(() => {
-          if (playerRef.current && playerRef.current.getDuration) {
-            const dur = playerRef.current.getDuration();
-            if (dur > 0) {
-              setDuration(dur);
-            }
+          if (playerRef.current.setVolume) {
+            playerRef.current.setVolume(initialVolumePercent);
           }
-        }, 1000);
+
+          setTimeout(() => {
+            if (mountedRef.current && playerRef.current?.getDuration) {
+              try {
+                const dur = playerRef.current.getDuration();
+                if (dur > 0) {
+                  setDuration(dur);
+                }
+              } catch (err) {
+                console.error('Error getting duration:', err);
+              }
+            }
+          }, 1000);
+        } catch (err) {
+          console.error('Error loading video:', err);
+        }
 
         return;
       }
 
-      playerRef.current = new window.YT.Player('youtube-player', {
-        videoId: currentTrack.videoId,
-        playerVars: {
-          autoplay: 1,
-          controls: 0,
-        },
-        events: {
-          onReady: (event: any) => {
-            const initialVol = Math.round(volume * 100);
-            if (event.target && typeof event.target.setVolume === 'function') {
-              event.target.setVolume(initialVol);
-            }
-            const dur = event.target.getDuration();
-            if (dur > 0) {
-              setDuration(dur);
-            }
+      try {
+        playerRef.current = new window.YT.Player('youtube-player', {
+          videoId: currentTrack.videoId,
+          playerVars: {
+            autoplay: 1,
+            controls: 0,
           },
-          onStateChange: (event: any) => {
-            if (event.data === window.YT.PlayerState.ENDED) {
-              playNext();
-            }
+          events: {
+            onReady: (event: any) => {
+              if (!mountedRef.current) return;
+
+              try {
+                const initialVol = Math.round(volume * 100);
+                if (event.target && typeof event.target.setVolume === 'function') {
+                  event.target.setVolume(initialVol);
+                }
+                const dur = event.target.getDuration();
+                if (dur > 0) {
+                  setDuration(dur);
+                }
+              } catch (err) {
+                console.error('Error in onReady:', err);
+              }
+            },
+            onStateChange: (event: any) => {
+              if (!mountedRef.current) return;
+
+              try {
+                if (event.data === window.YT.PlayerState.ENDED) {
+                  playNext();
+                }
+              } catch (err) {
+                console.error('Error in onStateChange:', err);
+              }
+            },
           },
-        },
-      });
+        });
+      } catch (err) {
+        console.error('Error creating player:', err);
+      }
     };
 
     loadYouTubeAPI();
@@ -153,13 +202,24 @@ export default function Player() {
       clearInterval(intervalRef.current);
     }
 
-    if (!currentTrack) return;
+    if (!currentTrack || !mountedRef.current) return;
 
     intervalRef.current = setInterval(() => {
+      if (!mountedRef.current) {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
+        return;
+      }
+
       if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
-        const currentTime = playerRef.current.getCurrentTime();
-        if (typeof currentTime === 'number' && !isNaN(currentTime) && currentTime >= 0) {
-          setProgress(currentTime);
+        try {
+          const currentTime = playerRef.current.getCurrentTime();
+          if (typeof currentTime === 'number' && !isNaN(currentTime) && currentTime >= 0) {
+            setProgress(currentTime);
+          }
+        } catch (err) {
+          console.error('Error getting current time:', err);
         }
       }
     }, 500);

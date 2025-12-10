@@ -6,7 +6,7 @@ import { Toaster } from 'react-hot-toast';
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PlayerModeProvider } from "@/contexts/PlayerModeContext";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import Player from "@/components/Player/Player";
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -46,7 +46,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <PlayerProvider>
           <PlayerModeProvider>
             <Component {...pageProps} />
-            {!hidePlayer && <Player />}
+            {!hidePlayer && <Player key="global-player" />}
           </PlayerModeProvider>
         </PlayerProvider>
       </AuthProvider>

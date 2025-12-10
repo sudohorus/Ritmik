@@ -12,8 +12,10 @@ CREATE TABLE IF NOT EXISTS play_history (
   playlist_id UUID REFERENCES playlists(id) ON DELETE SET NULL,
   played_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   
-  listen_duration INTEGER, 
-  completed BOOLEAN DEFAULT FALSE
+  listen_duration INTEGER,
+  completed BOOLEAN DEFAULT FALSE,
+  
+  CONSTRAINT valid_listen_duration CHECK (listen_duration IS NULL OR listen_duration <= duration)
 );
 
 CREATE INDEX idx_play_history_user ON play_history(user_id, played_at DESC);
@@ -36,7 +38,7 @@ CREATE TABLE IF NOT EXISTS user_statistics (
   user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   
   total_plays INTEGER DEFAULT 0,
-  total_listen_time INTEGER DEFAULT 0, 
+  total_listen_time INTEGER DEFAULT 0,
   completed_plays INTEGER DEFAULT 0,
   
   playlists_created INTEGER DEFAULT 0,
@@ -58,17 +60,12 @@ CREATE POLICY "Users can view own statistics"
   TO authenticated
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can view public statistics"
-  ON user_statistics FOR SELECT
-  TO authenticated
-  USING (true);
-
-CREATE POLICY "System can update statistics"
+CREATE POLICY "Users can update own statistics"
   ON user_statistics FOR UPDATE
   TO authenticated
   USING (auth.uid() = user_id);
 
-CREATE POLICY "System can insert statistics"
+CREATE POLICY "Users can insert own statistics"
   ON user_statistics FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = user_id);
@@ -105,6 +102,16 @@ CREATE POLICY "Anyone can view track statistics"
   ON track_statistics FOR SELECT
   TO authenticated
   USING (true);
+
+CREATE POLICY "Authenticated users can update track statistics"
+  ON track_statistics FOR UPDATE
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Authenticated users can insert track statistics"
+  ON track_statistics FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
 
 CREATE TABLE IF NOT EXISTS playlist_statistics (
   playlist_id UUID PRIMARY KEY REFERENCES playlists(id) ON DELETE CASCADE,
@@ -166,8 +173,8 @@ CREATE POLICY "Users can delete own favorites"
 
 CREATE TABLE IF NOT EXISTS trending_cache (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  category TEXT NOT NULL, -- 'tracks', 'playlists', 'artists'
-  time_period TEXT NOT NULL, -- 'daily', 'weekly', 'monthly'
+  category TEXT NOT NULL,
+  time_period TEXT NOT NULL,
   
   video_id TEXT,
   playlist_id UUID REFERENCES playlists(id) ON DELETE CASCADE,
@@ -207,7 +214,7 @@ BEGIN
   
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trigger_update_user_stats ON play_history;
 CREATE TRIGGER trigger_update_user_stats
@@ -234,7 +241,7 @@ BEGIN
   
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trigger_update_track_stats ON play_history;
 CREATE TRIGGER trigger_update_track_stats
