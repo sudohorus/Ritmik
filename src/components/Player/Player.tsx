@@ -1,5 +1,6 @@
 import { usePlayer } from '@/hooks/player/usePlayer';
 import { useKeyboardShortcuts } from '@/hooks/player/useKeyboardShortcuts';
+import { usePlayTracking } from '@/hooks/statistics/usePlayTracking';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import PlayerControls from './PlayerControls';
@@ -39,6 +40,8 @@ export default function Player() {
   const currentRouteRef = useRef(router.pathname);
   const mountedRef = useRef(true);
 
+  const { recordSkip } = usePlayTracking(currentTrack, progress, duration, isPlaying);
+
   const handleSeekForward = () => {
     if (playerRef.current?.seekTo && duration > 0) {
       const newTime = Math.min(progress + 5, duration);
@@ -63,10 +66,20 @@ export default function Player() {
     setVolume(Math.max(volume - 0.1, 0));
   };
 
+  const handlePlayNext = () => {
+    recordSkip();
+    playNext();
+  };
+
+  const handlePlayPrevious = () => {
+    recordSkip();
+    playPrevious();
+  };
+
   useKeyboardShortcuts({
     onPlayPause: togglePlay,
-    onNext: playNext,
-    onPrevious: playPrevious,
+    onNext: handlePlayNext,
+    onPrevious: handlePlayPrevious,
     onSeekForward: handleSeekForward,
     onSeekBackward: handleSeekBackward,
     onVolumeUp: handleVolumeUp,
@@ -314,7 +327,7 @@ export default function Player() {
                 </button>
 
                 <button
-                  onClick={playNext}
+                  onClick={handlePlayNext}
                   disabled={queue.length === 0}
                   className="p-2 hover:bg-zinc-800 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -378,8 +391,8 @@ export default function Player() {
               <PlayerControls
                 isPlaying={isPlaying}
                 onTogglePlay={togglePlay}
-                onPrevious={playPrevious}
-                onNext={playNext}
+                onNext={handlePlayNext}
+                onPrevious={handlePlayPrevious}
                 hasQueue={queue.length > 0}
               />
               <div className="w-full max-w-2xl">
@@ -410,8 +423,8 @@ export default function Player() {
         track={currentTrack}
         isPlaying={isPlaying}
         onTogglePlay={togglePlay}
-        onNext={playNext}
-        onPrevious={playPrevious}
+        onNext={handlePlayNext}
+        onPrevious={handlePlayPrevious}
         hasQueue={queue.length > 0}
       />
     </>

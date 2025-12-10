@@ -31,8 +31,8 @@ export default function Navbar() {
                 <Link
                   href="/playlists"
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${isActive('/playlists')
-                      ? 'text-white bg-zinc-800'
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    ? 'text-white bg-zinc-800'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
                     }`}
                 >
                   My Playlists
@@ -40,8 +40,8 @@ export default function Navbar() {
                 <Link
                   href="/following"
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${isActive('/following')
-                      ? 'text-white bg-zinc-800'
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    ? 'text-white bg-zinc-800'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
                     }`}
                 >
                   Following
@@ -49,11 +49,20 @@ export default function Navbar() {
                 <Link
                   href="/explore"
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${isActive('/explore')
-                      ? 'text-white bg-zinc-800'
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    ? 'text-white bg-zinc-800'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
                     }`}
                 >
                   Explore
+                </Link>
+                <Link
+                  href="/stats"
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${isActive('/stats')
+                    ? 'text-white bg-zinc-800'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    }`}
+                >
+                  Stats
                 </Link>
               </nav>
             )}
@@ -90,8 +99,8 @@ export default function Navbar() {
             <Link
               href="/playlists"
               className={`flex flex-col items-center gap-1 py-2 px-4 rounded-lg transition-all ${isActive('/playlists')
-                  ? 'text-white bg-zinc-800'
-                  : 'text-zinc-400'
+                ? 'text-white bg-zinc-800'
+                : 'text-zinc-400'
                 }`}
             >
               <svg
@@ -112,8 +121,8 @@ export default function Navbar() {
             <Link
               href="/following"
               className={`flex flex-col items-center gap-1 py-2 px-4 rounded-lg transition-all ${isActive('/following')
-                  ? 'text-white bg-zinc-800'
-                  : 'text-zinc-400'
+                ? 'text-white bg-zinc-800'
+                : 'text-zinc-400'
                 }`}
             >
               <svg
@@ -134,8 +143,8 @@ export default function Navbar() {
             <Link
               href="/explore"
               className={`flex flex-col items-center gap-1 py-2 px-4 rounded-lg transition-all ${isActive('/explore')
-                  ? 'text-white bg-zinc-800'
-                  : 'text-zinc-400'
+                ? 'text-white bg-zinc-800'
+                : 'text-zinc-400'
                 }`}
             >
               <svg

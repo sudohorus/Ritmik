@@ -203,8 +203,20 @@ CREATE POLICY "Anyone can view trending"
 CREATE OR REPLACE FUNCTION update_user_statistics()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO user_statistics (user_id, total_plays, last_played_at)
-  VALUES (NEW.user_id, 1, NEW.played_at)
+  INSERT INTO user_statistics (
+    user_id, 
+    total_plays, 
+    total_listen_time,
+    completed_plays,
+    last_played_at
+  )
+  VALUES (
+    NEW.user_id, 
+    1, 
+    COALESCE(NEW.listen_duration, 0),
+    CASE WHEN NEW.completed THEN 1 ELSE 0 END,
+    NEW.played_at
+  )
   ON CONFLICT (user_id) DO UPDATE SET
     total_plays = user_statistics.total_plays + 1,
     total_listen_time = user_statistics.total_listen_time + COALESCE(NEW.listen_duration, 0),
@@ -224,17 +236,27 @@ EXECUTE FUNCTION update_user_statistics();
 
 CREATE OR REPLACE FUNCTION update_track_statistics()
 RETURNS TRIGGER AS $$
+DECLARE
+  is_new_listener BOOLEAN;
 BEGIN
+  SELECT NOT EXISTS (
+    SELECT 1 FROM play_history 
+    WHERE video_id = NEW.video_id 
+    AND user_id = NEW.user_id 
+    AND id != NEW.id
+  ) INTO is_new_listener;
+
   INSERT INTO track_statistics (
     video_id, title, artist, thumbnail_url, duration,
-    total_plays, last_played_at
+    total_plays, unique_listeners, last_played_at
   )
   VALUES (
     NEW.video_id, NEW.title, NEW.artist, NEW.thumbnail_url, NEW.duration,
-    1, NEW.played_at
+    1, CASE WHEN is_new_listener THEN 1 ELSE 0 END, NEW.played_at
   )
   ON CONFLICT (video_id) DO UPDATE SET
     total_plays = track_statistics.total_plays + 1,
+    unique_listeners = track_statistics.unique_listeners + CASE WHEN is_new_listener THEN 1 ELSE 0 END,
     completed_plays = track_statistics.completed_plays + CASE WHEN NEW.completed THEN 1 ELSE 0 END,
     last_played_at = NEW.played_at,
     stats_updated_at = NOW();

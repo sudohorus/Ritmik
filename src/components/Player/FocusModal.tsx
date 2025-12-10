@@ -250,56 +250,45 @@ export default function FocusModal({
   return (
     <>
       <div
-        className="fixed top-0 left-0 right-0 bottom-0 z-60 bg-zinc-950 overflow-y-auto"
+        className="fixed inset-0 z-60 bg-black/95 backdrop-blur-sm overflow-y-auto"
         onClick={onClose}
       >
-        <div className="fixed top-2 right-2 md:top-4 md:right-4 flex items-center gap-1 md:gap-2" style={{ zIndex: 100 }}>
+        <div className="fixed top-4 right-4 flex items-center gap-2 z-10">
           <button
             onClick={(e) => {
               e.stopPropagation();
               setShowAddToPlaylist(true);
             }}
-            className="text-zinc-400 hover:text-white transition-colors p-1.5 md:p-2 hover:bg-zinc-800 rounded-lg"
+            className="text-zinc-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg backdrop-blur-sm"
             aria-label="Add to playlist"
           >
-            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
           </button>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-white transition-colors p-2 hover:bg-zinc-800 rounded-lg"
+            className="text-zinc-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg backdrop-blur-sm"
             aria-label="Close"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="min-h-full flex items-center justify-center p-4 md:p-6 pb-24 md:pb-32">
+        <div className="min-h-screen flex items-center justify-center p-6 pb-32">
           <div
-            className="relative w-full max-w-6xl"
+            className="relative w-full max-w-5xl"
             onClick={(e) => e.stopPropagation()}
           >
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
               <div className="flex flex-col items-center">
-                <div className="relative w-full aspect-square max-w-sm mb-3 md:mb-4">
+                <div className="relative w-full aspect-square max-w-md mb-6">
                   <img
                     src={imageSrc}
                     alt={title}
-                    className="w-full h-full object-cover rounded-lg shadow-2xl"
+                    className="w-full h-full object-cover rounded-2xl shadow-2xl"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       if (target.src !== thumbnail) {
@@ -309,31 +298,31 @@ export default function FocusModal({
                   />
                 </div>
 
-                <div className="text-white text-center max-w-sm">
-                  <h2 className="text-lg md:text-xl font-bold mb-1">{title}</h2>
-                  <p className="text-sm md:text-base text-zinc-400 mb-4">{artist}</p>
+                <div className="text-white text-center max-w-md w-full">
+                  <h2 className="text-2xl font-bold mb-2 truncate">{title}</h2>
+                  <p className="text-base text-zinc-400 mb-8 truncate">{artist}</p>
 
-                  <div className="flex items-center justify-center gap-4 md:gap-6">
+                  <div className="flex items-center justify-center gap-6">
                     <button
                       onClick={onPrevious}
                       disabled={!hasQueue}
-                      className="p-2 md:p-3 hover:bg-zinc-800 rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="p-3 hover:bg-white/10 rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     >
-                      <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
                       </svg>
                     </button>
 
                     <button
                       onClick={onTogglePlay}
-                      className="p-3 md:p-4 bg-white hover:bg-zinc-200 rounded-full transition-colors"
+                      className="p-4 bg-white hover:bg-zinc-200 rounded-full transition-all hover:scale-105"
                     >
                       {isPlaying ? (
-                        <svg className="w-6 h-6 md:w-7 md:h-7 text-black" fill="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-7 h-7 text-black" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                         </svg>
                       ) : (
-                        <svg className="w-6 h-6 md:w-7 md:h-7 text-black" fill="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-7 h-7 text-black" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M8 5v14l11-7z" />
                         </svg>
                       )}
@@ -342,9 +331,9 @@ export default function FocusModal({
                     <button
                       onClick={onNext}
                       disabled={!hasQueue}
-                      className="p-2 md:p-3 hover:bg-zinc-800 rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="p-3 hover:bg-white/10 rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     >
-                      <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
                       </svg>
                     </button>
@@ -352,24 +341,23 @@ export default function FocusModal({
                 </div>
               </div>
 
-              <div className="flex flex-col">
+              <div className="flex flex-col min-h-[500px]">
+                <h3 className="text-xl font-semibold text-white mb-4">Lyrics</h3>
                 {loadingLyrics ? (
-                  <div className="overflow-y-auto min-h-[400px] max-h-[600px] px-4 py-4">
-                    <div className="text-zinc-400 w-full text-center py-8">Loading lyrics...</div>
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-zinc-400">Loading lyrics...</div>
                   </div>
                 ) : syncedLyrics ? (
                   <SyncedLyrics lines={syncedLyrics} currentTime={currentTime} onSeek={onSeek} />
                 ) : lyrics ? (
-                  <div className="overflow-y-auto min-h-[400px] max-h-[600px] px-4 py-4">
-                    <pre className="text-zinc-300 whitespace-pre-wrap text-base leading-loose font-sans w-full">
+                  <div className="overflow-y-auto flex-1 pr-2">
+                    <pre className="text-zinc-300 whitespace-pre-wrap text-base leading-relaxed font-sans">
                       {lyrics}
                     </pre>
                   </div>
                 ) : lyricsNotFound ? (
-                  <div className="overflow-y-auto min-h-[400px] max-h-[600px] px-4 py-4">
-                    <p className="text-zinc-500 text-lg italic w-full text-center py-8">
-                      Lyrics not available
-                    </p>
+                  <div className="flex-1 flex items-center justify-center">
+                    <p className="text-zinc-500 text-lg">Lyrics not available</p>
                   </div>
                 ) : null}
               </div>

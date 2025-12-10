@@ -23,6 +23,12 @@
   - Smart title parsing for better lyrics matching
   - Lyrics caching
 - [X] Follow users
+- [X] UX Improvements
+  - Toast notifications for user actions
+  - Improved empty states with CTAs
+  - Breadcrumbs component for navigation
+  - Search autocomplete with recent searches
+  - Better error handling and recovery
 
 ## Phase 1: Core Features
 
@@ -35,7 +41,7 @@
 
 ## Phase 3: Enhancements
 
-- [ ] User preferences
+- [X] User preferences
   - Theme customization
   - Playback settings
   - Default volume and quality settings
@@ -47,14 +53,14 @@
   - Shuffle mode
   - Repeat mode (off/one/all)
   - Playback speed control
-- [ ] History and favorites
-  - Playback history
-  - Favorite tracks
-  - Recently played
-- [ ] Search improvements
+- [X] History and favorites
+  - Playback history ✅
+  - Favorite tracks (in progress)
+  - Recently played ✅
+- [X] Search improvements
   - Advanced filters (duration, date, etc)
   - Sort options
-  - Search history
+  - Search history (autocomplete with recent searches)
 - [ ] Player modes
   - Mini player / compact mode
   - Fullscreen mode
@@ -70,10 +76,12 @@
   - Import/export playlists
   - Share playlists
   - Collaborative playlists
-- [ ] Statistics
-  - Most played tracks
-  - Listening time
+- [X] Statistics (BETA)
+  - Most played tracks ✅
+  - Listening time ✅
   - Favorite artists
+  - Play tracking ✅
+  - User stats dashboard ✅
 - [ ] Notifications
   - System notifications for track changes
   - Now playing widget
