@@ -8,6 +8,7 @@ CREATE TABLE public.user_settings (
   followers_public BOOLEAN NOT NULL DEFAULT true,
   following_public BOOLEAN NOT NULL DEFAULT true,
   show_activity BOOLEAN NOT NULL DEFAULT true,
+  allow_statistics_tracking BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
   UNIQUE(user_id)

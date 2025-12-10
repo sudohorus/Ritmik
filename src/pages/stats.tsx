@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { StatisticsService } from '@/services/statistics-service';
+import { SettingsService } from '@/services/settings-service';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
 import Loading from '@/components/Loading';
+import EmptyState from '@/components/EmptyState';
 import { useUserStats } from '@/hooks/statistics/useUserStats';
 
 export default function StatsPage() {
@@ -13,6 +15,7 @@ export default function StatsPage() {
     const [topTracks, setTopTracks] = useState<any[]>([]);
     const [recentPlays, setRecentPlays] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [statisticsAllowed, setStatisticsAllowed] = useState<boolean>(false);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -26,6 +29,15 @@ export default function StatsPage() {
         const loadData = async () => {
             try {
                 setLoading(true);
+
+                const allowed = await SettingsService.checkStatisticsAllowed(user.id);
+                setStatisticsAllowed(allowed);
+
+                if (!allowed) {
+                    setLoading(false);
+                    return;
+                }
+
                 const [tracks, recent] = await Promise.all([
                     StatisticsService.getTopTracks(user.id, 10),
                     StatisticsService.getRecentPlays(user.id, 15),
@@ -118,6 +130,20 @@ export default function StatsPage() {
 
                 {statsLoading || loading ? (
                     <Loading text="Loading your stats..." />
+                ) : !statisticsAllowed ? (
+                    <EmptyState
+                        icon={
+                            <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        }
+                        title="Statistics Tracking Disabled"
+                        description="Your statistics are disabled for privacy. When enabled, we only collect your personal listening data (tracks played, listen time) to show your own stats. This data is not shared or sold to anyone."
+                        action={{
+                            label: "Enable in Settings",
+                            onClick: () => router.push('/settings/privacy')
+                        }}
+                    />
                 ) : (
                     <div className="space-y-8">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

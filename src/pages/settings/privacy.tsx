@@ -5,21 +5,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import Loading from '@/components/Loading';
 import { SettingsService, UserSettings } from '@/services/settings-service';
+import { showToast } from '@/lib/toast';
 
 export default function PrivacySettingsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  
+
   const [settings, setSettings] = useState<UserSettings>({
     followers_public: true,
     following_public: true,
     show_activity: true,
+    allow_statistics_tracking: false,
   });
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -59,16 +59,13 @@ export default function PrivacySettingsPage() {
   }
 
   const handleSave = async () => {
-    setError(null);
-    setSuccess(false);
     setSaving(true);
 
     try {
       await SettingsService.updateUserSettings(user.id, settings);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      showToast.success('Privacy settings saved successfully!');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save settings');
+      showToast.error(err instanceof Error ? err.message : 'Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -146,24 +143,48 @@ export default function PrivacySettingsPage() {
               </div>
             </div>
 
-            {/* Messages */}
-            {error && (
-              <div className="p-4 bg-red-950/50 border border-red-900/50 rounded-lg text-red-400 text-sm flex items-start gap-2">
-                <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>{error}</span>
-              </div>
-            )}
+            <div className="bg-zinc-900/50 rounded-lg p-6 border border-zinc-800">
+              <h2 className="text-xl font-bold mb-6">Statistics & Data</h2>
 
-            {success && (
-              <div className="p-4 bg-green-950/50 border border-green-900/50 rounded-lg text-green-400 text-sm flex items-start gap-2">
-                <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>Privacy settings saved successfully!</span>
+              <div className="space-y-4">
+                {/* Statistics Tracking */}
+                <div className="flex items-start justify-between p-4 bg-zinc-800/50 rounded-lg border border-zinc-800">
+                  <div className="flex-1 pr-4">
+                    <label htmlFor="allow_statistics_tracking" className="text-base font-medium text-zinc-200 cursor-pointer block mb-1">
+                      Allow Statistics Tracking
+                    </label>
+                    <p className="text-sm text-zinc-500">
+                      When enabled, we track your listening activity (tracks played, listen time, top tracks). This data is used <strong>only for your personal statistics</strong> and is not shared or sold.
+                    </p>
+                    {settings.allow_statistics_tracking ? (
+                      <div className="mt-2 flex items-center gap-2 text-xs text-green-500">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Statistics tracking is enabled</span>
+                      </div>
+                    ) : (
+                      <div className="mt-2 flex items-center gap-2 text-xs text-amber-500">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span>Statistics tracking is disabled - your stats page will be empty</span>
+                      </div>
+                    )}
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                    <input
+                      id="allow_statistics_tracking"
+                      type="checkbox"
+                      checked={settings.allow_statistics_tracking}
+                      onChange={(e) => setSettings(prev => ({ ...prev, allow_statistics_tracking: e.target.checked }))}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-zinc-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
               </div>
-            )}
+            </div>
 
             {/* Actions */}
             <div className="flex items-center gap-4">

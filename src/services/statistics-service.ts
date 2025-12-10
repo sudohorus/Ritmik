@@ -52,6 +52,13 @@ export class StatisticsService {
             throw new Error('User not authenticated');
         }
 
+        const { SettingsService } = await import('./settings-service');
+        const allowed = await SettingsService.checkStatisticsAllowed(user.id);
+
+        if (!allowed) {
+            return;
+        }
+
         const { error } = await supabase
             .from('play_history')
             .insert({
@@ -65,11 +72,6 @@ export class StatisticsService {
                 listen_duration: data.listen_duration,
                 completed: data.completed,
             });
-
-        if (error) {
-            console.error('Error recording play:', error);
-            throw error;
-        }
     }
 
     static async getUserStats(userId: string): Promise<UserStats | null> {
