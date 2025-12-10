@@ -2,9 +2,11 @@ import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { Toaster } from 'react-hot-toast';
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PlayerModeProvider } from "@/contexts/PlayerModeContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Player from "@/components/Player/Player";
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -39,13 +41,16 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [router]);
 
   return (
-    <AuthProvider>
-      <PlayerProvider>
-        <PlayerModeProvider>
-          <Component {...pageProps} />
-          {!hidePlayer && <Player />}
-        </PlayerModeProvider>
-      </PlayerProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <PlayerProvider>
+          <PlayerModeProvider>
+            <Component {...pageProps} />
+            {!hidePlayer && <Player />}
+          </PlayerModeProvider>
+        </PlayerProvider>
+      </AuthProvider>
+      <Toaster />
+    </ErrorBoundary>
   );
 }

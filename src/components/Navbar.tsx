@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import UserMenu from '@/components/Auth/UserMenu';
 
 export default function Navbar() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   const isActive = (path: string) => {
@@ -19,42 +19,39 @@ export default function Navbar() {
       <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="text-2xl font-bold tracking-tight hover:text-zinc-300 transition-colors mr-8"
             >
               Ritmik
             </Link>
-            
+
             {user && (
-              <nav className="hidden md:flex items-center gap-6">
-                <Link 
-                  href="/playlists" 
-                  className={`text-sm font-medium transition-colors ${
-                    isActive('/playlists') 
-                      ? 'text-white' 
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
+              <nav className="hidden md:flex items-center gap-1">
+                <Link
+                  href="/playlists"
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${isActive('/playlists')
+                      ? 'text-white bg-zinc-800'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    }`}
                 >
                   My Playlists
                 </Link>
-                <Link 
-                  href="/following" 
-                  className={`text-sm font-medium transition-colors ${
-                    isActive('/following') 
-                      ? 'text-white' 
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
+                <Link
+                  href="/following"
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${isActive('/following')
+                      ? 'text-white bg-zinc-800'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    }`}
                 >
                   Following
                 </Link>
-                <Link 
-                  href="/explore" 
-                  className={`text-sm font-medium transition-colors ${
-                    isActive('/explore') 
-                      ? 'text-white' 
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
+                <Link
+                  href="/explore"
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${isActive('/explore')
+                      ? 'text-white bg-zinc-800'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    }`}
                 >
                   Explore
                 </Link>
@@ -63,7 +60,9 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-3">
-            {user ? (
+            {loading ? (
+              <div className="w-8 h-8 rounded-full bg-zinc-800 animate-pulse" />
+            ) : user ? (
               <UserMenu />
             ) : (
               <>
@@ -87,17 +86,16 @@ export default function Navbar() {
 
       {user && (
         <nav className="fixed bottom-0 inset-x-0 md:hidden border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-sm z-20">
-          <div className="max-w-7xl mx-auto px-6 py-2.5 flex items-center justify-between text-[11px] font-medium">
+          <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-around text-[11px] font-medium">
             <Link
               href="/playlists"
-              className={`flex flex-col items-center gap-0.5 flex-1 ${
-                isActive('/playlists')
-                  ? 'text-white'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
+              className={`flex flex-col items-center gap-1 py-2 px-4 rounded-lg transition-all ${isActive('/playlists')
+                  ? 'text-white bg-zinc-800'
+                  : 'text-zinc-400'
+                }`}
             >
               <svg
-                className="w-5 h-5 mb-0.5"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -113,14 +111,13 @@ export default function Navbar() {
             </Link>
             <Link
               href="/following"
-              className={`flex flex-col items-center gap-0.5 flex-1 ${
-                isActive('/following')
-                  ? 'text-white'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
+              className={`flex flex-col items-center gap-1 py-2 px-4 rounded-lg transition-all ${isActive('/following')
+                  ? 'text-white bg-zinc-800'
+                  : 'text-zinc-400'
+                }`}
             >
               <svg
-                className="w-5 h-5 mb-0.5"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -136,14 +133,13 @@ export default function Navbar() {
             </Link>
             <Link
               href="/explore"
-              className={`flex flex-col items-center gap-0.5 flex-1 ${
-                isActive('/explore')
-                  ? 'text-white'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
+              className={`flex flex-col items-center gap-1 py-2 px-4 rounded-lg transition-all ${isActive('/explore')
+                  ? 'text-white bg-zinc-800'
+                  : 'text-zinc-400'
+                }`}
             >
               <svg
-                className="w-5 h-5 mb-0.5"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -152,7 +148,7 @@ export default function Navbar() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M12 3v18m9-9H3"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
               </svg>
               <span>Explore</span>

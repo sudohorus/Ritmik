@@ -4,6 +4,7 @@ import { PlaylistService } from '@/services/playlist-service';
 import { Track } from '@/types/track';
 import { PlaylistTrack } from '@/types/playlist';
 import Loading from '@/components/Loading';
+import { showToast } from '@/lib/toast';
 
 interface AddToPlaylistModalProps {
   isOpen: boolean;
@@ -16,7 +17,6 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
   const [loading, setLoading] = useState(false);
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [playlistTracks, setPlaylistTracks] = useState<Record<string, PlaylistTrack[]>>({});
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
 
     const fetchAllPlaylistTracks = async () => {
       const tracksMap: Record<string, PlaylistTrack[]> = {};
-      
+
       await Promise.all(
         playlists.map(async (playlist) => {
           try {
@@ -61,7 +61,7 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
     if (!track || addingTo === playlistId) return;
 
     if (isTrackInPlaylist(playlistId)) {
-      setError('This track is already in the playlist');
+      showToast.error('Track already in playlist');
       return;
     }
 
@@ -70,7 +70,6 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
     setLoading(true);
     setAddingTo(playlistId);
     setError(null);
-    setSuccess(false);
 
     try {
       await PlaylistService.addTrackToPlaylist({
@@ -81,7 +80,7 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
         thumbnail: track.thumbnail,
         duration: track.duration,
       });
-      
+
       if (!active) return;
 
       setPlaylistTracks(prev => ({
@@ -101,17 +100,19 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
           }
         ]
       }));
-      
-      setSuccess(true);
+
+      showToast.success('Track added to playlist');
+
       setTimeout(() => {
         if (active) {
           onClose();
-          setSuccess(false);
         }
-      }, 1500);
+      }, 1000);
     } catch (err) {
       if (active) {
-        setError(err instanceof Error ? err.message : 'Failed to add track');
+        const errorMsg = err instanceof Error ? err.message : 'Failed to add track';
+        setError(errorMsg);
+        showToast.error('Failed to add track');
       }
     } finally {
       if (active) {
@@ -145,12 +146,6 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
             </button>
           </div>
 
-          {success && (
-            <div className="mb-4 p-3 bg-green-950/50 border border-green-900/50 rounded-lg text-green-400 text-sm">
-              Track added successfully!
-            </div>
-          )}
-
           {error && (
             <div className="mb-4 p-3 bg-red-950/50 border border-red-900/50 rounded-lg text-red-400 text-sm">
               {error}
@@ -175,11 +170,10 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
                     key={playlist.id}
                     onClick={() => handleAddToPlaylist(playlist.id)}
                     disabled={loading || alreadyAdded || addingTo === playlist.id}
-                    className={`w-full p-4 rounded-lg text-left transition-colors ${
-                      alreadyAdded
-                        ? 'bg-zinc-800/50 cursor-not-allowed opacity-60'
-                        : 'bg-zinc-800 hover:bg-zinc-700'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    className={`w-full p-4 rounded-lg text-left transition-colors ${alreadyAdded
+                      ? 'bg-zinc-800/50 cursor-not-allowed opacity-60'
+                      : 'bg-zinc-800 hover:bg-zinc-700'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">

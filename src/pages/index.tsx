@@ -4,19 +4,21 @@ import TrackList from '@/components/TrackList';
 import EmptyState from '@/components/EmptyState';
 import ErrorMessage from '@/components/ErrorMessage';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import UserMenu from '@/components/Auth/UserMenu';
 import Navbar from '@/components/Navbar';
 
 export default function Home() {
-  const { 
-    loading, 
-    error, 
-    displayTracks, 
-    listTitle, 
+  const router = useRouter();
+  const {
+    loading,
+    error,
+    displayTracks,
+    listTitle,
     viewMode,
     hasMore,
-    fetchTrending, 
+    fetchTrending,
     search,
     loadMore
   } = useTracks();
@@ -32,14 +34,6 @@ export default function Home() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="mb-8">
           <div className="flex flex-col gap-3 sm:flex-row">
-            {/* <button
-              onClick={fetchTrending}
-              disabled={loading}
-              className="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-800/50 disabled:text-zinc-500 border border-zinc-700 rounded-lg transition-all font-medium text-sm"
-            > 
-              {isTrendingLoading ? 'Loading...' : 'Trending'}
-            </button>*/}
-            
             <div className="w-full sm:flex-1">
               <SearchBar onSearch={search} loading={loading} />
             </div>
@@ -47,11 +41,11 @@ export default function Home() {
         </div>
 
         {error && <ErrorMessage message={error} />}
-        
+
         {showTracks && (
           <>
             <TrackList tracks={displayTracks} title={listTitle} />
-            
+
             {hasMore && viewMode === 'search' && (
               <div className="mt-6 text-center">
                 <button
@@ -65,8 +59,22 @@ export default function Home() {
             )}
           </>
         )}
-        
-        {showEmpty && <EmptyState />}
+
+        {showEmpty && (
+          <EmptyState
+            icon={
+              <svg className="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            }
+            title="Start discovering music"
+            description="Search for your favorite artists, songs, or albums to get started. Try searching for something you love!"
+            action={{
+              label: "Explore Playlists",
+              onClick: () => router.push('/explore')
+            }}
+          />
+        )}
       </main>
     </div>
   );

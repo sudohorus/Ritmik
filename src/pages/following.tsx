@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FollowerService } from '@/services/follower-service';
 import Navbar from '@/components/Navbar';
 import Loading from '@/components/Loading';
+import { showToast } from '@/lib/toast';
+import EmptyState from '@/components/EmptyState';
 
 export default function FollowingPage() {
   const { user, loading: authLoading } = useAuth();
@@ -19,43 +21,34 @@ export default function FollowingPage() {
     }
   }, [user, authLoading, router]);
 
-  useEffect(() => {
+  const loadPlaylists = async () => {
     if (!user) return;
 
-    let mounted = true;
+    setLoading(true);
+    setError(null);
 
-    const loadPlaylists = async () => {
-      setLoading(true);
-      setError(null);
+    try {
+      const data = await FollowerService.getFollowingPlaylists(user.id);
+      setPlaylists(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load playlists';
+      console.error('Error loading following playlists:', err);
 
-      try {
-        const data = await FollowerService.getFollowingPlaylists(user.id);
-
-        if (mounted) {
-          setPlaylists(data);
-        }
-      } catch (err) {
-        if (mounted) {
-          const errorMessage = err instanceof Error ? err.message : 'Failed to load playlists';
-
-          if (errorMessage.includes('Unauthorized') || errorMessage.includes('Authentication required')) {
-            setError('You need to be logged in to view this page');
-          } else {
-            setError(errorMessage);
-          }
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+      if (errorMessage.includes('Unauthorized') || errorMessage.includes('Authentication required')) {
+        setError('You need to be logged in to view this page');
+      } else if (errorMessage.includes('Network') || errorMessage.includes('fetch')) {
+        setError('Connection error. Check your internet and try again.');
+      } else {
+        setError('Failed to load playlists. Please try again.');
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    if (!user) return;
     loadPlaylists();
-
-    return () => {
-      mounted = false;
-    };
   }, [user]);
 
   if (authLoading || !user) {
@@ -78,33 +71,41 @@ export default function FollowingPage() {
           </div>
         ) : error ? (
           <div className="text-center py-12">
-            <div className="mb-4 p-4 bg-red-950/50 border border-red-900/50 rounded-lg text-red-400 text-sm inline-block">
-              {error}
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-950/50 mb-4">
+              <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
-            <div className="mt-4">
-              <Link href="/explore" className="text-blue-500 hover:underline">
-                Explore public playlists
+            <p className="text-zinc-300 mb-4 font-medium">{error}</p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={loadPlaylists}
+                className="px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-zinc-200 transition-colors"
+              >
+                Try again
+              </button>
+              <Link
+                href="/explore"
+                className="px-6 py-3 bg-zinc-800 text-white rounded-lg font-medium hover:bg-zinc-700 transition-colors"
+              >
+                Explore playlists
               </Link>
             </div>
           </div>
         ) : playlists.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-zinc-900 mb-4">
-              <svg className="w-8 h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          <EmptyState
+            icon={
+              <svg className="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-            </div>
-            <p className="text-zinc-400 mb-4">No playlists yet from people you follow</p>
-            <p className="text-sm text-zinc-500 mb-6">
-              Follow users to see their public playlists here
-            </p>
-            <Link
-              href="/explore"
-              className="inline-block px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-zinc-200 transition-colors"
-            >
-              Explore public playlists
-            </Link>
-          </div>
+            }
+            title="No playlists from followed users"
+            description="Follow users to discover their public playlists here. Start by exploring the community!"
+            action={{
+              label: "Explore Public Playlists",
+              onClick: () => router.push('/explore')
+            }}
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {playlists.map((playlist) => {

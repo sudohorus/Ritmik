@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { FollowerService, FollowerStats } from '@/services/follower-service';
 import { useAuth } from '@/contexts/AuthContext';
+import { showToast } from '@/lib/toast';
 
 export function useFollowers(targetUserId: string | undefined) {
   const { user } = useAuth();
@@ -62,11 +63,11 @@ export function useFollowers(targetUserId: string | undefined) {
 
   const followUser = async () => {
     if (!targetUserId || !user) return;
-    
+
     setActionLoading(true);
     try {
       await FollowerService.followUser(targetUserId);
-      
+
       if (mountedRef.current) {
         setStats(prev => ({
           ...prev,
@@ -74,7 +75,10 @@ export function useFollowers(targetUserId: string | undefined) {
           isFollowing: true,
         }));
       }
+
+      showToast.success('User followed successfully');
     } catch (err) {
+      showToast.error('Failed to follow user');
       if (mountedRef.current) {
         await loadStats();
       }
@@ -88,11 +92,11 @@ export function useFollowers(targetUserId: string | undefined) {
 
   const unfollowUser = async () => {
     if (!targetUserId || !user) return;
-    
+
     setActionLoading(true);
     try {
       await FollowerService.unfollowUser(targetUserId);
-      
+
       if (mountedRef.current) {
         setStats(prev => ({
           ...prev,
@@ -100,7 +104,10 @@ export function useFollowers(targetUserId: string | undefined) {
           isFollowing: false,
         }));
       }
+
+      showToast.success('User unfollowed');
     } catch (err) {
+      showToast.error('Failed to unfollow user');
       if (mountedRef.current) {
         await loadStats();
       }

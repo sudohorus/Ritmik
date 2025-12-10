@@ -2,42 +2,50 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { showToast } from '@/lib/toast';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { signIn } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     const { error } = await signIn(email, password);
 
-    if (error) {
-      setError(error.message || 'Failed to sign in');
-      setLoading(false);
-    } else {
-      const device = navigator.userAgent;
+    if (!error) {
+      showToast.success('Successfully logged in');
 
-      const location = "Unknown location";
+      // Send login notification email with auth token
+      try {
+        const { data: { session } } = await import('@/lib/supabase').then(m => m.supabase.auth.getSession());
 
-      await fetch("/api/email/login-notification", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email,
-          location,
-          device
-        })
-      });
+        if (session?.access_token) {
+          await fetch("/api/email/login-notification", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+              email,
+              location: "Unknown location",
+              device: navigator.userAgent
+            })
+          });
+        }
+      } catch (emailError) {
+        // Silently fail - don't block login if email fails
+        console.error('Failed to send login notification:', emailError);
+      }
+
       router.push('/');
+    } else {
+      setLoading(false);
     }
   };
 
@@ -82,12 +90,6 @@ export default function Login() {
                 placeholder="••••••••"
               />
             </div>
-
-            {error && (
-              <div className="p-4 bg-red-950/50 border border-red-900/50 rounded-lg text-red-400 text-sm">
-                {error}
-              </div>
-            )}
 
             <button
               type="submit"

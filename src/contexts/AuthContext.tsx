@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState, useRef, useCallback, Re
 import { supabase } from '@/lib/supabase';
 import { User } from '@/types/auth';
 import { Session } from '@supabase/supabase-js';
+import { isSessionValid, withRetry, getAuthErrorMessage } from '@/utils/auth-utils';
+import { showToast } from '@/lib/toast';
 
 interface AuthContextType {
   user: User | null;
@@ -24,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const sessionIdRef = useRef<string | null>(null);
   const isInitializedRef = useRef(false);
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isRefreshingRef = useRef(false);
 
 
   const updateUser = useCallback((newUser: User | null) => {
@@ -71,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+
   useEffect(() => {
     if (isInitializedRef.current) return;
     isInitializedRef.current = true;
@@ -79,7 +83,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const init = async () => {
       try {
-        const { data: { session: current }, error } = await supabase.auth.getSession();
+        const { data: { session: current }, error } = await withRetry(
+          () => supabase.auth.getSession(),
+          { retries: 2, delay: 1000 }
+        );
 
         if (!mounted) return;
 
@@ -91,6 +98,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        if (!isSessionValid(current)) {
+          console.warn('Session expired, attempting refresh...');
+          const { data: { session: refreshed }, error: refreshError } = await supabase.auth.refreshSession();
+
+          if (refreshError || !refreshed) {
+            sessionIdRef.current = null;
+            updateUser(null);
+            setSession(null);
+            setLoading(false);
+            return;
+          }
+
+          sessionIdRef.current = refreshed.access_token;
+          setSession(refreshed);
+
+          const profile = await fetchUserProfile(refreshed.user.id);
+          if (mounted) {
+            updateUser(profile || mapUserFromAuth(refreshed.user));
+            setLoading(false);
+          }
+          return;
+        }
+
         sessionIdRef.current = current.access_token;
         setSession(current);
 
@@ -99,7 +129,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           updateUser(profile || mapUserFromAuth(current.user));
           setLoading(false);
         }
-      } catch {
+      } catch (err) {
+        console.error('Auth initialization error:', err);
         if (mounted) {
           updateUser(null);
           setSession(null);
@@ -110,13 +141,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     init();
 
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         if (!mounted) return;
 
+        console.log('Auth state change:', event);
+
         if (event === 'TOKEN_REFRESHED' && newSession) {
+          if (isRefreshingRef.current) return;
+          isRefreshingRef.current = true;
+
           sessionIdRef.current = newSession.access_token;
           setSession(newSession);
+
+          isRefreshingRef.current = false;
           return;
         }
 
@@ -135,8 +174,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           sessionIdRef.current = newSession.access_token;
           setSession(newSession);
 
-          const profile = await fetchUserProfile(newSession.user.id);
-          updateUser(profile || mapUserFromAuth(newSession.user));
+          try {
+            const profile = await fetchUserProfile(newSession.user.id);
+            updateUser(profile || mapUserFromAuth(newSession.user));
+          } catch (err) {
+            console.error('Error fetching user profile on sign in:', err);
+            updateUser(mapUserFromAuth(newSession.user));
+          }
           setLoading(false);
         }
 
@@ -144,12 +188,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
 
           refreshTimeoutRef.current = setTimeout(async () => {
-            const profile = await fetchUserProfile(newSession.user.id);
-            updateUser(profile || mapUserFromAuth(newSession.user));
+            try {
+              const profile = await fetchUserProfile(newSession.user.id);
+              updateUser(profile || mapUserFromAuth(newSession.user));
+            } catch (err) {
+              console.error('Error fetching user profile on update:', err);
+            }
           }, 300);
         }
       }
     );
+
 
     return () => {
       mounted = false;
@@ -172,18 +221,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
-      if (!error && data.user) {
-        await supabase.from('users').insert({
-          id: data.user.id,
-          email,
-          username,
-          display_name: username,
-        });
+      if (error) {
+        const friendlyMessage = getAuthErrorMessage(error);
+        showToast.error(friendlyMessage);
+        return { error: { message: friendlyMessage } };
       }
 
-      return { error };
+      if (data.user) {
+        try {
+          await supabase.from('users').insert({
+            id: data.user.id,
+            email,
+            username,
+            display_name: username,
+          });
+        } catch (dbError) {
+          console.error('Error creating user profile:', dbError);
+        }
+      }
+
+      return { error: null };
     } catch (err) {
-      return { error: err };
+      const friendlyMessage = getAuthErrorMessage(err);
+      showToast.error(friendlyMessage);
+      return { error: { message: friendlyMessage } };
     }
   };
 
@@ -194,13 +255,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
       });
 
-      if (error?.message?.includes('Email not confirmed')) {
-        return { error: { message: 'Please disable email confirmation in Supabase settings.' } };
+      if (error) {
+        const friendlyMessage = getAuthErrorMessage(error);
+        showToast.error(friendlyMessage);
+        return { error: { message: friendlyMessage } };
       }
 
-      return { error };
+      return { error: null };
     } catch (err) {
-      return { error: err };
+      const friendlyMessage = getAuthErrorMessage(err);
+      showToast.error(friendlyMessage);
+      return { error: { message: friendlyMessage } };
     }
   };
 
@@ -211,7 +276,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(null);
 
       await supabase.auth.signOut();
-    } catch {}
+    } catch { }
   };
 
   const refreshUser = async () => {
@@ -222,7 +287,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const profile = await fetchUserProfile(current.user.id);
         updateUser(profile || mapUserFromAuth(current.user));
       }
-    } catch {}
+    } catch { }
   };
 
   const value = {

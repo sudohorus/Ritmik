@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { showToast } from '@/lib/toast';
 
 export default function SignUp() {
   const [email, setEmail] = useState('');
@@ -9,41 +10,36 @@ export default function SignUp() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const { signUp } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-    setSuccess(false);
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      showToast.error('Passwords do not match');
       setLoading(false);
       return;
     }
 
     if (username.length < 3) {
-      setError('Username must be at least 3 characters');
+      showToast.error('Username must be at least 3 characters');
       setLoading(false);
       return;
     }
 
     const { error } = await signUp(email, password, username);
 
-    if (error) {
-      setError(error.message || 'Failed to sign up');
+    if (!error) {
+      showToast.success('Account created successfully');
       setLoading(false);
-    } else {
-      setSuccess(true);
-      setLoading(false);
-      
+
       setTimeout(() => {
         router.push('/login');
-      }, 2000);
+      }, 1500);
+    } else {
+      setLoading(false);
     }
   };
 
@@ -123,24 +119,12 @@ export default function SignUp() {
               />
             </div>
 
-            {error && (
-              <div className="p-4 bg-red-950/50 border border-red-900/50 rounded-lg text-red-400 text-sm">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="p-4 bg-green-950/50 border border-green-900/50 rounded-lg text-green-400 text-sm">
-                Account created successfully! Redirecting to login...
-              </div>
-            )}
-
             <button
               type="submit"
-              disabled={loading || success}
+              disabled={loading}
               className="w-full py-3 bg-white text-black rounded-lg font-semibold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating account...' : success ? 'Success!' : 'Sign Up'}
+              {loading ? 'Creating account...' : 'Sign Up'}
             </button>
           </form>
 

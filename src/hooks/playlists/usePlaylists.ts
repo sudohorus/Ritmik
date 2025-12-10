@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlaylistService } from '@/services/playlist-service';
 import { Playlist, CreatePlaylistData } from '@/types/playlist';
+import { showToast } from '@/lib/toast';
 
 export function usePlaylists() {
   const { user } = useAuth();
@@ -11,11 +12,11 @@ export function usePlaylists() {
   const mountedRef = useRef(true);
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isFetchingRef = useRef(false);
-  const isCreatingRef = useRef(false); 
+  const isCreatingRef = useRef(false);
 
   useEffect(() => {
     mountedRef.current = true;
-    
+
     return () => {
       mountedRef.current = false;
       if (fetchTimeoutRef.current) {
@@ -26,7 +27,7 @@ export function usePlaylists() {
 
   useEffect(() => {
     const userId = user?.id;
-    
+
     if (!userId) {
       setPlaylists([]);
       setLoading(false);
@@ -91,10 +92,10 @@ export function usePlaylists() {
 
     try {
       await PlaylistService.createPlaylist(user.id, data);
-      
+
       let retries = 3;
       let updated: Playlist[] | null = null;
-      
+
       while (retries > 0 && !updated) {
         try {
           updated = await PlaylistService.getUserPlaylists(user.id);
@@ -108,11 +109,14 @@ export function usePlaylists() {
           }
         }
       }
-      
+
       if (mountedRef.current && updated) {
         setPlaylists(updated);
       }
+
+      showToast.success('Playlist created successfully');
     } catch (err) {
+      showToast.error('Failed to create playlist');
       throw err;
     } finally {
       isCreatingRef.current = false;
@@ -121,20 +125,34 @@ export function usePlaylists() {
 
   const updatePlaylist = async (playlistId: string, data: Partial<CreatePlaylistData>) => {
     if (!user) throw new Error('User not authenticated');
-    
-    await PlaylistService.updatePlaylist(playlistId, data);
-    const updated = await PlaylistService.getUserPlaylists(user.id);
-    
-    if (mountedRef.current) {
-      setPlaylists(updated);
+
+    try {
+      await PlaylistService.updatePlaylist(playlistId, data);
+      const updated = await PlaylistService.getUserPlaylists(user.id);
+
+      if (mountedRef.current) {
+        setPlaylists(updated);
+      }
+
+      showToast.success('Playlist updated successfully');
+    } catch (err) {
+      showToast.error('Failed to update playlist');
+      throw err;
     }
   };
 
   const deletePlaylist = async (playlistId: string) => {
-    await PlaylistService.deletePlaylist(playlistId);
-    
-    if (mountedRef.current) {
-      setPlaylists(prev => prev.filter(p => p.id !== playlistId));
+    try {
+      await PlaylistService.deletePlaylist(playlistId);
+
+      if (mountedRef.current) {
+        setPlaylists(prev => prev.filter(p => p.id !== playlistId));
+      }
+
+      showToast.success('Playlist deleted successfully');
+    } catch (err) {
+      showToast.error('Failed to delete playlist');
+      throw err;
     }
   };
 

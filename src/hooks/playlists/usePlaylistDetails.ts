@@ -4,6 +4,7 @@ import { PlaylistService } from '@/services/playlist-service';
 import { Playlist, PlaylistTrack, CreatePlaylistData } from '@/types/playlist';
 import { arrayMove } from '@dnd-kit/sortable';
 import { useVisibilityReset } from '@/hooks/useVisibilityReset';
+import { showToast } from '@/lib/toast';
 
 export function usePlaylistDetails(playlistId: string | undefined) {
   const { user } = useAuth();
@@ -17,7 +18,7 @@ export function usePlaylistDetails(playlistId: string | undefined) {
 
   useEffect(() => {
     mountedRef.current = true;
-    
+
     return () => {
       mountedRef.current = false;
       if (fetchTimeoutRef.current) {
@@ -58,7 +59,7 @@ export function usePlaylistDetails(playlistId: string | undefined) {
         setLoading(false);
         setError('Request timeout - please refresh the page');
       }
-    }, 10000); 
+    }, 10000);
 
     const load = async () => {
       try {
@@ -124,19 +125,26 @@ export function usePlaylistDetails(playlistId: string | undefined) {
 
   const removeTrack = async (videoId: string) => {
     if (!playlistId || !user) throw new Error('Not authorized');
-    
-    await PlaylistService.removeTrackFromPlaylist(playlistId, videoId);
-    
-    if (mountedRef.current) {
-      setTracks(prev => prev.filter(t => t.video_id !== videoId));
+
+    try {
+      await PlaylistService.removeTrackFromPlaylist(playlistId, videoId);
+
+      if (mountedRef.current) {
+        setTracks(prev => prev.filter(t => t.video_id !== videoId));
+      }
+
+      showToast.success('Track removed from playlist');
+    } catch (err) {
+      showToast.error('Failed to remove track');
+      throw err;
     }
   };
 
   const updatePlaylist = async (data: Partial<CreatePlaylistData>) => {
     if (!playlistId || !user) throw new Error('Not authorized');
-    
+
     const updated = await PlaylistService.updatePlaylist(playlistId, data);
-    
+
     if (mountedRef.current) {
       setPlaylist(updated);
     }
@@ -149,7 +157,7 @@ export function usePlaylistDetails(playlistId: string | undefined) {
     const oldIndex = tracks.findIndex((t) => t.video_id === activeId);
     const newIndex = tracks.findIndex((t) => t.video_id === overId);
     const newTracks = arrayMove(tracks, oldIndex, newIndex);
-    
+
     setTracks(newTracks);
 
     try {

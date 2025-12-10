@@ -8,6 +8,7 @@ import ConfirmModal from '@/components/Playlist/ConfirmModal';
 import UserMenu from '@/components/Auth/UserMenu';
 import Loading from '@/components/Loading';
 import Navbar from '@/components/Navbar';
+import EmptyState from '@/components/EmptyState';
 
 export default function PlaylistsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -63,15 +64,23 @@ export default function PlaylistsPage() {
             <Loading text="Loading playlists..." />
           </div>
         ) : playlists.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-zinc-400 mb-4">You don&apos;t have any playlists yet</div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg font-medium transition-colors border border-zinc-700"
-            >
-              Create your first playlist
-            </button>
-          </div>
+          <EmptyState
+            icon={
+              <svg className="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+            }
+            title="Create your first playlist"
+            description="Organize your favorite tracks into playlists. Search for music and start building your collection!"
+            action={{
+              label: "Create Playlist",
+              onClick: () => setShowCreateModal(true)
+            }}
+            secondaryAction={{
+              label: "Explore Music",
+              onClick: () => router.push('/')
+            }}
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {playlists.map((playlist) => (
