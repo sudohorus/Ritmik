@@ -46,7 +46,9 @@ export default function App({ Component, pageProps }: AppProps) {
         <PlayerProvider>
           <PlayerModeProvider>
             <Component {...pageProps} />
-            {!hidePlayer && <Player key="global-player" />}
+            <div style={{ display: hidePlayer ? 'none' : 'block' }}>
+              <Player key="global-player" />
+            </div>
           </PlayerModeProvider>
         </PlayerProvider>
       </AuthProvider>
