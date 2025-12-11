@@ -10,6 +10,7 @@ import UserMenu from '@/components/Auth/UserMenu';
 import SortableTrackItem from '@/components/Playlist/SortableTrackItem';
 import Link from 'next/link';
 import Loading from '@/components/Loading';
+import { showToast } from '@/lib/toast';
 import {
   DndContext,
   closestCenter,
@@ -62,9 +63,9 @@ export default function PlaylistPage() {
     try {
       await removeTrack(removeConfirm);
       setRemoveConfirm(null);
-    } catch (err) {
-      console.error('Error removing track:', err);
-      alert('Failed to remove track');
+    } catch (error) {
+      console.error('Error removing track:', error);
+      showToast.error('Failed to remove track');
     }
   };
 

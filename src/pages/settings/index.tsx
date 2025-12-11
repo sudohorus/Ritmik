@@ -43,6 +43,17 @@ export default function SettingsPage() {
       items: ['Followers visibility', 'Following visibility', 'Playlist defaults', 'Activity'],
     },
     {
+      title: 'Integrations',
+      description: 'Connect external music services',
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+        </svg>
+      ),
+      href: '/settings/integrations',
+      items: ['Spotify'],
+    },
+    {
       title: 'Appearance',
       description: 'Customize how Ritmik looks',
       icon: (
@@ -83,11 +94,10 @@ export default function SettingsPage() {
             <Link
               key={section.href}
               href={section.badge ? '#' : section.href}
-              className={`bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 transition-all group ${
-                section.badge
+              className={`bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 transition-all group ${section.badge
                   ? 'cursor-not-allowed opacity-60'
                   : 'hover:border-zinc-700 hover:bg-zinc-800/50'
-              }`}
+                }`}
               onClick={(e) => section.badge && e.preventDefault()}
             >
               <div className="flex items-start justify-between mb-4">
@@ -107,10 +117,10 @@ export default function SettingsPage() {
                     {section.badge}
                   </span>
                 ) : (
-                  <svg 
-                    className="w-5 h-5 text-zinc-600 group-hover:text-zinc-400 transition-colors shrink-0" 
-                    fill="none" 
-                    stroke="currentColor" 
+                  <svg
+                    className="w-5 h-5 text-zinc-600 group-hover:text-zinc-400 transition-colors shrink-0"
+                    fill="none"
+                    stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

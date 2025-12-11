@@ -7,18 +7,17 @@ import Loading from '@/components/Loading';
 import { ProfileService } from '@/services/profile-service';
 import { User } from '@/types/auth';
 import Navbar from '@/components/Navbar';
+import { showToast } from '@/lib/toast';
 
 export default function ProfilePage() {
   const { user, loading: authLoading, refreshUser } = useAuth();
   const router = useRouter();
   const initialLoadDone = useRef(false);
-  
+
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -45,11 +44,9 @@ export default function ProfilePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(false);
 
     if (username.length < 3) {
-      setError('Username must be at least 3 characters');
+      showToast.error('Username must be at least 3 characters');
       return;
     }
 
@@ -59,14 +56,14 @@ export default function ProfilePage() {
     if (avatarUrl !== user.avatar_url) updates.avatar_url = avatarUrl || null;
 
     if (Object.keys(updates).length === 0) {
-      setError('No changes to save');
+      showToast.success('No changes to save');
       return;
     }
 
     setSaving(true);
 
     try {
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Update timeout')), 10000)
       );
 
@@ -76,17 +73,16 @@ export default function ProfilePage() {
 
       if (updateError) {
         if (updateError.code === 'USERNAME_TAKEN' || updateError.message?.includes('username')) {
-          setError('This username is already taken. Please choose another one.');
+          showToast.error('This username is already taken. Please choose another one.');
         } else {
-          setError(updateError.message || 'Failed to update profile');
+          showToast.error(updateError.message || 'Failed to update profile');
         }
       } else {
-        setSuccess(true);
+        showToast.success('Profile updated successfully!');
         await refreshUser();
-        setTimeout(() => setSuccess(false), 3000);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update profile');
+      showToast.error(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
       setSaving(false);
     }
@@ -185,18 +181,6 @@ export default function ProfilePage() {
               />
               <p className="mt-1 text-xs text-zinc-500">URL to your profile picture.</p>
             </div>
-
-            {error && (
-              <div className="p-4 bg-red-950/50 border border-red-900/50 rounded-lg text-red-400 text-sm">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="p-4 bg-green-950/50 border border-green-900/50 rounded-lg text-green-400 text-sm">
-                Profile updated successfully!
-              </div>
-            )}
 
             <div className="flex items-center gap-4 pt-4">
               <button

@@ -209,6 +209,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, username: string) => {
     try {
+      const ipAddress = await import('@/utils/rate-limiter').then(m => m.getClientIP());
+      const { checkRateLimit, recordAttempt, formatTimeRemaining } = await import('@/utils/rate-limiter');
+
+      const rateLimitCheck = await checkRateLimit(ipAddress, 'signup');
+
+      if (!rateLimitCheck.allowed) {
+        const timeRemaining = rateLimitCheck.blockedUntil
+          ? formatTimeRemaining(rateLimitCheck.blockedUntil)
+          : '30 minutes';
+        const message = `Account creation limit reached. Please try again in ${timeRemaining}.`;
+        showToast.error(message);
+        return { error: { message } };
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -235,6 +249,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             username,
             display_name: username,
           });
+
+          await recordAttempt(ipAddress, 'signup');
         } catch (dbError) {
           console.error('Error creating user profile:', dbError);
         }
@@ -250,17 +266,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
+      const ipAddress = await import('@/utils/rate-limiter').then(m => m.getClientIP());
+      const { checkRateLimit, recordAttempt, resetAttempts, formatTimeRemaining } = await import('@/utils/rate-limiter');
+
+      const rateLimitCheck = await checkRateLimit(ipAddress, 'login');
+
+      if (!rateLimitCheck.allowed) {
+        const timeRemaining = rateLimitCheck.blockedUntil
+          ? formatTimeRemaining(rateLimitCheck.blockedUntil)
+          : '30 minutes';
+        const message = `Too many failed login attempts. Please try again in ${timeRemaining}.`;
+        showToast.error(message);
+        return { error: { message } };
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        await recordAttempt(ipAddress, 'login');
+
         const friendlyMessage = getAuthErrorMessage(error);
         showToast.error(friendlyMessage);
         return { error: { message: friendlyMessage } };
       }
 
+      await resetAttempts(ipAddress, 'login');
       return { error: null };
     } catch (err) {
       const friendlyMessage = getAuthErrorMessage(err);

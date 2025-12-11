@@ -8,7 +8,7 @@ import { handleApiError, ValidationError } from '@/utils/error-handler';
 import { z } from 'zod';
 
 const searchSchema = z.object({
-  query: z.string().min(1).max(100),
+  query: z.string().min(1).max(200),
   nextPageData: z.string().optional(),
 });
 

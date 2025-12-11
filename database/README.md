@@ -21,6 +21,8 @@ Execute the SQL files in order:
 5. followers.sql
 6. user_settings.sql
 7. statistics.sql
+8. rate_limiting.sql
+9. spotify_connections.sql
 ```
 
 ### 3. Configure Environment Variables
@@ -125,6 +127,31 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 - `title` (TEXT) - Track title
 - `favorited_at` (TIMESTAMP) - When favorited
 
+#### `rate_limit_attempts`
+
+- `id` (UUID, PK) - Rate limit entry ID
+- `ip_address` (TEXT) - Client IP address
+- `action_type` (TEXT) - Type of action ('login' or 'signup')
+- `attempt_count` (INTEGER) - Number of attempts
+- `blocked_until` (TIMESTAMP) - Block expiration time
+- `created_at` (TIMESTAMP) - Entry creation time
+- `updated_at` (TIMESTAMP) - Last update time
+- UNIQUE(`ip_address`, `action_type`) - One record per IP/action combination
+
+#### `spotify_connections`
+
+- `id` (UUID, PK) - Connection ID
+- `user_id` (UUID, FK, UNIQUE) - User ID
+- `spotify_user_id` (TEXT) - Spotify user ID
+- `access_token` (TEXT) - OAuth access token
+- `refresh_token` (TEXT) - OAuth refresh token  
+- `token_expires_at` (TIMESTAMP) - Token expiration time
+- `connected_at` (TIMESTAMP) - Connection timestamp
+- `last_synced_at` (TIMESTAMP) - Last import timestamp
+- UNIQUE(`user_id`) - One Spotify connection per user
+
+
+
 ## Row Level Security (RLS)
 
 All tables have RLS enabled with policies:
@@ -142,3 +169,8 @@ All tables have RLS enabled with policies:
 - Track and playlist statistics are public (viewable by all)
 - Users can only manage their own favorites
 - Automatic triggers update statistics in real-time
+
+### Security Tables
+- Anonymous users can manage rate limit attempts (required for auth flow)
+- Rate limit checks prevent brute force attacks (15 login attempts, 5 signups per 30 minutes)
+
