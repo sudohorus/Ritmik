@@ -27,11 +27,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
         const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-        // Get userId from state parameter (passed from connect endpoint)
         const userId = state;
 
-        const tokens = await SpotifyService.exchangeCodeForTokens(code);
-        const userProfile = await SpotifyService.getUserProfile(tokens.access_token);
+        let tokens;
+        try {
+            tokens = await SpotifyService.exchangeCodeForTokens(code);
+        } catch (tokenError: any) {
+            console.error('Token exchange failed:', {
+                userId,
+                error: tokenError?.response?.data || tokenError?.message,
+                statusCode: tokenError?.response?.status
+            });
+            return res.redirect('/settings/integrations?error=token_exchange_failed');
+        }
+
+        let userProfile;
+        try {
+            userProfile = await SpotifyService.getUserProfile(tokens.access_token);
+        } catch (profileError: any) {
+            console.error('Get user profile failed:', {
+                userId,
+                error: profileError?.response?.data || profileError?.message,
+                statusCode: profileError?.response?.status
+            });
+
+            if (profileError?.response?.status === 403) {
+                return res.redirect('/settings/integrations?error=spotify_permissions_denied');
+            }
+
+            return res.redirect('/settings/integrations?error=profile_fetch_failed');
+        }
+
         const expiresAt = SpotifyService.calculateExpiryDate(tokens.expires_in);
 
         const { error: dbError } = await supabaseAdmin
@@ -48,13 +74,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             });
 
         if (dbError) {
-            console.error('Database error:', dbError);
+            console.error('Database error:', {
+                userId,
+                error: dbError
+            });
             return res.redirect('/settings/integrations?error=database_error');
         }
 
         res.redirect('/settings/integrations?success=spotify_connected');
-    } catch (error) {
-        console.error('Spotify callback error:', error);
+    } catch (error: any) {
+        console.error('Spotify callback error:', {
+            error: error?.message,
+            stack: error?.stack
+        });
         res.redirect('/settings/integrations?error=connection_failed');
     }
 }

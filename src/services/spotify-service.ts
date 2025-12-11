@@ -39,22 +39,27 @@ export class SpotifyService {
         const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
         const redirectUri = process.env.SPOTIFY_REDIRECT_URI || process.env.NEXT_PUBLIC_SPOTIFY_REDIRECT_URI;
 
-        const response = await axios.post(
-            `${SPOTIFY_ACCOUNTS_BASE}/api/token`,
-            new URLSearchParams({
-                grant_type: 'authorization_code',
-                code,
-                redirect_uri: redirectUri!,
-            }),
-            {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
-                },
-            }
-        );
+        try {
+            const response = await axios.post(
+                `${SPOTIFY_ACCOUNTS_BASE}/api/token`,
+                new URLSearchParams({
+                    grant_type: 'authorization_code',
+                    code,
+                    redirect_uri: redirectUri!,
+                }),
+                {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+                    },
+                }
+            );
 
-        return response.data;
+            return response.data;
+        } catch (error: any) {
+            console.error('Spotify token exchange error:', error?.response?.data || error?.message);
+            throw error;
+        }
     }
 
     static async refreshAccessToken(refreshToken: string): Promise<{
@@ -64,49 +69,64 @@ export class SpotifyService {
         const clientId = process.env.SPOTIFY_CLIENT_ID || process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
         const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
-        const response = await axios.post(
-            `${SPOTIFY_ACCOUNTS_BASE}/api/token`,
-            new URLSearchParams({
-                grant_type: 'refresh_token',
-                refresh_token: refreshToken,
-            }),
-            {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
-                },
-            }
-        );
+        try {
+            const response = await axios.post(
+                `${SPOTIFY_ACCOUNTS_BASE}/api/token`,
+                new URLSearchParams({
+                    grant_type: 'refresh_token',
+                    refresh_token: refreshToken,
+                }),
+                {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+                    },
+                }
+            );
 
-        return response.data;
+            return response.data;
+        } catch (error: any) {
+            console.error('Spotify token refresh error:', error?.response?.data || error?.message);
+            throw error;
+        }
     }
 
     static async getUserProfile(accessToken: string): Promise<SpotifyUserProfile> {
-        const response = await axios.get(`${SPOTIFY_API_BASE}/me`, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-            },
-        });
+        try {
+            const response = await axios.get(`${SPOTIFY_API_BASE}/me`, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
 
-        return response.data;
+            return response.data;
+        } catch (error: any) {
+            console.error('Spotify get user profile error:', error?.response?.data || error?.message);
+            throw error;
+        }
     }
 
     static async getUserPlaylists(accessToken: string, limit = 50): Promise<SpotifyPlaylist[]> {
         const playlists: SpotifyPlaylist[] = [];
         let url: string | null = `${SPOTIFY_API_BASE}/me/playlists?limit=${limit}`;
 
-        while (url) {
-            const response: { data: { items: SpotifyPlaylist[]; next: string | null } } = await axios.get(url, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            });
+        try {
+            while (url) {
+                const response: { data: { items: SpotifyPlaylist[]; next: string | null } } = await axios.get(url, {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                });
 
-            playlists.push(...response.data.items);
-            url = response.data.next;
+                playlists.push(...response.data.items);
+                url = response.data.next;
+            }
+
+            return playlists;
+        } catch (error: any) {
+            console.error('Spotify get playlists error:', error?.response?.data || error?.message);
+            throw error;
         }
-
-        return playlists;
     }
 
     static async getPlaylistTracks(

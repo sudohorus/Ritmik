@@ -71,8 +71,18 @@ export default function SpotifyImportModal({ onClose }: SpotifyImportModalProps)
 
             setSpotifyPlaylists(spotifyRes.data.playlists || []);
             setRitmikPlaylists(ritmikRes.data || []);
-        } catch (error) {
-            showToast.error('Failed to load playlists');
+        } catch (error: any) {
+            const errorCode = error?.response?.data?.error;
+
+            if (errorCode === 'spotify_reauth_required') {
+                showToast.error('Your Spotify connection expired. Please reconnect in settings.');
+            } else if (errorCode === 'spotify_permission_denied') {
+                showToast.error('Spotify permissions denied. Please reconnect and grant all permissions.');
+            } else if (error?.response?.status === 404) {
+                showToast.error('Spotify not connected. Please connect in settings.');
+            } else {
+                showToast.error('Failed to load playlists');
+            }
             handleClose();
         } finally {
             setLoadingPlaylists(false);
