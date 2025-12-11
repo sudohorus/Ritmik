@@ -165,7 +165,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             sendEvent('progress', progress);
 
             try {
-                const searchUrl = `${req.headers.origin || 'http://localhost:3000'}/api/youtube/search?query=${encodeURIComponent(searchQuery)}`;
+                const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+                const searchUrl = `${baseUrl}/api/youtube/search?query=${encodeURIComponent(searchQuery)}`;
                 const searchResponse = await searchWithRetry(searchUrl, trackName);
 
                 if (!searchResponse.data || !searchResponse.data.data) {

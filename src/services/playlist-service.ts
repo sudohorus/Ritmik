@@ -37,7 +37,7 @@ export class PlaylistService {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    
+
     return (data || []).map(playlist => ({
       ...playlist,
       track_count: playlist.playlist_tracks?.[0]?.count || 0,
@@ -70,7 +70,7 @@ export class PlaylistService {
         throw new Error('This playlist is private');
       }
     }
-    
+
     return data;
   }
 
@@ -167,24 +167,29 @@ export class PlaylistService {
     if (error) throw error;
   }
 
-  static async getPlaylistTracks(playlistId: string) {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    const { data: playlist, error: playlistError } = await supabase
+  static async getPlaylist(playlistId: string, userId?: string): Promise<Playlist> {
+    const { data: playlist, error } = await supabase
       .from('playlists')
-      .select('user_id, is_public')
+      .select('*, users(username, display_name, avatar_url)')
       .eq('id', playlistId)
       .single();
 
-    if (playlistError) {
+    if (error || !playlist) {
       throw new Error('Playlist not found');
     }
 
-    if (!playlist.is_public) {
-      if (!user || playlist.user_id !== user.id) {
-        throw new Error('This playlist is private');
-      }
+    if (!playlist.is_public && playlist.user_id !== userId) {
+      throw new Error('This playlist is private');
     }
+
+    return playlist;
+  }
+
+  static async getPlaylistTracks(playlistId: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Use the new getPlaylist method to handle privacy checks
+    await this.getPlaylist(playlistId, user?.id);
 
     const { data, error } = await supabase
       .from('playlist_tracks')
