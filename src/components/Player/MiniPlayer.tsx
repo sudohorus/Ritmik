@@ -4,18 +4,18 @@ import { formatDuration } from '@/utils/format';
 import { useState, useEffect, useRef } from 'react';
 
 export default function MiniPlayer() {
-  const { 
-    currentTrack, 
-    isPlaying, 
-    progress, 
-    duration, 
+  const {
+    currentTrack,
+    isPlaying,
+    progress,
+    duration,
     queue,
-    togglePlay, 
-    playNext, 
+    togglePlay,
+    playNext,
     playPrevious,
     seekTo
   } = usePlayer();
-  
+
   const { setMode } = usePlayerMode();
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: window.innerWidth - 340, y: window.innerHeight - 420 });
@@ -28,7 +28,7 @@ export default function MiniPlayer() {
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button, .no-drag')) return;
-    
+
     setIsDragging(true);
     dragRef.current = {
       startX: e.clientX,
@@ -44,7 +44,7 @@ export default function MiniPlayer() {
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - dragRef.current.startX;
       const deltaY = e.clientY - dragRef.current.startY;
-      
+
       setPosition({
         x: dragRef.current.initialX + deltaX,
         y: dragRef.current.initialY + deltaY
@@ -66,12 +66,12 @@ export default function MiniPlayer() {
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!progressRef.current) return;
-    
+
     const rect = progressRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const percentage = x / rect.width;
     const newTime = percentage * duration;
-    
+
     seekTo(newTime);
   };
 
@@ -86,7 +86,7 @@ export default function MiniPlayer() {
       }}
     >
       {/* Header - Area de arrastar */}
-      <div 
+      <div
         className="flex items-center justify-between p-3 border-b border-zinc-800 bg-zinc-900/95 cursor-grab active:cursor-grabbing"
         onMouseDown={handleMouseDown}
       >
@@ -129,7 +129,7 @@ export default function MiniPlayer() {
 
         {/* Progress Bar */}
         <div className="space-y-1.5 no-drag">
-          <div 
+          <div
             ref={progressRef}
             onClick={handleProgressClick}
             className="h-1 bg-zinc-800 rounded-full relative overflow-hidden cursor-pointer group"
@@ -174,7 +174,7 @@ export default function MiniPlayer() {
           </button>
 
           <button
-            onClick={playNext}
+            onClick={() => playNext()}
             disabled={queue.length === 0}
             className="text-zinc-400 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             title="Próxima"
