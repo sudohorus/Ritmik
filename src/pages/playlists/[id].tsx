@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlaylistTrack } from '@/types/playlist';
 import { usePlayer } from '@/contexts/PlayerContext';
@@ -48,10 +48,15 @@ export default function PlaylistPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredTracks = tracks.filter(track =>
-    track.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (track.artist && track.artist.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredTracks = useMemo(() => {
+    if (!searchQuery.trim()) return tracks;
+    const lowerQuery = searchQuery.toLowerCase().trim();
+    return tracks.filter(track => {
+      const titleMatch = track.title?.toLowerCase().includes(lowerQuery);
+      const artistMatch = track.artist?.toLowerCase().includes(lowerQuery);
+      return titleMatch || artistMatch;
+    });
+  }, [tracks, searchQuery]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -230,17 +235,18 @@ export default function PlaylistPage() {
               {filteredTracks.length > 0 ? (
                 filteredTracks.map((track, index) => {
                   const isCurrentTrack = currentTrack?.videoId === track.video_id;
+                  const originalIndex = tracks.findIndex(t => t.video_id === track.video_id);
                   return (
                     <SortableTrackItem
                       key={track.video_id}
                       track={track}
-                      index={index}
+                      index={originalIndex}
                       isCurrentTrack={isCurrentTrack}
                       isPlaying={isPlaying}
                       isOwner={!!isOwner}
                       onPlay={() => handlePlayTrack(track)}
                       onRemove={() => setRemoveConfirm(track.video_id)}
-                      disabled={true} 
+                      disabled={true}
                     />
                   );
                 })
