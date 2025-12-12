@@ -10,6 +10,7 @@ interface SortableTrackItemProps {
   isOwner: boolean;
   onPlay: () => void;
   onRemove: () => void;
+  disabled?: boolean;
 }
 
 export default function SortableTrackItem({
@@ -20,6 +21,7 @@ export default function SortableTrackItem({
   isOwner,
   onPlay,
   onRemove,
+  disabled = false,
 }: SortableTrackItemProps) {
   const {
     attributes,
@@ -28,7 +30,7 @@ export default function SortableTrackItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: track.video_id, disabled: !isOwner });
+  } = useSortable({ id: track.video_id, disabled: !isOwner || disabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -44,7 +46,7 @@ export default function SortableTrackItem({
       className="bg-zinc-900 border border-zinc-800 rounded-lg p-2 md:p-4 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all group cursor-pointer"
     >
       <div className="flex items-center gap-2 md:gap-4">
-        {isOwner && (
+        {isOwner && !disabled && (
           <button
             {...attributes}
             {...listeners}

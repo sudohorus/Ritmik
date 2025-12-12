@@ -24,9 +24,13 @@ export default function Player() {
     progress,
     duration,
     seekToSeconds,
+    isShuffle,
+    repeatMode,
     togglePlay,
     playNext,
     playPrevious,
+    toggleShuffle,
+    toggleRepeat,
     setVolume,
     setProgress,
     setDuration,
@@ -68,7 +72,7 @@ export default function Player() {
 
   const handlePlayNext = () => {
     recordSkip();
-    playNext();
+    playNext(false);
   };
 
   const handlePlayPrevious = () => {
@@ -194,7 +198,7 @@ export default function Player() {
 
               try {
                 if (event.data === window.YT.PlayerState.ENDED) {
-                  playNext();
+                  playNext(true);
                 }
               } catch (err) {
                 console.error('Error in onStateChange:', err);
@@ -394,6 +398,10 @@ export default function Player() {
                 onNext={handlePlayNext}
                 onPrevious={handlePlayPrevious}
                 hasQueue={queue.length > 0}
+                isShuffle={isShuffle}
+                repeatMode={repeatMode}
+                onToggleShuffle={toggleShuffle}
+                onToggleRepeat={toggleRepeat}
               />
               <div className="w-full max-w-2xl">
                 <ProgressBar
@@ -426,6 +434,10 @@ export default function Player() {
         onNext={handlePlayNext}
         onPrevious={handlePlayPrevious}
         hasQueue={queue.length > 0}
+        isShuffle={isShuffle}
+        repeatMode={repeatMode}
+        onToggleShuffle={toggleShuffle}
+        onToggleRepeat={toggleRepeat}
       />
     </>
   );

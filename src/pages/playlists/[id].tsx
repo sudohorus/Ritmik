@@ -46,6 +46,12 @@ export default function PlaylistPage() {
 
   const [removeConfirm, setRemoveConfirm] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredTracks = tracks.filter(track =>
+    track.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (track.artist && track.artist.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -200,17 +206,29 @@ export default function PlaylistPage() {
         )}
 
         {playlist && tracks.length > 0 && (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={tracks.map(t => t.video_id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-3">
-                {tracks.map((track, index) => {
+          <div className="mb-6">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Search in playlist..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700 placeholder:text-zinc-600 transition-colors"
+              />
+            </div>
+          </div>
+        )}
+
+        {playlist && tracks.length > 0 && (
+          searchQuery ? (
+            <div className="space-y-3">
+              {filteredTracks.length > 0 ? (
+                filteredTracks.map((track, index) => {
                   const isCurrentTrack = currentTrack?.videoId === track.video_id;
                   return (
                     <SortableTrackItem
@@ -222,12 +240,46 @@ export default function PlaylistPage() {
                       isOwner={!!isOwner}
                       onPlay={() => handlePlayTrack(track)}
                       onRemove={() => setRemoveConfirm(track.video_id)}
+                      disabled={true} 
                     />
                   );
-                })}
-              </div>
-            </SortableContext>
-          </DndContext>
+                })
+              ) : (
+                <div className="text-center py-12 text-zinc-500">
+                  No tracks found matching "{searchQuery}"
+                </div>
+              )}
+            </div>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={tracks.map(t => t.video_id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {tracks.map((track, index) => {
+                    const isCurrentTrack = currentTrack?.videoId === track.video_id;
+                    return (
+                      <SortableTrackItem
+                        key={track.video_id}
+                        track={track}
+                        index={index}
+                        isCurrentTrack={isCurrentTrack}
+                        isPlaying={isPlaying}
+                        isOwner={!!isOwner}
+                        onPlay={() => handlePlayTrack(track)}
+                        onRemove={() => setRemoveConfirm(track.video_id)}
+                      />
+                    );
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )
         )}
       </main>
 

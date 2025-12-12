@@ -10,10 +10,14 @@ interface PlayerContextValue {
   progress: number;
   duration: number;
   seekToSeconds: number | null;
+  isShuffle: boolean;
+  repeatMode: 'off' | 'context' | 'track';
   playTrack: (track: Track, playlist?: Track[]) => void;
   togglePlay: () => void;
-  playNext: () => void;
+  playNext: (auto?: boolean) => void;
   playPrevious: () => void;
+  toggleShuffle: () => void;
+  toggleRepeat: () => void;
   setVolume: (volume: number) => void;
   setProgress: (progress: number) => void;
   setDuration: (duration: number) => void;
@@ -36,9 +40,21 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [seekToSeconds, setSeekToSeconds] = useState<number | null>(null);
-  
+  const [isShuffle, setIsShuffle] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<'off' | 'context' | 'track'>('off');
+
   const queueRef = useRef<Track[]>([]);
   const currentIndexRef = useRef<number>(0);
+  const isShuffleRef = useRef(false);
+  const repeatModeRef = useRef<'off' | 'context' | 'track'>('off');
+
+  useEffect(() => {
+    isShuffleRef.current = isShuffle;
+  }, [isShuffle]);
+
+  useEffect(() => {
+    repeatModeRef.current = repeatMode;
+  }, [repeatMode]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -60,10 +76,10 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
     const newQueue = playlist || [track];
     const trackIndex = newQueue.findIndex(t => t.videoId === track.videoId);
     const validIndex = trackIndex !== -1 ? trackIndex : 0;
-    
+
     queueRef.current = newQueue;
     currentIndexRef.current = validIndex;
-    
+
     if (isSameTrack) {
       setSeekToSeconds(0);
       setProgress(0);
@@ -84,29 +100,66 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
     setIsPlaying(prev => !prev);
   };
 
-  const playNext = () => {
+  const toggleShuffle = () => {
+    setIsShuffle(prev => !prev);
+  };
+
+  const toggleRepeat = () => {
+    setRepeatMode(prev => {
+      if (prev === 'off') return 'context';
+      if (prev === 'context') return 'track';
+      return 'off';
+    });
+  };
+
+  const playNext = (auto = false) => {
     const queue = queueRef.current;
     const currentIdx = currentIndexRef.current;
-    
+
     if (queue.length === 0) return;
-    
+
+    if (auto && repeatModeRef.current === 'track') {
+      setSeekToSeconds(0);
+      setProgress(0);
+      setIsPlaying(true);
+      return;
+    }
+
     if (queue.length === 1) {
-      setIsPlaying(false);
-      setProgress(0);
+      if (repeatModeRef.current !== 'off') {
+        setSeekToSeconds(0);
+        setProgress(0);
+        setIsPlaying(true);
+      } else {
+        setIsPlaying(false);
+        setProgress(0);
+      }
       return;
     }
-    
-    const nextIndex = currentIdx + 1;
-    
+
+    let nextIndex: number;
+
+    if (isShuffleRef.current) {
+      do {
+        nextIndex = Math.floor(Math.random() * queue.length);
+      } while (nextIndex === currentIdx && queue.length > 1);
+    } else {
+      nextIndex = currentIdx + 1;
+    }
+
     if (nextIndex >= queue.length) {
-      setIsPlaying(false);
-      setProgress(0);
-      return;
+      if (repeatModeRef.current === 'context') {
+        nextIndex = 0;
+      } else {
+        setIsPlaying(false);
+        setProgress(0);
+        return;
+      }
     }
-    
+
     const nextTrack = queue[nextIndex];
     currentIndexRef.current = nextIndex;
-    
+
     setCurrentIndex(nextIndex);
     setCurrentTrack(nextTrack);
     setIsPlaying(true);
@@ -117,26 +170,35 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
   const playPrevious = () => {
     const queue = queueRef.current;
     const currentIdx = currentIndexRef.current;
-    
+
     if (queue.length === 0) return;
-    
+
     if (progress > 3) {
       setSeekToSeconds(0);
       setProgress(0);
       return;
     }
-    
+
     if (queue.length === 1) {
       setSeekToSeconds(0);
       setProgress(0);
       setIsPlaying(true);
       return;
     }
-    
-    const prevIndex = currentIdx === 0 ? queue.length - 1 : currentIdx - 1;
+
+    let prevIndex = currentIdx - 1;
+
+    if (prevIndex < 0) {
+      if (repeatModeRef.current === 'context') {
+        prevIndex = queue.length - 1;
+      } else {
+        prevIndex = 0;
+      }
+    }
+
     const prevTrack = queue[prevIndex];
     currentIndexRef.current = prevIndex;
-    
+
     setCurrentIndex(prevIndex);
     setCurrentTrack(prevTrack);
     setIsPlaying(true);
@@ -176,10 +238,14 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
         progress,
         duration,
         seekToSeconds,
+        isShuffle,
+        repeatMode,
         playTrack,
         togglePlay,
         playNext,
         playPrevious,
+        toggleShuffle,
+        toggleRepeat,
         setVolume,
         setProgress,
         setDuration,
