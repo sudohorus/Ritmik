@@ -146,8 +146,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, newSession) => {
         if (!mounted) return;
 
-        console.log('Auth state change:', event);
-
         if (event === 'TOKEN_REFRESHED' && newSession) {
           if (isRefreshingRef.current) return;
           isRefreshingRef.current = true;

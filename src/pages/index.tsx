@@ -6,8 +6,11 @@ import ErrorMessage from '@/components/ErrorMessage';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePlayer } from '@/contexts/PlayerContext';
 import UserMenu from '@/components/Auth/UserMenu';
 import Navbar from '@/components/Navbar';
+import { useEffect, useRef } from 'react';
+import { showToast } from '@/lib/toast';
 
 export default function Home() {
   const router = useRouter();
@@ -24,9 +27,40 @@ export default function Home() {
   } = useTracks();
 
   const { user } = useAuth();
+  const { playTrack } = usePlayer();
   const showTracks = displayTracks.length > 0;
   const showEmpty = !loading && !showTracks && !error;
   const isTrendingLoading = loading && viewMode === 'trending';
+
+  const searchedPlayIdRef = useRef<string | null>(null);
+  const hasPlayedRef = useRef(false);
+
+  useEffect(() => {
+    const playId = router.query.play as string;
+
+    if (playId && playId !== searchedPlayIdRef.current) {
+      searchedPlayIdRef.current = playId;
+      hasPlayedRef.current = false;
+      search(playId);
+    } else if (!playId && !displayTracks.length && !loading && viewMode === 'trending') {
+      fetchTrending();
+    }
+  }, [router.query.play, displayTracks.length, loading, viewMode, fetchTrending, search]);
+
+  useEffect(() => {
+    const playId = router.query.play as string;
+
+    if (playId && displayTracks.length > 0 && viewMode === 'search' && !hasPlayedRef.current) {
+      const trackToPlay = displayTracks.find(t => t.videoId === playId);
+
+      if (trackToPlay) {
+        hasPlayedRef.current = true;
+        playTrack(trackToPlay, displayTracks);
+        showToast.success('Playing shared track');
+        router.replace('/', undefined, { shallow: true });
+      }
+    }
+  }, [displayTracks, viewMode, playTrack, router]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">

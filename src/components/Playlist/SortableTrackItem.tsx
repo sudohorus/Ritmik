@@ -1,6 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { PlaylistTrack } from '@/types/playlist';
+import TrackOptionsMenu from './TrackOptionsMenu';
 
 interface SortableTrackItemProps {
   track: PlaylistTrack;
@@ -99,22 +100,20 @@ export default function SortableTrackItem({
           </span>
         )}
 
-        {isOwner && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-            className="md:opacity-0 md:group-hover:opacity-100 p-1.5 md:p-2 hover:bg-zinc-700 rounded-lg transition-all shrink-0"
-            title="Remove from playlist"
-          >
-            <svg className="w-4 h-4 md:w-5 md:h-5 text-zinc-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        )}
+        <div className="md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+          <TrackOptionsMenu
+            videoId={track.video_id}
+            title={track.title}
+            artist={track.artist}
+            thumbnailUrl={track.thumbnail_url}
+            duration={track.duration}
+            onRemove={isOwner ? onRemove : undefined}
+            showRemove={isOwner}
+          />
+        </div>
       </div>
     </div>
   );
 }
+
 

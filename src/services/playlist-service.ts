@@ -188,7 +188,6 @@ export class PlaylistService {
   static async getPlaylistTracks(playlistId: string) {
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Use the new getPlaylist method to handle privacy checks
     await this.getPlaylist(playlistId, user?.id);
 
     const { data, error } = await supabase
@@ -219,6 +218,17 @@ export class PlaylistService {
 
     if (playlist.user_id !== user.id) {
       throw new Error('Unauthorized: You can only add tracks to your own playlists');
+    }
+
+    const { data: existingTrack } = await supabase
+      .from('playlist_tracks')
+      .select('id')
+      .eq('playlist_id', trackData.playlist_id)
+      .eq('video_id', trackData.track_id)
+      .single();
+
+    if (existingTrack) {
+      throw new Error('Track already exists in this playlist');
     }
 
     const tracks = await this.getPlaylistTracks(trackData.playlist_id);

@@ -225,9 +225,9 @@ export default function StatsPage() {
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
-                                        {uniqueRecentTracks.map((play) => (
+                                        {uniqueRecentTracks.map((play, index) => (
                                             <div
-                                                key={play.video_id}
+                                                key={`${play.video_id}-${index}`}
                                                 className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 flex items-center gap-4 hover:bg-zinc-800 transition-colors"
                                             >
                                                 {play.thumbnail_url && (

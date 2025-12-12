@@ -170,14 +170,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const searchResponse = await searchWithRetry(searchUrl, trackName);
 
                 if (!searchResponse.data || !searchResponse.data.data) {
-                    console.log(`No data returned for: ${trackName}`);
                     progress.status = 'not_found';
                     sendEvent('progress', progress);
                     return { success: false, notFound: true, failed: false };
                 }
 
                 if (searchResponse.data.data.length === 0) {
-                    console.log(`No results for: ${trackName}`);
                     progress.status = 'not_found';
                     sendEvent('progress', progress);
                     return { success: false, notFound: true, failed: false };
@@ -208,7 +206,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     });
 
                 if (insertError) {
-                    console.error(`Insert error for ${trackName}:`, insertError);
                     progress.status = 'error';
                     progress.error = 'Failed to add track';
                     sendEvent('progress', progress);
@@ -219,7 +216,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     return { success: true, notFound: false, failed: false };
                 }
             } catch (error: any) {
-                console.error(`Error processing ${trackName}:`, error.message || error);
                 progress.status = 'error';
                 progress.error = 'Search failed';
                 sendEvent('progress', progress);
@@ -256,12 +252,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 duration,
             });
         } else {
-            console.log('Connection closed before sending complete event');
         }
 
         res.end();
     } catch (error) {
-        console.error('Import error:', error);
         res.status(500).json({ error: 'Failed to import playlist' });
     }
 }

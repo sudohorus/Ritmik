@@ -1,118 +1,55 @@
-# Roadmap
+# Ritmik Roadmap
 
-## Completed
+## Phase 1: The "Social" Player
+*Focus: Making music a shared experience, something Spotify/YouTube Music lack in real-time.*
 
-- [X] Music search from YouTube
-- [X] Trending tracks browsing
-- [X] Persistent player with controls
-- [X] Focus mode with high-quality album art
-- [X] Volume control improvements
-- [X] Queue system
-- [X] Keyboard shortcuts
-- [X] Playlist creation and management
-  - Create custom playlists
-  - Add/remove tracks from playlists
-  - Edit playlist details (name, description, cover, privacy)
-  - Delete playlists
-  - Drag-and-drop track reordering
-  - Public/private playlists
-  - Explore public playlists
-- [X] Lyrics display
-  - Integrated lrclib.net API
-  - Display lyrics in focus mode
-  - Smart title parsing for better lyrics matching
-  - Lyrics caching
-- [X] Follow users
-- [X] UX Improvements
-  - Toast notifications for user actions
-  - Improved empty states with CTAs
-  - Breadcrumbs component for navigation
-  - Search autocomplete with recent searches
-  - Better error handling and recovery
+- [ ] **Ritmik Rooms (Listen Together)**
+  - [ ] Create public/private rooms where users listen in perfect sync.
+  - [ ] Pass the control of the queue between users.
+  - [ ] Live chat within the room.
+- [ ] **Discord Integration 2.0**
+  - [ ] Rich Presence (via desktop bridge/app).
+  - [ ] "Invite to Listen" button in Discord.
+- [ ] **User Profiles & Social Graph**
+  - [ ] "Taste Match": Compare your music taste with a friend (%).
+  - [ ] Activity Feed: See what friends are listening to right now.
+  - [ ] Pinned Playlists & Bio.
 
-## Phase 1: Core Features
+## 🎨Phase 2: Customization & Power User
+*Focus: Giving users control that big streaming services refuse to give.*
 
-## Phase 2: Infrastructure
+- [ ] **Theme Engine (CSS)**
+  - [ ] Allow users to write custom CSS.
+  - [ ] "Theme Store" (Community shared themes).
+  - [ ] Dynamic colors based on album art (Mood Ring).
+- [ ] **Advanced Audio**
+  - [ ] 10-Band Equalizer with presets.
+  - [ ] Audio Normalization (ReplayGain).
+  - [ ] Crossfade & Gapless Playback.
 
-- [ ] Docker integration
-  - Dockerfile for easy deployment
-  - Docker Compose setup
-  - Production-ready configuration
+## Phase 3: Discovery & Intelligence
+*Focus: Better ways to find music than just "algorithms".*
 
-## Phase 3: Enhancements
+- [ ] **Smart Stats (Better than Wrapped)**
+  - [ ] Real-time stats dashboard (not just yearly).
+  - [ ] "Listening Clock": See what genres you listen to at different times of day.
+  - [ ] Export data to JSON/CSV.
+- [ ] **Contextual Search**
+  - [ ] Search by lyrics.
+  - [ ] Search by "Vibe" (e.g., "Sad songs for rainy days").
 
-- [X] User preferences
-  - Theme customization
-  - Playback settings
-  - Default volume and quality settings
-- [ ] Queue management
-  - Reorder tracks in queue
-  - Clear queue option
-  - Queue history
-- [ ] Playback controls
-  - Shuffle mode
-  - Repeat mode (off/one/all)
-  - Playback speed control
-- [X] History and favorites
-  - Playback history ✅
-  - Favorite tracks (in progress)
-  - Recently played ✅
-- [X] Search improvements
-  - Advanced filters (duration, date, etc)
-  - Sort options
-  - Search history (autocomplete with recent searches)
-- [ ] Player modes
-  - Mini player / compact mode
-  - Fullscreen mode
-  - Picture-in-picture
-- [ ] Audio quality
-  - Quality selection (auto/low/medium/high)
-  - Audio normalization
-  - Preload next track
+## Phase 4: Ecosystem
 
-## Phase 4: Advanced Features
+- [ ] **Mobile App** (React Native / Expo) - Offline support is key here.
+- [ ] **Desktop App** (Electron/Tauri) - Native global media keys, Discord RPC.
+- [ ] **TV Mode** - 10-foot UI for living rooms.
+- [ ] **Public API** - Let developers build bots/plugins for Ritmik.
 
-- [ ] Playlist features
-  - Import/export playlists
-  - Share playlists
-  - Collaborative playlists
-- [X] Statistics (BETA)
-  - Most played tracks ✅
-  - Listening time ✅
-  - Favorite artists
-  - Play tracking ✅
-  - User stats dashboard ✅
-- [ ] Notifications
-  - System notifications for track changes
-  - Now playing widget
-- [ ] PWA support
-  - Install as app
-  - Offline mode
-  - Background playback
-- [ ] Accessibility
-  - Screen reader support
-  - High contrast mode
-  - Keyboard navigation
-- [ ] Visual features
-  - Audio visualizer
-  - Animated album art
-  - Background blur effects
-- [ ] Smart features
-  - Sleep timer
-  - Auto-pause after X songs
-  - Smart queue suggestions
+---
 
-## Future Ideas
+## Completed / In Maintenance
 
-- [ ] User accounts and cloud sync
-- [ ] Social features (share playlists)
-- [ ] Mobile app
-- [ ] Recommendations engine
-- [ ] Radio mode (auto-play similar tracks)
-- [ ] Equalizer
-- [ ] Crossfade between tracks
-- [ ] Casting support (Chromecast, AirPlay)
-- [ ] Download tracks for offline
-- [ ] Multiple audio sources (beyond YouTube)
-- [ ] Gesture controls (swipe, pinch)
-- [ ] Multi-language support
+- **Core Player**: YouTube Source, Queue, Volume, Persistent Player.
+- **Library**: Playlists, Favorites, History.
+- **UI/UX**: Focus Mode, Keyboard Shortcuts, Toast Notifications.
+- **Basics**: Search, Trending, Artist Pages.

@@ -43,6 +43,11 @@ export default function Player() {
   const router = useRouter();
   const currentRouteRef = useRef(router.pathname);
   const mountedRef = useRef(true);
+  const isPlayingRef = useRef(isPlaying);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
   const { recordSkip } = usePlayTracking(currentTrack, progress, duration, isPlaying);
 
@@ -150,6 +155,10 @@ export default function Player() {
             playerRef.current.setVolume(initialVolumePercent);
           }
 
+          if (isPlayingRef.current) {
+            playerRef.current.playVideo();
+          }
+
           setTimeout(() => {
             if (mountedRef.current && playerRef.current?.getDuration) {
               try {
@@ -189,6 +198,10 @@ export default function Player() {
                 if (dur > 0) {
                   setDuration(dur);
                 }
+
+                if (isPlayingRef.current) {
+                  event.target.playVideo();
+                }
               } catch (err) {
                 console.error('Error in onReady:', err);
               }
@@ -197,6 +210,10 @@ export default function Player() {
               if (!mountedRef.current) return;
 
               try {
+                if ((event.data === window.YT.PlayerState.CUED || event.data === -1) && isPlayingRef.current) {
+                  event.target.playVideo();
+                }
+
                 if (event.data === window.YT.PlayerState.ENDED) {
                   playNext(true);
                 }

@@ -11,8 +11,8 @@ export default function TrackList({ tracks, title }: TrackListProps) {
     <div className="space-y-3">
       <h2 className="text-lg font-semibold text-zinc-300 mb-4">{title}</h2>
       <div className="grid gap-3">
-        {tracks.map((track) => (
-          <TrackCard key={track.id} track={track} playlist={tracks} />
+        {tracks.map((track, index) => (
+          <TrackCard key={`${track.videoId}-${index}`} track={track} playlist={tracks} />
         ))}
       </div>
     </div>
