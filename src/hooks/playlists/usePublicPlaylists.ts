@@ -7,83 +7,77 @@ export function usePublicPlaylists() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const mountedRef = useRef(true);
-  const hasLoadedRef = useRef(false);
-  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const LIMIT = 8;
 
   useEffect(() => {
     mountedRef.current = true;
-    
     return () => {
       mountedRef.current = false;
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-      }
     };
   }, []);
 
-  const forceReset = useCallback(() => {
-    if (loading && mountedRef.current) {
-      setLoading(false);
-      hasLoadedRef.current = true;
-    }
-  }, [loading]);
-
-  useVisibilityReset(forceReset);
-
-  useEffect(() => {
-    if (hasLoadedRef.current) {
-      setLoading(false);
-      return;
+  const fetchPlaylists = async (pageNum: number, isLoadMore: boolean = false, search: string = searchQuery) => {
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
     }
 
-    setLoading(true);
+    try {
+      const { data, count } = await PlaylistService.getPublicPlaylists(pageNum, LIMIT, search);
 
-    fetchTimeoutRef.current = setTimeout(() => {
+      if (mountedRef.current) {
+        if (isLoadMore) {
+          setPlaylists(prev => [...prev, ...data]);
+        } else {
+          setPlaylists(data);
+        }
+
+        if (isLoadMore) {
+          setHasMore((pageNum * LIMIT) < count);
+        } else {
+          setHasMore(data.length === LIMIT && count > LIMIT);
+        }
+
+        setPage(pageNum);
+      }
+    } catch (err) {
+      if (mountedRef.current) {
+        if (!isLoadMore) setPlaylists([]);
+      }
+    } finally {
       if (mountedRef.current) {
         setLoading(false);
-        hasLoadedRef.current = true;
+        setLoadingMore(false);
       }
-    }, 5000);
+    }
+  };
 
-    PlaylistService.getPublicPlaylists()
-      .then(data => {
-        if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
-        if (mountedRef.current) {
-          setPlaylists(data);
-          hasLoadedRef.current = true;
-        }
-      })
-      .catch(() => {
-        if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
-        if (mountedRef.current) {
-          setPlaylists([]);
-          hasLoadedRef.current = true;
-        }
-      })
-      .finally(() => {
-        if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
-        if (mountedRef.current) {
-          setLoading(false);
-        }
-      });
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchPlaylists(1, false, searchQuery);
+    }, 500);
 
-    return () => {
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-      }
-    };
-  }, []);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
-  const filteredPlaylists = playlists.filter(playlist => 
-    playlist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    playlist.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchPlaylists(page + 1, true, searchQuery);
+    }
+  };
 
   return {
-    playlists: filteredPlaylists,
+    playlists,
     loading,
     searchQuery,
     setSearchQuery,
+    loadMore,
+    hasMore,
+    loadingMore
   };
 }

@@ -103,3 +103,6 @@ BEGIN
     ON public.playlists FOR DELETE
     USING ((select auth.uid()) = public.playlists.user_id);
 END $$;
+
+ALTER TABLE playlists 
+ADD COLUMN banner_image_url TEXT;

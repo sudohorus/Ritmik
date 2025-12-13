@@ -4,6 +4,7 @@ export interface Playlist {
   name: string;
   description?: string;
   cover_image_url?: string;
+  banner_image_url?: string;
   is_public: boolean;
   created_at: string;
   updated_at: string;
@@ -31,6 +32,7 @@ export interface CreatePlaylistData {
   description?: string;
   is_public?: boolean;
   cover_image_url?: string;
+  banner_image_url?: string;
 }
 
 export interface AddTrackToPlaylistData {

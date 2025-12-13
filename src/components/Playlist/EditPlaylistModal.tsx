@@ -4,7 +4,7 @@ import { Playlist } from '@/types/playlist';
 interface EditPlaylistModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: (data: { name: string; description?: string; is_public?: boolean; cover_image_url?: string }) => Promise<void>;
+  onUpdate: (data: { name: string; description?: string; is_public?: boolean; cover_image_url?: string; banner_image_url?: string }) => Promise<void>;
   playlist: Playlist | null;
 }
 
@@ -12,6 +12,7 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [coverImage, setCoverImage] = useState('');
+  const [bannerImage, setBannerImage] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +22,7 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
       setName(playlist.name);
       setDescription(playlist.description || '');
       setCoverImage(playlist.cover_image_url || '');
+      setBannerImage(playlist.banner_image_url || '');
       setIsPublic(playlist.is_public);
     }
   }, [playlist]);
@@ -33,11 +35,12 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
     setError(null);
 
     try {
-      await onUpdate({ 
-        name, 
+      await onUpdate({
+        name,
         description: description || undefined,
         is_public: isPublic,
-        cover_image_url: coverImage || undefined
+        cover_image_url: coverImage || undefined,
+        banner_image_url: bannerImage || undefined
       });
       if (!active) return;
       onClose();
@@ -121,6 +124,20 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
                 onChange={(e) => setCoverImage(e.target.value)}
                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 focus:ring-2 focus:ring-zinc-600/50 transition-all"
                 placeholder="https://example.com/image.jpg"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="bannerImage" className="block text-sm font-medium text-zinc-300 mb-2">
+                Banner Image URL
+              </label>
+              <input
+                id="bannerImage"
+                type="url"
+                value={bannerImage}
+                onChange={(e) => setBannerImage(e.target.value)}
+                className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 focus:ring-2 focus:ring-zinc-600/50 transition-all"
+                placeholder="https://example.com/banner.jpg"
               />
             </div>
 

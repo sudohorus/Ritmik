@@ -14,6 +14,12 @@ export function usePlaylists() {
   const isFetchingRef = useRef(false);
   const isCreatingRef = useRef(false);
 
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [search, setSearch] = useState('');
+  const LIMIT = 8;
+
   useEffect(() => {
     mountedRef.current = true;
 
@@ -25,59 +31,67 @@ export function usePlaylists() {
     };
   }, []);
 
-  useEffect(() => {
+  const fetchPlaylists = async (pageNum: number, isLoadMore: boolean = false, searchQuery: string = search) => {
     const userId = user?.id;
+    if (!userId) return;
 
-    if (!userId) {
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+    setError(null);
+
+    try {
+      const { data, count } = await PlaylistService.getUserPlaylists(userId, pageNum, LIMIT, searchQuery);
+
+      if (mountedRef.current) {
+        if (isLoadMore) {
+          setPlaylists(prev => [...prev, ...data]);
+        } else {
+          setPlaylists(data);
+        }
+        if (isLoadMore) {
+          setHasMore((pageNum * LIMIT) < count);
+        } else {
+          setHasMore(data.length === LIMIT && count > LIMIT);
+        }
+
+        setPage(pageNum);
+      }
+    } catch (err) {
+      if (mountedRef.current) {
+        const errorMsg = err instanceof Error ? err.message : 'Failed to fetch playlists';
+        setError(errorMsg);
+      }
+    } finally {
+      if (mountedRef.current) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!user?.id) {
       setPlaylists([]);
       setLoading(false);
       setError(null);
       return;
     }
 
-    if (isFetchingRef.current) {
-      return;
+    const timeoutId = setTimeout(() => {
+      fetchPlaylists(1, false, search);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [user?.id, search]);
+
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchPlaylists(page + 1, true, search);
     }
-
-    isFetchingRef.current = true;
-    setLoading(true);
-    setError(null);
-
-    fetchTimeoutRef.current = setTimeout(() => {
-      isFetchingRef.current = false;
-      if (mountedRef.current) {
-        setLoading(false);
-        setError('Request timeout - please refresh the page');
-      }
-    }, 10000);
-
-    PlaylistService.getUserPlaylists(userId)
-      .then(data => {
-        if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
-        isFetchingRef.current = false;
-        if (mountedRef.current) {
-          setPlaylists(data);
-          setError(null);
-        }
-      })
-      .catch(err => {
-        if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
-        isFetchingRef.current = false;
-        if (mountedRef.current) {
-          const errorMsg = err instanceof Error ? err.message : 'Failed to fetch playlists';
-          setError(errorMsg);
-        }
-      })
-      .finally(() => {
-        if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
-        isFetchingRef.current = false;
-        if (mountedRef.current) {
-          setLoading(false);
-        }
-      });
-
-    return undefined;
-  }, [user?.id]);
+  };
 
   const createPlaylist = async (data: CreatePlaylistData) => {
     if (!user) {
@@ -92,28 +106,7 @@ export function usePlaylists() {
 
     try {
       await PlaylistService.createPlaylist(user.id, data);
-
-      let retries = 3;
-      let updated: Playlist[] | null = null;
-
-      while (retries > 0 && !updated) {
-        try {
-          updated = await PlaylistService.getUserPlaylists(user.id);
-          break;
-        } catch (err) {
-          retries--;
-          if (retries > 0) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          } else {
-            throw err;
-          }
-        }
-      }
-
-      if (mountedRef.current && updated) {
-        setPlaylists(updated);
-      }
-
+      await fetchPlaylists(1);
       showToast.success('Playlist created successfully');
     } catch (err) {
       showToast.error('Failed to create playlist');
@@ -128,12 +121,7 @@ export function usePlaylists() {
 
     try {
       await PlaylistService.updatePlaylist(playlistId, data);
-      const updated = await PlaylistService.getUserPlaylists(user.id);
-
-      if (mountedRef.current) {
-        setPlaylists(updated);
-      }
-
+      setPlaylists(prev => prev.map(p => p.id === playlistId ? { ...p, ...data } : p));
       showToast.success('Playlist updated successfully');
     } catch (err) {
       showToast.error('Failed to update playlist');
@@ -159,9 +147,14 @@ export function usePlaylists() {
   return {
     playlists,
     loading,
+    loadingMore,
+    hasMore,
     error,
     createPlaylist,
     updatePlaylist,
     deletePlaylist,
+    loadMore,
+    search,
+    setSearch,
   };
 }

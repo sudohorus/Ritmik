@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { Playlist, CreatePlaylistData, AddTrackToPlaylistData } from '@/types/playlist';
 
 export class PlaylistService {
-  static async getUserPlaylists(userId: string): Promise<Playlist[]> {
+  static async getUserPlaylists(userId: string, page: number = 1, limit: number = 8, search?: string): Promise<{ data: Playlist[], count: number }> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('Authentication required');
@@ -12,18 +12,31 @@ export class PlaylistService {
       throw new Error('Unauthorized: You can only view your own playlists');
     }
 
-    const { data, error } = await supabase
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    let query = supabase
       .from('playlists')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (search) {
+      query = query.ilike('name', `%${search}%`);
+    }
+
+    const { data, error, count } = await query;
 
     if (error) throw error;
-    return data || [];
+    return { data: data || [], count: count || 0 };
   }
 
-  static async getPublicPlaylists(): Promise<Playlist[]> {
-    const { data, error } = await supabase
+  static async getPublicPlaylists(page: number = 1, limit: number = 8, search?: string): Promise<{ data: Playlist[], count: number }> {
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    let query = supabase
       .from('playlists')
       .select(`
         *,
@@ -32,17 +45,26 @@ export class PlaylistService {
           username,
           display_name
         )
-      `)
+      `, { count: 'exact' })
       .eq('is_public', true)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (search) {
+      query = query.ilike('name', `%${search}%`);
+    }
+
+    const { data, error, count } = await query;
 
     if (error) throw error;
 
-    return (data || []).map(playlist => ({
+    const playlists = (data || []).map(playlist => ({
       ...playlist,
       track_count: playlist.playlist_tracks?.[0]?.count || 0,
       playlist_tracks: undefined,
     }));
+
+    return { data: playlists, count: count || 0 };
   }
 
   static async getPlaylistById(playlistId: string): Promise<Playlist | null> {
@@ -91,6 +113,7 @@ export class PlaylistService {
         name: playlistData.name,
         description: playlistData.description,
         cover_image_url: playlistData.cover_image_url,
+        banner_image_url: playlistData.banner_image_url,
         is_public: playlistData.is_public ?? true,
       })
       .select()
@@ -127,6 +150,7 @@ export class PlaylistService {
     if (data.description !== undefined) updateData.description = data.description;
     if (data.is_public !== undefined) updateData.is_public = data.is_public;
     if (data.cover_image_url !== undefined) updateData.cover_image_url = data.cover_image_url;
+    if (data.banner_image_url !== undefined) updateData.banner_image_url = data.banner_image_url;
 
     const { data: updated, error } = await supabase
       .from('playlists')
