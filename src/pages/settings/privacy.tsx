@@ -140,6 +140,43 @@ export default function PrivacySettingsPage() {
                     <div className="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-zinc-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
+
+                {/* Show Listening Activity */}
+                <div className="flex items-start justify-between p-4 bg-zinc-800/50 rounded-lg border border-zinc-800">
+                  <div className="flex-1 pr-4">
+                    <label htmlFor="show_activity" className="text-base font-medium text-zinc-200 cursor-pointer block mb-1">
+                      Show Listening Activity
+                    </label>
+                    <p className="text-sm text-zinc-500">
+                      When enabled, your friends (who you follow and who follow you) can see what you are currently listening to.
+                    </p>
+                    {settings.show_activity ? (
+                      <div className="mt-2 flex items-center gap-2 text-xs text-green-500">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Activity sharing is enabled</span>
+                      </div>
+                    ) : (
+                      <div className="mt-2 flex items-center gap-2 text-xs text-amber-500">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                        <span>Activity sharing is hidden</span>
+                      </div>
+                    )}
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                    <input
+                      id="show_activity"
+                      type="checkbox"
+                      checked={settings.show_activity}
+                      onChange={(e) => setSettings(prev => ({ ...prev, show_activity: e.target.checked }))}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-zinc-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
               </div>
             </div>
 

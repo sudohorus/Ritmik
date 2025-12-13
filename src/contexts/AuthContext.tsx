@@ -37,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       current?.username === newUser?.username &&
       current?.display_name === newUser?.display_name &&
       current?.avatar_url === newUser?.avatar_url &&
+      current?.banner_url === newUser?.banner_url &&
       current?.email === newUser?.email
     ) return;
 
@@ -68,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         username: data.username,
         display_name: data.display_name,
         avatar_url: data.avatar_url,
+        banner_url: data.banner_url,
       };
     } catch {
       return null;

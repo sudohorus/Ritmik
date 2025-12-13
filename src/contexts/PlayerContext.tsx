@@ -1,5 +1,7 @@
 import React, { createContext, ReactNode, useState, useRef, useEffect } from 'react';
 import { Track } from '@/types/track';
+import { useAuth } from './AuthContext';
+import { UserActivityService } from '@/services/user-activity-service';
 
 interface PlayerContextValue {
   currentTrack: Track | null;
@@ -70,6 +72,18 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
     } catch {
     }
   }, []);
+
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      if (isPlaying) {
+        UserActivityService.updateActivity(user.id, currentTrack);
+      } else {
+        UserActivityService.updateActivity(user.id, null);
+      }
+    }
+  }, [currentTrack, isPlaying, user]);
 
   const playTrack = (track: Track, playlist?: Track[]) => {
     const isSameTrack = currentTrack?.videoId === track.videoId;

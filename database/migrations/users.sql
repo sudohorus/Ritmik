@@ -42,3 +42,6 @@ on public.users
 for update
 using (auth.uid() = id)
 with check (auth.uid() = id);
+
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS banner_url TEXT;

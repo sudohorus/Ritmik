@@ -5,6 +5,7 @@ export interface UpdateProfileData {
   username?: string;
   display_name?: string;
   avatar_url?: string;
+  banner_url?: string;
 }
 
 export class ProfileService {
@@ -40,18 +41,18 @@ export class ProfileService {
     try {
       if (updates.username) {
         const { available, error: checkError } = await this.checkUsernameAvailable(updates.username, userId);
-        
+
         if (checkError) {
           return { data: null, error: checkError };
         }
 
         if (!available) {
-          return { 
-            data: null, 
-            error: { 
+          return {
+            data: null,
+            error: {
               message: 'This username is already taken. Please choose another one.',
               code: 'USERNAME_TAKEN'
-            } 
+            }
           };
         }
       }
@@ -63,12 +64,12 @@ export class ProfileService {
 
       if (updateError) {
         if (updateError.code === '23505' || updateError.message?.includes('unique constraint')) {
-          return { 
-            data: null, 
-            error: { 
+          return {
+            data: null,
+            error: {
               message: 'This username is already taken. Please choose another one.',
               code: 'USERNAME_TAKEN'
-            } 
+            }
           };
         }
         return { data: null, error: updateError };
@@ -82,12 +83,12 @@ export class ProfileService {
 
       if (error) {
         if (error.code === '23505' || error.message?.includes('unique constraint')) {
-          return { 
-            data: null, 
-            error: { 
+          return {
+            data: null,
+            error: {
               message: 'This username is already taken. Please choose another one.',
               code: 'USERNAME_TAKEN'
-            } 
+            }
           };
         }
         return { data: null, error };
@@ -95,11 +96,11 @@ export class ProfileService {
 
       return { data: data as User | null, error };
     } catch (err) {
-      return { 
-        data: null, 
-        error: { 
+      return {
+        data: null,
+        error: {
           message: err instanceof Error ? err.message : 'Failed to update profile',
-        } 
+        }
       };
     }
   }

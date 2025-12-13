@@ -17,6 +17,7 @@ export default function ProfilePage() {
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [bannerUrl, setBannerUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -26,13 +27,19 @@ export default function ProfilePage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (user && !initialLoadDone.current) {
-      setUsername(user.username || '');
-      setDisplayName(user.display_name || '');
-      setAvatarUrl(user.avatar_url || '');
-      initialLoadDone.current = true;
+    if (user) {
+      if (!initialLoadDone.current) {
+        setUsername(user.username || '');
+        setDisplayName(user.display_name || '');
+        setAvatarUrl(user.avatar_url || '');
+        setBannerUrl(user.banner_url || '');
+        initialLoadDone.current = true;
+      } else if (user.banner_url && !bannerUrl) {
+        // Safety check: if banner_url loaded late and field is empty, update it
+        setBannerUrl(user.banner_url);
+      }
     }
-  }, [user]);
+  }, [user, bannerUrl]);
 
   if (authLoading) {
     return <Loading fullScreen text="Loading..." />;
@@ -54,6 +61,7 @@ export default function ProfilePage() {
     if (username !== user.username) updates.username = username;
     if (displayName !== user.display_name) updates.display_name = displayName;
     if (avatarUrl !== user.avatar_url) updates.avatar_url = avatarUrl || null;
+    if (bannerUrl !== user.banner_url) updates.banner_url = bannerUrl || null;
 
     if (Object.keys(updates).length === 0) {
       showToast.success('No changes to save');
@@ -180,6 +188,22 @@ export default function ProfilePage() {
                 disabled={saving}
               />
               <p className="mt-1 text-xs text-zinc-500">URL to your profile picture.</p>
+            </div>
+
+            <div>
+              <label htmlFor="bannerUrl" className="block text-sm font-medium text-zinc-300 mb-2">
+                Banner URL
+              </label>
+              <input
+                id="bannerUrl"
+                type="url"
+                value={bannerUrl}
+                onChange={(e) => setBannerUrl(e.target.value)}
+                className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-colors"
+                placeholder="https://example.com/banner.jpg"
+                disabled={saving}
+              />
+              <p className="mt-1 text-xs text-zinc-500">URL to your profile banner image.</p>
             </div>
 
             <div className="flex items-center gap-4 pt-4">
