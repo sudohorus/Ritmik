@@ -8,7 +8,7 @@ interface FollowButtonProps {
   onFollowChange?: (isFollowing: boolean) => void;
 }
 
-export default function FollowButton({ userId, username, onFollowChange }: FollowButtonProps) {
+export default function FollowButton({ userId, username, onFollowChange, className = '' }: FollowButtonProps & { className?: string }) {
   const { user } = useAuth();
   const { stats, loading, actionLoading, toggleFollow } = useFollowers(userId);
 
@@ -25,7 +25,7 @@ export default function FollowButton({ userId, username, onFollowChange }: Follo
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       await toggleFollow();
     } catch (err) {
@@ -34,7 +34,7 @@ export default function FollowButton({ userId, username, onFollowChange }: Follo
 
   if (loading) {
     return (
-      <div className="px-6 py-2 rounded-lg bg-zinc-800 animate-pulse">
+      <div className={`px-4 py-2 rounded-lg bg-zinc-800 animate-pulse ${className}`}>
         <div className="h-5 w-20 bg-zinc-700 rounded" />
       </div>
     );
@@ -44,11 +44,10 @@ export default function FollowButton({ userId, username, onFollowChange }: Follo
     <button
       onClick={handleClick}
       disabled={actionLoading}
-      className={`px-6 py-2 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
-        stats.isFollowing
+      className={`px-4 py-2 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${stats.isFollowing
           ? 'bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700'
           : 'bg-white hover:bg-zinc-200 text-black'
-      }`}
+        } ${className}`}
     >
       {actionLoading ? (
         <>

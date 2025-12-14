@@ -240,6 +240,7 @@ export default function PublicProfilePage() {
                     userId={profile.id}
                     username={profile.username || undefined}
                     onFollowChange={handleFollowChange}
+                    className="w-full text-center justify-center bg-white/10 hover:bg-white/20 text-white border-white/10 backdrop-blur-sm py-2.5"
                   />
                 )}
               </div>
@@ -341,6 +342,7 @@ export default function PublicProfilePage() {
                     userId={profile.id}
                     username={profile.username || undefined}
                     onFollowChange={handleFollowChange}
+                    className="bg-white/10 hover:bg-white/20 text-white border-white/10 backdrop-blur-sm"
                   />
                 )}
               </div>
