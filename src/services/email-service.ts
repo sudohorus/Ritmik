@@ -90,7 +90,7 @@ const resetPasswordEmailTemplate = (resetLink: string) => ({
         <div class="header"><h1>Ritmik</h1></div>
         <div class="content">
           <h2>Reset Your Password</h2>
-          <p>You requested a password reset. Click the button below to set a new password. This link expires in 1 hour.</p>
+          <p>You requested a password reset. Click the button below to set a new password. This link expires in 15 minutes.</p>
           <div style="text-align: center;">
             <a href="${resetLink}" class="button">Reset Password</a>
           </div>

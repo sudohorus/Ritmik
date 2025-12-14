@@ -32,7 +32,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         }
 
         const token = crypto.randomBytes(32).toString('hex');
-        const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
         const { error: dbError } = await supabaseAdmin
             .from('password_resets')
@@ -53,6 +53,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 }
 
 export default withRateLimit(handler, {
-    interval: 60 * 60 * 1000, 
-    maxRequests: 5 
+    interval: 60 * 60 * 1000,
+    maxRequests: 5
 });
