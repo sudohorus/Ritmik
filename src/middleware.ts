@@ -34,7 +34,7 @@ export function middleware(request: NextRequest) {
     img-src 'self' blob: data: https:;
     font-src 'self' https://fonts.gstatic.com;
     frame-src 'self' https://www.youtube.com;
-    connect-src 'self' https://www.youtube.com https://s.ytimg.com https://*.supabase.co https://*.supabase.in;
+    connect-src 'self' https://www.youtube.com https://s.ytimg.com https://*.supabase.co https://*.supabase.in https://api.ipify.org;
     object-src 'none';
     base-uri 'self';
     form-action 'self';
