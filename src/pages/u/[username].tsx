@@ -11,6 +11,7 @@ import FollowButton from '@/components/Followers/FollowButton';
 import FollowersList from '@/components/Followers/FollowersList';
 import { UserActivityService } from '@/services/user-activity-service';
 import UserActivityDisplay from '@/components/UserActivityDisplay';
+import BetaBadge from '@/components/BetaBadge';
 import { Track } from '@/types/track';
 
 export default function PublicProfilePage() {
@@ -153,6 +154,11 @@ export default function PublicProfilePage() {
         </div>
       )}
 
+      {/* Beta Badge */}
+      <div className="absolute top-20 right-4 z-20 md:top-24 md:right-8">
+        <BetaBadge createdAt={profile.created_at} className="scale-125" />
+      </div>
+
       <div className="relative z-10">
         <Navbar />
 
@@ -225,6 +231,8 @@ export default function PublicProfilePage() {
               <div className="text-xs text-zinc-500 mb-4">
                 Joined {new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </div>
+
+              {/* Badges - Mobile (Removed) */}
 
               {/* Action Button */}
               <div className="w-full px-4">
@@ -320,6 +328,8 @@ export default function PublicProfilePage() {
                 <div className="text-xs text-zinc-500 mb-4">
                   Joined {new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </div>
+
+                {/* Badges - Desktop (Removed) */}
 
                 {/* Activity Display - Desktop */}
                 {activity && (
