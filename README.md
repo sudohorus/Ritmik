@@ -1,30 +1,40 @@
+<div align="center">
+
 # Ritmik
 
-A music player that streams from YouTube. Search for tracks, browse trending music, and play your favorites with a clean interface.
+![License](https://img.shields.io/badge/license-MIT-blue.svg) ![Version](https://img.shields.io/badge/version-1.0.0-purple) ![Status](https://img.shields.io/badge/status-live-green)
 
-## Roadmap
+[![Visit Site](https://img.shields.io/badge/%F0%9F%9A%80_Launch_App-Visit_Site-2ea44f?style=for-the-badge)](https://ritmik.vercel.app/)
 
-See [ROADMAP.md](./ROADMAP.md) for planned features and development phases.
+> **Social Music Streaming, Reimagined.**
+> Ritmik is a modern music platform designed for shared listening experiences.
+> Stream unlimited music, create playlists, and track your stats in real-time.
 
-## Getting Started
+![Ritmik Preview](./screenshots/ritmik1.png)
 
-Install dependencies:
+</div>
 
-```bash
-npm install
-```
+## 📸 Gallery
 
-Run the development server:
+|               Profile               |               Stats               |
+| :---------------------------------: | :-------------------------------: |
+| ![Profile](./screenshots/ritmik2.png) | ![Stats](./screenshots/ritmik3.png) |
 
-```bash
-npm run dev
-```
+<br />
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+## 🗺️ Roadmap
 
-## Build
+We are constantly evolving. Here is what's coming next:
 
-```bash
-npm run build
-npm start
-```
+- 📱 **Mobile App** (React Native)
+- 🖥️ **Desktop App** (Electron)
+- 🎛️ **Advanced Audio Equalizer**
+- 🎨 **Theme Store**
+
+Check out [ROADMAP.md](./ROADMAP.md) for the full list.
+
+<br />
+
+## 📄 License
+
+This project is licensed under the MIT License.
