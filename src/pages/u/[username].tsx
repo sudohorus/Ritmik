@@ -155,13 +155,13 @@ export default function PublicProfilePage() {
       )}
 
       {/* Beta Badge */}
-      <div className="absolute top-20 right-4 z-20 md:top-24 md:right-8">
+      <div className="absolute top-20 right-4 z-40 md:top-24 md:right-8">
         <BetaBadge createdAt={profile.created_at} className="scale-125" />
       </div>
 
-      <div className="relative z-10">
-        <Navbar />
+      <Navbar />
 
+      <div className="relative z-10">
         <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pt-20 md:pt-32">
           {/* Profile Header - Mobile */}
           <div className="mb-8 md:hidden">
