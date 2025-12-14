@@ -15,7 +15,7 @@ export interface FollowerUser {
   display_name: string | null;
   avatar_url: string | null;
   created_at: string;
-  isFollowedByCurrentUser?: boolean; 
+  isFollowedByCurrentUser?: boolean;
 }
 
 export class FollowerService {
@@ -81,22 +81,22 @@ export class FollowerService {
           .from('followers')
           .select('*', { count: 'exact', head: true })
           .eq('follower_id', userId),
-        
+
         currentUserId && currentUserId !== userId
           ? supabase
-              .from('followers')
-              .select('id')
-              .eq('follower_id', currentUserId)
-              .eq('following_id', userId)
-              .maybeSingle()
+            .from('followers')
+            .select('id')
+            .eq('follower_id', currentUserId)
+            .eq('following_id', userId)
+            .maybeSingle()
           : Promise.resolve({ data: null, error: null })
       ]);
 
       const isFollowing = !isFollowingResult.error && !!isFollowingResult.data;
 
       return {
-        followerCount: followersVisible ? (followerResult.count || 0) : 0,
-        followingCount: followingVisible ? (followingResult.count || 0) : 0,
+        followerCount: followerResult.count || 0,
+        followingCount: followingResult.count || 0,
         isFollowing,
         followersVisible,
         followingVisible,
@@ -151,7 +151,7 @@ export class FollowerService {
 
     if (currentUserId && followerUsers.length > 0) {
       const userIds = followerUsers.map(u => u.id);
-      
+
       const { data: followData } = await supabase
         .from('followers')
         .select('following_id')
@@ -208,7 +208,7 @@ export class FollowerService {
 
     if (currentUserId && followingUsers.length > 0) {
       const userIds = followingUsers.map(u => u.id);
-      
+
       const { data: followData } = await supabase
         .from('followers')
         .select('following_id')
@@ -240,7 +240,7 @@ export class FollowerService {
       const { data: followingData, error: followingError } = await supabase
         .from('followers')
         .select('following_id')
-        .eq('follower_id', userId); 
+        .eq('follower_id', userId);
 
       if (followingError) throw followingError;
       if (!followingData || followingData.length === 0) return [];
@@ -309,7 +309,7 @@ export class FollowerService {
 
     const followedIds = new Set((data || []).map(f => f.following_id));
     const statusMap = new Map<string, boolean>();
-    
+
     targetUserIds.forEach(id => {
       statusMap.set(id, followedIds.has(id));
     });
