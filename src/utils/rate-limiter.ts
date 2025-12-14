@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 
-export type ActionType = 'login' | 'signup';
+export type ActionType = 'login' | 'signup' | 'reset_password';
 
 interface RateLimitConfig {
     maxAttempts: number;
@@ -15,6 +15,10 @@ const LIMITS: Record<ActionType, RateLimitConfig> = {
     signup: {
         maxAttempts: 5,
         blockDuration: 30 * 60 * 1000,
+    },
+    reset_password: {
+        maxAttempts: 3,
+        blockDuration: 60 * 60 * 1000,
     },
 };
 
@@ -40,54 +44,22 @@ export async function checkRateLimit(
     actionType: ActionType
 ): Promise<RateLimitResult> {
     try {
-        const { data, error } = await supabase
-            .from('rate_limit_attempts')
-            .select('*')
-            .eq('ip_address', ipAddress)
-            .eq('action_type', actionType)
-            .maybeSingle();
+        const { data, error } = await supabase.rpc('check_rate_limit', {
+            p_ip_address: ipAddress,
+            p_action_type: actionType
+        });
 
         if (error) {
-            console.error('Error checking rate limit:', error);
             return { allowed: true };
         }
 
-        if (!data) {
-            return {
-                allowed: true,
-                remainingAttempts: LIMITS[actionType].maxAttempts
-            };
-        }
-
-        if (data.blocked_until) {
-            const blockedUntil = new Date(data.blocked_until);
-            if (blockedUntil > new Date()) {
-                return {
-                    allowed: false,
-                    blockedUntil,
-                    resetAt: blockedUntil,
-                };
-            }
-
-            await supabase
-                .from('rate_limit_attempts')
-                .delete()
-                .eq('ip_address', ipAddress)
-                .eq('action_type', actionType);
-
-            return {
-                allowed: true,
-                remainingAttempts: LIMITS[actionType].maxAttempts
-            };
-        }
-
-        const remaining = LIMITS[actionType].maxAttempts - data.attempt_count;
         return {
-            allowed: remaining > 0,
-            remainingAttempts: Math.max(0, remaining),
+            allowed: data.allowed,
+            remainingAttempts: data.remainingAttempts,
+            blockedUntil: data.blockedUntil ? new Date(data.blockedUntil) : undefined,
+            resetAt: data.resetAt ? new Date(data.resetAt) : undefined
         };
     } catch (err) {
-        console.error('Rate limit check error:', err);
         return { allowed: true };
     }
 }
@@ -97,38 +69,11 @@ export async function recordAttempt(
     actionType: ActionType
 ): Promise<void> {
     try {
-        const { data: existing } = await supabase
-            .from('rate_limit_attempts')
-            .select('*')
-            .eq('ip_address', ipAddress)
-            .eq('action_type', actionType)
-            .maybeSingle();
+        const { error } = await supabase.rpc('record_rate_limit_attempt', {
+            p_ip_address: ipAddress,
+            p_action_type: actionType
+        });
 
-        const config = LIMITS[actionType];
-
-        if (existing) {
-            const newCount = existing.attempt_count + 1;
-            const shouldBlock = newCount >= config.maxAttempts;
-
-            await supabase
-                .from('rate_limit_attempts')
-                .update({
-                    attempt_count: newCount,
-                    blocked_until: shouldBlock
-                        ? new Date(Date.now() + config.blockDuration).toISOString()
-                        : null,
-                })
-                .eq('ip_address', ipAddress)
-                .eq('action_type', actionType);
-        } else {
-            await supabase
-                .from('rate_limit_attempts')
-                .insert({
-                    ip_address: ipAddress,
-                    action_type: actionType,
-                    attempt_count: 1,
-                });
-        }
     } catch (err) {
         console.error('Error recording attempt:', err);
     }
@@ -139,11 +84,11 @@ export async function resetAttempts(
     actionType: ActionType
 ): Promise<void> {
     try {
-        await supabase
-            .from('rate_limit_attempts')
-            .delete()
-            .eq('ip_address', ipAddress)
-            .eq('action_type', actionType);
+        const { error } = await supabase.rpc('reset_rate_limit_attempts', {
+            p_ip_address: ipAddress,
+            p_action_type: actionType
+        });
+
     } catch (err) {
         console.error('Error resetting attempts:', err);
     }

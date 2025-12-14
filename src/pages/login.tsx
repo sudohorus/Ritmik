@@ -20,7 +20,6 @@ export default function Login() {
     if (!error) {
       showToast.success('Successfully logged in');
 
-      // Send login notification email with auth token
       try {
         const { data: { session } } = await import('@/lib/supabase').then(m => m.supabase.auth.getSession());
 
@@ -39,7 +38,6 @@ export default function Login() {
           });
         }
       } catch (emailError) {
-        // Silently fail - don't block login if email fails
         console.error('Failed to send login notification:', emailError);
       }
 
@@ -89,6 +87,15 @@ export default function Login() {
                 minLength={6}
                 placeholder="••••••••"
               />
+            </div>
+
+            <div className="flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-zinc-400 hover:text-white transition-colors"
+              >
+                Forgot your password?
+              </Link>
             </div>
 
             <button

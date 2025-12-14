@@ -58,13 +58,21 @@ export class SettingsService {
   }
 
   static async checkFollowersPublic(userId: string): Promise<boolean> {
-    const settings = await this.getUserSettings(userId);
-    return settings?.followers_public ?? true;
+    const { data, error } = await supabase.rpc('is_followers_public', { target_user_id: userId });
+    if (error) return true; 
+    return data;
   }
 
   static async checkFollowingPublic(userId: string): Promise<boolean> {
-    const settings = await this.getUserSettings(userId);
-    return settings?.following_public ?? true;
+    const { data, error } = await supabase.rpc('is_following_public', { target_user_id: userId });
+    if (error) return true;
+    return data;
+  }
+
+  static async checkActivityPublic(userId: string): Promise<boolean> {
+    const { data, error } = await supabase.rpc('is_activity_public', { target_user_id: userId });
+    if (error) return true;
+    return data;
   }
 
   static async checkStatisticsAllowed(userId: string): Promise<boolean> {
@@ -72,3 +80,4 @@ export class SettingsService {
     return settings?.allow_statistics_tracking ?? false;
   }
 }
+

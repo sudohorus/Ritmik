@@ -13,6 +13,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
+  updatePassword: (password: string, token?: string) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('*')
+        .select('id, username, display_name, avatar_url, banner_url')
         .eq('id', userId)
         .single();
 
@@ -65,7 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return {
         id: data.id,
-        email: data.email,
+        // Email is private, handled by auth session
+        email: '',
         username: data.username,
         display_name: data.display_name,
         avatar_url: data.avatar_url,
@@ -101,7 +104,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (!isSessionValid(current)) {
-          console.warn('Session expired, attempting refresh...');
           const { data: { session: refreshed }, error: refreshError } = await supabase.auth.refreshSession();
 
           if (refreshError || !refreshed) {
@@ -132,7 +134,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setLoading(false);
         }
       } catch (err) {
-        console.error('Auth initialization error:', err);
         if (mounted) {
           updateUser(null);
           setSession(null);
@@ -178,7 +179,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const profile = await fetchUserProfile(newSession.user.id);
             updateUser(profile || mapUserFromAuth(newSession.user));
           } catch (err) {
-            console.error('Error fetching user profile on sign in:', err);
             updateUser(mapUserFromAuth(newSession.user));
           }
           setLoading(false);
@@ -192,7 +192,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const profile = await fetchUserProfile(newSession.user.id);
               updateUser(profile || mapUserFromAuth(newSession.user));
             } catch (err) {
-              console.error('Error fetching user profile on update:', err);
             }
           }, 300);
         }
@@ -245,14 +244,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           await supabase.from('users').insert({
             id: data.user.id,
-            email,
             username,
             display_name: username,
           });
 
           await recordAttempt(ipAddress, 'signup');
         } catch (dbError) {
-          console.error('Error creating user profile:', dbError);
         }
       }
 
@@ -323,6 +320,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch { }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      const response = await fetch('/api/auth/request-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showToast.error(data.error || 'Failed to send reset email');
+        return { error: { message: data.error } };
+      }
+
+      return { error: null };
+    } catch (err) {
+      showToast.error('An unexpected error occurred');
+      return { error: { message: 'An unexpected error occurred' } };
+    }
+  };
+
+  const updatePassword = async (password: string, token?: string) => {
+    try {
+      if (token) {
+        const response = await fetch('/api/auth/complete-reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          showToast.error(data.error || 'Failed to update password');
+          return { error: { message: data.error } };
+        }
+      } else {
+        const { error } = await supabase.auth.updateUser({ password });
+
+        if (error) {
+          const friendlyMessage = getAuthErrorMessage(error);
+          showToast.error(friendlyMessage);
+          return { error: { message: friendlyMessage } };
+        }
+      }
+
+      return { error: null };
+    } catch (err) {
+      showToast.error('An unexpected error occurred');
+      return { error: { message: 'An unexpected error occurred' } };
+    }
+  };
+
   const value = {
     user,
     session,
@@ -331,6 +382,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signOut,
     refreshUser,
+    resetPassword,
+    updatePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
