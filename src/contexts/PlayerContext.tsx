@@ -36,6 +36,7 @@ interface PlayerProviderProps {
 export function PlayerProvider({ children }: PlayerProviderProps) {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [queue, setQueue] = useState<Track[]>([]);
+  const [originalQueue, setOriginalQueue] = useState<Track[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolumeState] = useState(1.0);
@@ -46,6 +47,7 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
   const [repeatMode, setRepeatMode] = useState<'off' | 'context' | 'track'>('off');
 
   const queueRef = useRef<Track[]>([]);
+  const originalQueueRef = useRef<Track[]>([]);
   const currentIndexRef = useRef<number>(0);
   const isShuffleRef = useRef(false);
   const repeatModeRef = useRef<'off' | 'context' | 'track'>('off');
@@ -85,24 +87,42 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
     }
   }, [currentTrack, isPlaying, user]);
 
+  // Fisher-Yates shuffle
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+  };
+
   const playTrack = (track: Track, playlist?: Track[]) => {
     const isSameTrack = currentTrack?.videoId === track.videoId;
-    const newQueue = playlist || [track];
+    const newOriginalQueue = playlist || [track];
+
+    let newQueue = newOriginalQueue;
+    if (isShuffleRef.current) {
+      newQueue = shuffleArray(newOriginalQueue);
+      const idx = newQueue.findIndex(t => t.videoId === track.videoId);
+    }
+
     const trackIndex = newQueue.findIndex(t => t.videoId === track.videoId);
     const validIndex = trackIndex !== -1 ? trackIndex : 0;
 
     queueRef.current = newQueue;
+    originalQueueRef.current = newOriginalQueue;
     currentIndexRef.current = validIndex;
+
+    setOriginalQueue(newOriginalQueue);
+    setQueue(newQueue);
+    setCurrentIndex(validIndex);
 
     if (isSameTrack) {
       setSeekToSeconds(0);
       setProgress(0);
       setIsPlaying(true);
-      setQueue(newQueue);
-      setCurrentIndex(validIndex);
     } else {
-      setQueue(newQueue);
-      setCurrentIndex(validIndex);
       setCurrentTrack(track);
       setIsPlaying(true);
       setProgress(0);
@@ -115,7 +135,33 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
   };
 
   const toggleShuffle = () => {
-    setIsShuffle(prev => !prev);
+    setIsShuffle(prev => {
+      const nextShuffle = !prev;
+      const currentTrack = queueRef.current[currentIndexRef.current];
+
+      if (nextShuffle) {
+        const shuffled = shuffleArray(originalQueueRef.current);
+        let newIndex = shuffled.findIndex(t => t.videoId === currentTrack?.videoId);
+        if (newIndex === -1) newIndex = 0;
+
+        queueRef.current = shuffled;
+        currentIndexRef.current = newIndex;
+        setQueue(shuffled);
+        setCurrentIndex(newIndex);
+      } else {
+        const original = originalQueueRef.current;
+
+        let newIndex = original.findIndex(t => t.videoId === currentTrack?.videoId);
+        if (newIndex === -1) newIndex = 0;
+
+        queueRef.current = original;
+        currentIndexRef.current = newIndex;
+        setQueue(original);
+        setCurrentIndex(newIndex);
+      }
+
+      return nextShuffle;
+    });
   };
 
   const toggleRepeat = () => {
@@ -151,15 +197,7 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
       return;
     }
 
-    let nextIndex: number;
-
-    if (isShuffleRef.current) {
-      do {
-        nextIndex = Math.floor(Math.random() * queue.length);
-      } while (nextIndex === currentIdx && queue.length > 1);
-    } else {
-      nextIndex = currentIdx + 1;
-    }
+    let nextIndex = currentIdx + 1;
 
     if (nextIndex >= queue.length) {
       if (repeatModeRef.current === 'context') {

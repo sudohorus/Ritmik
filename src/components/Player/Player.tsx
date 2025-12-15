@@ -8,6 +8,8 @@ import ProgressBar from './ProgressBar';
 import VolumeControl from './VolumeControl';
 import FocusModal from './FocusModal';
 
+import QueueView from './QueueView';
+
 declare global {
   interface Window {
     YT: any;
@@ -35,11 +37,13 @@ export default function Player() {
     setProgress,
     setDuration,
     clearSeek,
+    playTrack,
   } = usePlayer();
 
   const playerRef = useRef<any>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isFocusModalOpen, setIsFocusModalOpen] = useState(false);
+  const [isQueueOpen, setIsQueueOpen] = useState(false);
   const router = useRouter();
   const currentRouteRef = useRef(router.pathname);
   const mountedRef = useRef(true);
@@ -429,7 +433,20 @@ export default function Player() {
               </div>
             </div>
 
-            <div className="flex justify-end pr-4">
+            <div className="flex justify-end pr-4 items-center gap-4">
+              <div className="relative">
+                <button
+                  onClick={() => setIsQueueOpen(!isQueueOpen)}
+                  className={`p-2 rounded-lg transition-colors ${isQueueOpen ? 'text-green-500 bg-white/10' : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  title="Queue"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+                <QueueView isOpen={isQueueOpen} onClose={() => setIsQueueOpen(false)} />
+              </div>
               <VolumeControl volume={volume} onVolumeChange={setVolume} />
             </div>
           </div>
