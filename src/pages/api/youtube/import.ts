@@ -97,12 +97,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             if (!isConnectionAlive()) break;
 
             const item = tracks[i];
+            const raw = item as any;
+
             const videoId = item.id;
             const title = item.title;
             const thumbnail = item.thumbnail?.thumbnails?.[0]?.url || '';
             const durationStr = item.length?.simpleText || '0:00';
             const duration = parseDuration(durationStr);
-            const artist = item.thumbnail?.thumbnails?.[0]?.url ? 'YouTube' : 'Unknown'; // API limitation, but we can try to get channel name if available in item
+            const artist =
+                raw.channelTitle ??
+                raw.author?.name ??
+                raw.author ??
+                raw.shortBylineText?.runs?.[0]?.text ??
+                'Unknown';
 
             const progress: YoutubeImportProgress = {
                 current: i + 1,
