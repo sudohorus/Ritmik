@@ -4,6 +4,7 @@
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(calc(-50% - 1rem));
   }
@@ -32,26 +33,63 @@
 }
 
 @keyframes equalizer-1 {
-  0%, 100% { height: 4px; }
-  50% { height: 16px; }
+
+  0%,
+  100% {
+    height: 4px;
+  }
+
+  50% {
+    height: 16px;
+  }
 }
 
 @keyframes equalizer-2 {
-  0%, 100% { height: 12px; }
-  25% { height: 4px; }
-  75% { height: 20px; }
+
+  0%,
+  100% {
+    height: 12px;
+  }
+
+  25% {
+    height: 4px;
+  }
+
+  75% {
+    height: 20px;
+  }
 }
 
 @keyframes equalizer-3 {
-  0%, 100% { height: 8px; }
-  33% { height: 18px; }
-  66% { height: 6px; }
+
+  0%,
+  100% {
+    height: 8px;
+  }
+
+  33% {
+    height: 18px;
+  }
+
+  66% {
+    height: 6px;
+  }
 }
 
 @keyframes equalizer-4 {
-  0%, 100% { height: 16px; }
-  40% { height: 8px; }
-  80% { height: 22px; }
+
+  0%,
+  100% {
+    height: 16px;
+  }
+
+  40% {
+    height: 8px;
+  }
+
+  80% {
+    height: 22px;
+  }
 }
 
 .equalizer-bar-1 {
@@ -71,6 +109,65 @@
 }
 
 @keyframes equalizer {
-  0%, 100% { height: 20%; }
-  50% { height: 100%; }
+
+  0%,
+  100% {
+    height: 20%;
+  }
+
+  50% {
+    height: 100%;
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+
+  50% {
+    transform: translateY(-20px) rotate(1deg);
+  }
+}
+
+@keyframes float-delayed {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(2deg);
+  }
+
+  50% {
+    transform: translateY(-30px) rotate(-1deg);
+  }
+}
+
+@keyframes float-slow {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+
+  50% {
+    transform: translateY(-15px) rotate(2deg);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 7s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 8s ease-in-out infinite;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
 }

@@ -41,7 +41,7 @@ export default function Login() {
         console.error('Failed to send login notification:', emailError);
       }
 
-      router.push('/');
+      router.push('/search');
     } else {
       setLoading(false);
     }

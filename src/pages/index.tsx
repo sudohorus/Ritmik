@@ -1,115 +1,217 @@
-import { useTracks } from '@/hooks/tracks/useTracks';
-import SearchBar from '@/components/SearchBar';
-import TrackList from '@/components/TrackList';
-import EmptyState from '@/components/EmptyState';
-import ErrorMessage from '@/components/ErrorMessage';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { useAuth } from '@/contexts/AuthContext';
-import { usePlayer } from '@/contexts/PlayerContext';
-import UserMenu from '@/components/Auth/UserMenu';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
+import { Music, Users, PlayCircle, LayoutList, Zap, Volume2, RefreshCw } from 'lucide-react';
 import Navbar from '@/components/Navbar';
-import { useEffect, useRef } from 'react';
-import { showToast } from '@/lib/toast';
+import { PlaylistService } from '@/services/playlist-service';
+import { Playlist } from '@/types/playlist';
+import PlaylistCard from '@/components/Playlist/PlaylistCard';
 
-export default function Home() {
-  const router = useRouter();
-  const {
-    loading,
-    error,
-    displayTracks,
-    listTitle,
-    viewMode,
-    hasMore,
-    fetchTrending,
-    search,
-    loadMore
-  } = useTracks();
-
-  const { user } = useAuth();
-  const { playTrack } = usePlayer();
-  const showTracks = displayTracks.length > 0;
-  const showEmpty = !loading && !showTracks && !error;
-  const isTrendingLoading = loading && viewMode === 'trending';
-
-  const searchedPlayIdRef = useRef<string | null>(null);
-  const hasPlayedRef = useRef(false);
+export default function LandingPage() {
+  const [glitchText, setGlitchText] = useState("noise");
+  const [isChaos, setIsChaos] = useState(false);
+  const [publicPlaylists, setPublicPlaylists] = useState<Playlist[]>([]);
+  const [loadingPlaylists, setLoadingPlaylists] = useState(true);
 
   useEffect(() => {
-    const playId = router.query.play as string;
+    const interval = setInterval(() => {
+      setTimeout(() => {
+        setGlitchText("chaos");
+        setIsChaos(true);
+      }, 0);
 
-    if (playId && playId !== searchedPlayIdRef.current) {
-      searchedPlayIdRef.current = playId;
-      hasPlayedRef.current = false;
-      search(playId);
-    } else if (!playId && !displayTracks.length && !loading && viewMode === 'trending') {
-      fetchTrending();
+      setTimeout(() => {
+        setGlitchText("noise");
+        setIsChaos(false);
+      }, 100);
+
+      setTimeout(() => {
+        setGlitchText("chaos");
+        setIsChaos(true);
+      }, 200);
+
+      setTimeout(() => {
+        setGlitchText("noise");
+        setIsChaos(false);
+      }, 450);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchPlaylists = async () => {
+    setLoadingPlaylists(true);
+    try {
+      const { data } = await PlaylistService.getPublicPlaylists(1, 20);
+      const withImages = (data || []).filter(p => p.cover_image_url);
+      const shuffled = withImages.sort(() => Math.random() - 0.5).slice(0, 4);
+      setPublicPlaylists(shuffled);
+    } catch (error) {
+      console.error('Error fetching public playlists:', error);
+    } finally {
+      setLoadingPlaylists(false);
     }
-  }, [router.query.play, displayTracks.length, loading, viewMode, fetchTrending, search]);
+  };
 
   useEffect(() => {
-    const playId = router.query.play as string;
-
-    if (playId && displayTracks.length > 0 && viewMode === 'search' && !hasPlayedRef.current) {
-      const trackToPlay = displayTracks.find(t => t.videoId === playId);
-
-      if (trackToPlay) {
-        hasPlayedRef.current = true;
-        playTrack(trackToPlay, displayTracks);
-        showToast.success('Playing shared track');
-        router.replace('/', undefined, { shallow: true });
-      }
-    }
-  }, [displayTracks, viewMode, playTrack, router]);
+    fetchPlaylists();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="mb-8">
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="w-full sm:flex-1">
-              <SearchBar onSearch={search} loading={loading} />
+
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-b from-zinc-900/20 to-transparent pointer-events-none" />
+
+        <div className="max-w-4xl mx-auto px-6 pt-32 pb-32 relative text-center">
+          <div className="flex flex-col items-center">
+            <h1 className="text-5xl md:text-7xl font-bold leading-tight mb-8">
+              Music, without the{" "}
+              <span className={`relative inline-block transition-colors duration-75 ${isChaos ? 'text-red-500' : ''}`}>
+                {glitchText}
+              </span>.
+            </h1>
+            <p className="text-zinc-400 text-xl mb-8 max-w-2xl leading-relaxed">
+              Ritmik is a clean music platform built for people who care about focus. No ads, no distractions — just your music, organized your way.
+            </p>
+            <p className="text-zinc-500 mb-12 max-w-2xl leading-relaxed text-lg">
+              Create playlists, import your library from Spotify or YouTube, follow people with great taste and read lyrics in real time while listening.
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Link href="/signup" className="px-8 py-4 rounded-full bg-white text-black font-medium hover:bg-zinc-200 transition-all hover:shadow-lg text-lg">
+                Create account
+              </Link>
+              <Link href="/explore" className="px-8 py-4 rounded-full border border-zinc-700 hover:bg-zinc-900 hover:border-zinc-600 transition-all text-lg">
+                Explore
+              </Link>
             </div>
           </div>
         </div>
+      </section>
 
-        {error && <ErrorMessage message={error} />}
+      <div className="marquee-container py-8 border-y border-zinc-900 bg-zinc-950/50 backdrop-blur-sm z-10">
+        <div className="marquee-wrapper">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="marquee-content flex items-center gap-8 text-zinc-800 font-bold text-6xl tracking-tighter select-none">
+              <span>NO ADS</span>
+              <span className="text-zinc-900">•</span>
+              <span>NO ALGORITHMS</span>
+              <span className="text-zinc-900">•</span>
+              <span>JUST MUSIC</span>
+              <span className="text-zinc-900">•</span>
+              <span>YOUR LIBRARY</span>
+              <span className="text-zinc-900">•</span>
+              <span>UNIFIED</span>
+              <span className="text-zinc-900">•</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
-        {showTracks && (
-          <>
-            <TrackList tracks={displayTracks} title={listTitle} />
+      <section className="max-w-6xl mx-auto px-6 pt-24 pb-32">
+        <div className="max-w-2xl mb-12">
+          <h2 className="text-4xl font-bold mb-4">Discover community taste</h2>
+          <p className="text-zinc-400 text-lg leading-relaxed">
+            Explore public playlists created by users who care about music as much as you do.
+          </p>
+        </div>
 
-            {hasMore && viewMode === 'search' && (
-              <div className="mt-6 text-center">
-                <button
-                  onClick={loadMore}
-                  disabled={loading}
-                  className="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-800/50 disabled:text-zinc-500 border border-zinc-700 rounded-lg transition-all font-medium"
-                >
-                  {loading ? 'Loading...' : 'Load More'}
-                </button>
+        {loadingPlaylists && publicPlaylists.length === 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-32">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="aspect-square rounded-xl bg-zinc-900/50 border border-zinc-800 animate-pulse" />
+            ))}
+          </div>
+        ) : publicPlaylists.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-32">
+            {publicPlaylists.map((playlist) => (
+              <motion.div
+                key={playlist.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
+                <PlaylistCard playlist={playlist} />
+              </motion.div>
+            ))}
+          </div>
+        ) : !loadingPlaylists && (
+          <div className="text-center py-20 bg-zinc-900/30 rounded-2xl border border-zinc-800/50 mb-32">
+            <p className="text-zinc-500">No public playlists found at the moment.</p>
+            <button
+              onClick={fetchPlaylists}
+              className="mt-4 text-sm text-zinc-400 hover:text-white transition-colors underline underline-offset-4"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
+        <div className="border-t border-zinc-800 pt-24 mt-24">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+            <div className="flex flex-col items-center group">
+              <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-6 group-hover:border-zinc-700 transition-all duration-300">
+                <Zap className="w-8 h-8 text-zinc-400 group-hover:text-white transition-colors" />
               </div>
-            )}
-          </>
-        )}
+              <h3 className="text-xl font-bold mb-3">No Ads, Ever</h3>
+              <p className="text-zinc-500 max-w-xs leading-relaxed">
+                Your listening experience is sacred. We never interrupt it with advertisements.
+              </p>
+            </div>
 
-        {showEmpty && (
-          <EmptyState
-            icon={
-              <svg className="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            }
-            title="Start discovering music"
-            description="Search for your favorite artists, songs, or albums to get started. Try searching for something you love!"
-            action={{
-              label: "Explore Playlists",
-              onClick: () => router.push('/explore')
-            }}
-          />
-        )}
-      </main>
-    </div>
+            <div className="flex flex-col items-center group">
+              <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-6 group-hover:border-zinc-700 transition-all duration-300">
+                <LayoutList className="w-8 h-8 text-zinc-400 group-hover:text-white transition-colors" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">You Control the Queue</h3>
+              <p className="text-zinc-500 max-w-xs leading-relaxed">
+                No random songs added to your playlist. You decide exactly what plays next.
+              </p>
+            </div>
+
+            <div className="flex flex-col items-center group">
+              <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-6 group-hover:border-zinc-700 transition-all duration-300">
+                <Volume2 className="w-8 h-8 text-zinc-400 group-hover:text-white transition-colors" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">Clean Interface</h3>
+              <p className="text-zinc-500 max-w-xs leading-relaxed">
+                A minimalist design that gets out of the way and focuses on what matters: your music.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 py-32">
+        <div className="rounded-3xl bg-linear-to-br from-zinc-900 to-zinc-950 border border-zinc-800 p-12 md:p-16 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to listen differently?</h2>
+          <p className="text-zinc-400 text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
+            Join Ritmik today and experience music the way it was meant to be heard: without distractions, without interruptions, without noise.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/signup" className="px-8 py-4 rounded-lg bg-white text-black font-medium hover:bg-zinc-200 transition-all hover:shadow-xl">
+              Create free account
+            </Link>
+            <Link href="/explore" className="px-8 py-4 rounded-lg border border-zinc-700 hover:bg-zinc-900 hover:border-zinc-600 transition-all">
+              Explore music
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-zinc-800">
+        <div className="max-w-6xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center justify-between text-sm text-zinc-500">
+          <div className="flex items-center gap-2 mb-4 md:mb-0">
+            <span>© {new Date().getFullYear()} Ritmik. All rights reserved.</span>
+          </div>
+          <div>
+            <Link href="https://github.com/sudohorus/Ritmik" target="_blank" className="hover:text-white transition-colors">GitHub</Link>
+          </div>
+        </div>
+      </footer>
+    </div >
   );
 }

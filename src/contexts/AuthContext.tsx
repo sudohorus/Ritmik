@@ -67,7 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return {
         id: data.id,
-        // Email is private, handled by auth session
         email: '',
         username: data.username,
         display_name: data.display_name,

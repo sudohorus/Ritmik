@@ -87,7 +87,6 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
     }
   }, [currentTrack, isPlaying, user]);
 
-  // Fisher-Yates shuffle
   const shuffleArray = <T,>(array: T[]): T[] => {
     const newArray = [...array];
     for (let i = newArray.length - 1; i > 0; i--) {
@@ -263,11 +262,7 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
     setVolumeState(clamped);
 
     if (typeof window !== 'undefined') {
-      try {
-        window.localStorage.setItem('ritmik_player_volume', String(clamped));
-      } catch {
-
-      }
+      window.localStorage.setItem('ritmik_player_volume', String(clamped));
     }
   };
 

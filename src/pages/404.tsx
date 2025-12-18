@@ -23,7 +23,7 @@ export default function Custom404() {
                         Go Back
                     </button>
                     <Link
-                        href="/"
+                        href="/search"
                         className="px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-zinc-200 transition-colors inline-block"
                     >
                         Go to Home

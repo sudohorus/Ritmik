@@ -232,8 +232,6 @@ export default function PublicProfilePage() {
                 Joined {new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </div>
 
-              {/* Badges - Mobile (Removed) */}
-
               {/* Action Button */}
               <div className="w-full px-4">
                 {isOwnProfile ? (

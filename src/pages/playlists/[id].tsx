@@ -215,7 +215,7 @@ export default function PlaylistPage() {
           {playlist && tracks.length === 0 && !loading && !error && (
             <div className="text-center py-16">
               <p className="text-zinc-400 text-lg mb-4">No tracks in this playlist yet</p>
-              <Link href="/" className="text-blue-500 hover:underline">
+              <Link href="/search" className="text-blue-500 hover:underline">
                 Browse music to add tracks
               </Link>
             </div>
