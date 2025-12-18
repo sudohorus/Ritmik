@@ -100,6 +100,15 @@ export default function Player() {
   });
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && !window.YT) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    }
+  }, []);
+
+  useEffect(() => {
     mountedRef.current = true;
 
     return () => {
@@ -127,15 +136,10 @@ export default function Player() {
     setProgress(0);
 
     const loadYouTubeAPI = () => {
-      if (window.YT) {
+      if (window.YT && window.YT.Player) {
         initPlayer();
         return;
       }
-
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
       window.onYouTubeIframeAPIReady = initPlayer;
     };
@@ -160,7 +164,11 @@ export default function Player() {
           }
 
           if (isPlayingRef.current) {
-            playerRef.current.playVideo();
+            setTimeout(() => {
+              if (playerRef.current && mountedRef.current) {
+                playerRef.current.playVideo();
+              }
+            }, 100);
           }
 
           setTimeout(() => {
@@ -174,7 +182,7 @@ export default function Player() {
                 console.error('Error getting duration:', err);
               }
             }
-          }, 1000);
+          }, 500);
         } catch (err) {
           console.error('Error loading video:', err);
         }
@@ -188,6 +196,8 @@ export default function Player() {
           playerVars: {
             autoplay: 1,
             controls: 0,
+            playsinline: 1,
+            enablejsapi: 1,
           },
           events: {
             onReady: (event: any) => {
@@ -204,7 +214,11 @@ export default function Player() {
                 }
 
                 if (isPlayingRef.current) {
-                  event.target.playVideo();
+                  setTimeout(() => {
+                    if (mountedRef.current && event.target) {
+                      event.target.playVideo();
+                    }
+                  }, 100);
                 }
               } catch (err) {
                 console.error('Error in onReady:', err);
