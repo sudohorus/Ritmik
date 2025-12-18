@@ -25,6 +25,11 @@ interface PlayerContextValue {
   setDuration: (duration: number) => void;
   seekTo: (seconds: number) => void;
   clearSeek: () => void;
+  addToQueue: (track: Track) => void;
+  removeFromQueue: (index: number) => void;
+  reorderQueue: (fromIndex: number, toIndex: number) => void;
+  clearQueue: () => void;
+  playFromQueue: (index: number) => void;
 }
 
 export const PlayerContext = createContext<PlayerContextValue | undefined>(undefined);
@@ -103,7 +108,6 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
     let newQueue = newOriginalQueue;
     if (isShuffleRef.current) {
       newQueue = shuffleArray(newOriginalQueue);
-      const idx = newQueue.findIndex(t => t.videoId === track.videoId);
     }
 
     const trackIndex = newQueue.findIndex(t => t.videoId === track.videoId);
@@ -139,14 +143,14 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
       const currentTrack = queueRef.current[currentIndexRef.current];
 
       if (nextShuffle) {
-        const shuffled = shuffleArray(originalQueueRef.current);
-        let newIndex = shuffled.findIndex(t => t.videoId === currentTrack?.videoId);
-        if (newIndex === -1) newIndex = 0;
+        const otherTracks = originalQueueRef.current.filter(t => t.videoId !== currentTrack?.videoId);
+        const shuffledOthers = shuffleArray(otherTracks);
+        const shuffled = currentTrack ? [currentTrack, ...shuffledOthers] : shuffledOthers;
 
         queueRef.current = shuffled;
-        currentIndexRef.current = newIndex;
+        currentIndexRef.current = 0;
         setQueue(shuffled);
-        setCurrentIndex(newIndex);
+        setCurrentIndex(0);
       } else {
         const original = originalQueueRef.current;
 
@@ -274,6 +278,118 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
     setSeekToSeconds(null);
   };
 
+  const addToQueue = (track: Track) => {
+    const newOriginalQueue = [...originalQueueRef.current, track];
+    const newQueue = isShuffleRef.current
+      ? [...queueRef.current, track]
+      : newOriginalQueue;
+
+    queueRef.current = newQueue;
+    originalQueueRef.current = newOriginalQueue;
+
+    setQueue(newQueue);
+    setOriginalQueue(newOriginalQueue);
+  };
+
+  const removeFromQueue = (index: number) => {
+    if (index < 0 || index >= queueRef.current.length) return;
+
+    const trackToRemove = queueRef.current[index];
+    const currentIdx = currentIndexRef.current;
+
+    const newQueue = queueRef.current.filter((_, i) => i !== index);
+
+    const newOriginalQueue = originalQueueRef.current.filter(
+      t => t.videoId !== trackToRemove.videoId ||
+        originalQueueRef.current.indexOf(t) !== originalQueueRef.current.findIndex(track => track.videoId === trackToRemove.videoId)
+    );
+
+    let newIndex = currentIdx;
+    if (index < currentIdx) {
+      newIndex = currentIdx - 1;
+    } else if (index === currentIdx) {
+      newIndex = Math.min(currentIdx, newQueue.length - 1);
+    }
+
+    queueRef.current = newQueue;
+    originalQueueRef.current = newOriginalQueue;
+    currentIndexRef.current = newIndex;
+
+    setQueue(newQueue);
+    setOriginalQueue(newOriginalQueue);
+    setCurrentIndex(newIndex);
+
+    if (index === currentIdx && newQueue.length > 0) {
+      setCurrentTrack(newQueue[newIndex]);
+      setIsPlaying(true);
+      setProgress(0);
+      setDuration(0);
+    } else if (newQueue.length === 0) {
+      setCurrentTrack(null);
+      setIsPlaying(false);
+    }
+  };
+
+  const reorderQueue = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    if (fromIndex < 0 || fromIndex >= queueRef.current.length) return;
+    if (toIndex < 0 || toIndex >= queueRef.current.length) return;
+
+    const newQueue = [...queueRef.current];
+    const [movedTrack] = newQueue.splice(fromIndex, 1);
+    newQueue.splice(toIndex, 0, movedTrack);
+
+    const currentIdx = currentIndexRef.current;
+    let newIndex = currentIdx;
+
+    if (fromIndex === currentIdx) {
+      newIndex = toIndex;
+    } else if (fromIndex < currentIdx && toIndex >= currentIdx) {
+      newIndex = currentIdx - 1;
+    } else if (fromIndex > currentIdx && toIndex <= currentIdx) {
+      newIndex = currentIdx + 1;
+    }
+
+    queueRef.current = newQueue;
+    currentIndexRef.current = newIndex;
+
+    setQueue(newQueue);
+    setCurrentIndex(newIndex);
+
+    if (!isShuffleRef.current) {
+      originalQueueRef.current = newQueue;
+      setOriginalQueue(newQueue);
+    }
+  };
+
+  const clearQueue = () => {
+    queueRef.current = [];
+    originalQueueRef.current = [];
+    currentIndexRef.current = 0;
+
+    setQueue([]);
+    setOriginalQueue([]);
+    setCurrentIndex(0);
+    setCurrentTrack(null);
+    setIsPlaying(false);
+    setProgress(0);
+    setDuration(0);
+  };
+
+  const playFromQueue = (index: number) => {
+    if (index < 0 || index >= queueRef.current.length) return;
+
+    const track = queueRef.current[index];
+    currentIndexRef.current = index;
+
+    setCurrentIndex(index);
+    setCurrentTrack(track);
+    setIsPlaying(true);
+    setProgress(0);
+    setDuration(0);
+  };
+
+
   return (
     <PlayerContext.Provider
       value={{
@@ -298,6 +414,11 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
         setDuration,
         seekTo,
         clearSeek,
+        addToQueue,
+        removeFromQueue,
+        reorderQueue,
+        clearQueue,
+        playFromQueue,
       }}
     >
       {children}

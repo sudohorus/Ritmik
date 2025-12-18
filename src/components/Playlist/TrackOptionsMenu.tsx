@@ -1,28 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
-
-interface TrackOptionsMenuProps {
-    videoId: string;
-    title: string;
-    artist?: string;
-    thumbnailUrl?: string;
-    duration?: number;
-    onRemove?: () => void;
-    onAddToPlaylist?: () => void;
-    showRemove?: boolean;
-}
+import { TrackOptionsMenuProps } from '@/types/track-options';
+import { calculateMenuPosition } from '@/utils/menu-position';
+import { showToast } from '@/lib/toast';
 
 export default function TrackOptionsMenu({
     videoId,
     title,
     artist,
-    thumbnailUrl,
-    duration,
     onRemove,
     onAddToPlaylist,
     showRemove = true,
 }: TrackOptionsMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -40,6 +31,14 @@ export default function TrackOptionsMenu({
         };
     }, [isOpen]);
 
+    const handleCopyLink = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const link = `${window.location.origin}/?play=${videoId}`;
+        navigator.clipboard.writeText(link);
+        setIsOpen(false);
+        showToast.success('Link copied to clipboard');
+    };
+
     const handleAction = (action: () => void) => {
         action();
         setIsOpen(false);
@@ -48,6 +47,7 @@ export default function TrackOptionsMenu({
     return (
         <div className="relative" ref={menuRef}>
             <button
+                ref={buttonRef}
                 onClick={(e) => {
                     e.stopPropagation();
                     setIsOpen(!isOpen);
@@ -61,7 +61,10 @@ export default function TrackOptionsMenu({
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-zinc-800 rounded-lg shadow-xl border border-zinc-700 z-50 overflow-hidden">
+                <div
+                    className="fixed w-56 bg-zinc-800 rounded-lg shadow-xl border border-zinc-700 z-[9999] overflow-hidden"
+                    style={calculateMenuPosition(buttonRef.current)}
+                >
                     <div className="py-1">
                         <div className="px-4 py-3 border-b border-zinc-700">
                             <p className="text-xs font-medium text-zinc-400 truncate">{title}</p>
@@ -84,12 +87,7 @@ export default function TrackOptionsMenu({
                         )}
 
                         <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                const link = `${window.location.origin}/?play=${videoId}`;
-                                navigator.clipboard.writeText(link);
-                                setIsOpen(false);
-                            }}
+                            onClick={handleCopyLink}
                             className="w-full px-4 py-2.5 text-left hover:bg-zinc-700 transition-colors flex items-center gap-3 text-sm text-zinc-300"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
