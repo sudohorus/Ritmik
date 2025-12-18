@@ -25,7 +25,6 @@
 
 .marquee-content {
   display: inline-block;
-  padding-right: 2rem;
 }
 
 .marquee-container:hover .marquee-wrapper {
