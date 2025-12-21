@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Music, Users, PlayCircle, LayoutList, Zap, Volume2, RefreshCw } from 'lucide-react';
@@ -13,6 +15,14 @@ export default function LandingPage() {
   const [isChaos, setIsChaos] = useState(false);
   const [publicPlaylists, setPublicPlaylists] = useState<Playlist[]>([]);
   const [loadingPlaylists, setLoadingPlaylists] = useState(true);
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/search');
+    }
+  }, [user, loading, router]);
 
   useEffect(() => {
     const interval = setInterval(() => {

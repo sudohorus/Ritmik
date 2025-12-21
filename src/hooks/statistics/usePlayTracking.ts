@@ -12,6 +12,8 @@ export function usePlayTracking(
     const playRecordedRef = useRef<string | null>(null);
     const playStartTimeRef = useRef<number>(0);
     const lastProgressRef = useRef<number>(0);
+    const totalPausedTimeRef = useRef<number>(0);
+    const lastPauseStartRef = useRef<number | null>(null);
 
     useEffect(() => {
         if (!currentTrack || !user) return;
@@ -20,19 +22,35 @@ export function usePlayTracking(
             playRecordedRef.current = currentTrack.videoId;
             playStartTimeRef.current = Date.now();
             lastProgressRef.current = 0;
+            totalPausedTimeRef.current = 0;
+            lastPauseStartRef.current = null;
         }
     }, [currentTrack?.videoId, user]);
+
+    useEffect(() => {
+        if (isPlaying) {
+            if (lastPauseStartRef.current) {
+                const pausedDuration = Date.now() - lastPauseStartRef.current;
+                totalPausedTimeRef.current += pausedDuration;
+                lastPauseStartRef.current = null;
+            }
+        } else {
+            lastPauseStartRef.current = Date.now();
+        }
+    }, [isPlaying]);
 
     useEffect(() => {
         if (!currentTrack || !user || !isPlaying) return;
 
         lastProgressRef.current = progress;
 
-        const completionThreshold = duration * 0.5; 
+        const completionThreshold = duration * 0.5;
         const hasListenedEnough = progress >= completionThreshold && duration > 0;
 
         if (hasListenedEnough && playRecordedRef.current === currentTrack.videoId) {
-            const listenDuration = Math.floor((Date.now() - playStartTimeRef.current) / 1000);
+            const totalElapsed = Date.now() - playStartTimeRef.current;
+            const effectiveDuration = totalElapsed - totalPausedTimeRef.current;
+            const listenDuration = Math.min(Math.floor(effectiveDuration / 1000), Math.floor(duration));
 
             StatisticsService.recordPlay({
                 user_id: user.id,
@@ -52,7 +70,9 @@ export function usePlayTracking(
     const recordSkip = () => {
         if (!currentTrack || !user || playRecordedRef.current !== currentTrack.videoId) return;
 
-        const listenDuration = Math.floor((Date.now() - playStartTimeRef.current) / 1000);
+        const totalElapsed = Date.now() - playStartTimeRef.current;
+        const effectiveDuration = totalElapsed - totalPausedTimeRef.current;
+        const listenDuration = Math.min(Math.floor(effectiveDuration / 1000), Math.floor(duration));
         const listenedPercentage = duration > 0 ? (lastProgressRef.current / duration) : 0;
 
         if (listenedPercentage >= 0.3) {
