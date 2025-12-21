@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Toaster } from 'react-hot-toast';
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { JamProvider } from "@/contexts/JamContext";
 import { PlayerModeProvider } from "@/contexts/PlayerModeContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Player from "@/components/Player/Player";
@@ -44,12 +45,14 @@ export default function App({ Component, pageProps }: AppProps) {
     <ErrorBoundary>
       <AuthProvider>
         <PlayerProvider>
-          <PlayerModeProvider>
-            <Component {...pageProps} />
-            <div style={{ display: hidePlayer ? 'none' : 'block' }}>
-              <Player key="global-player" />
-            </div>
-          </PlayerModeProvider>
+          <JamProvider>
+            <PlayerModeProvider>
+              <Component {...pageProps} />
+              <div style={{ display: hidePlayer ? 'none' : 'block' }}>
+                <Player key="global-player" />
+              </div>
+            </PlayerModeProvider>
+          </JamProvider>
         </PlayerProvider>
       </AuthProvider>
       <Toaster />

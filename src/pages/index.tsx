@@ -94,7 +94,7 @@ export default function LandingPage() {
       <div className="marquee-container py-8 border-y border-zinc-900 bg-zinc-950/50 backdrop-blur-sm z-10">
         <div className="marquee-wrapper">
           {[...Array(4)].map((_, i) => (
-            <div className="marquee-content flex items-center text-zinc-800 font-bold text-6xl tracking-tighter select-none">
+            <div key={i} className="marquee-content flex items-center text-zinc-800 font-bold text-6xl tracking-tighter select-none">
               <span className="text-zinc-900 mx-4">•</span>
               <span>NO ADS</span>
               <span className="text-zinc-900 mx-4">•</span>

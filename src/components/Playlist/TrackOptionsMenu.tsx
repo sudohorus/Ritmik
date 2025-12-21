@@ -62,7 +62,7 @@ export default function TrackOptionsMenu({
 
             {isOpen && (
                 <div
-                    className="fixed w-56 bg-zinc-800 rounded-lg shadow-xl border border-zinc-700 z-[9999] overflow-hidden"
+                    className="fixed w-56 bg-zinc-800 rounded-lg shadow-xl border border-zinc-700 z-9999 overflow-hidden"
                     style={calculateMenuPosition(buttonRef.current)}
                 >
                     <div className="py-1">
