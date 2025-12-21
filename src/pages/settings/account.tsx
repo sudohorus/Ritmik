@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import UserMenu from '@/components/Auth/UserMenu';
 import Loading from '@/components/Loading';
 import { ProfileService } from '@/services/profile-service';
+import ProfilePreview from '@/components/Settings/ProfilePreview';
 import { User } from '@/types/auth';
 import Navbar from '@/components/Navbar';
 import { showToast } from '@/lib/toast';
@@ -35,7 +36,6 @@ export default function ProfilePage() {
         setBannerUrl(user.banner_url || '');
         initialLoadDone.current = true;
       } else if (user.banner_url && !bannerUrl) {
-        // Safety check: if banner_url loaded late and field is empty, update it
         setBannerUrl(user.banner_url);
       }
     }
@@ -117,6 +117,14 @@ export default function ProfilePage() {
         </div>
 
         <div className="bg-zinc-900/50 rounded-lg p-8 border border-zinc-800">
+          <ProfilePreview
+            user={user}
+            displayName={displayName}
+            username={username}
+            avatarUrl={avatarUrl}
+            bannerUrl={bannerUrl}
+          />
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex items-center gap-6 mb-8">
               <div className="relative">
