@@ -16,6 +16,7 @@ export default function PrivacySettingsPage() {
     following_public: true,
     show_activity: true,
     allow_statistics_tracking: false,
+    ambient_background: true,
   });
 
   const [loading, setLoading] = useState(true);

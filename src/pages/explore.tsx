@@ -15,7 +15,7 @@ export default function ExplorePage() {
 
   const sortedPlaylists = useMemo(() => {
     const sorted = [...playlists];
-    
+
     switch (sortBy) {
       case 'recent':
         return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -27,7 +27,7 @@ export default function ExplorePage() {
   }, [playlists, sortBy]);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">
+    <div className="min-h-screen text-zinc-100 pb-24">
       <Navbar />
       <main className="max-w-7xl mx-auto px-6 py-12">
         <div className="mb-12">
@@ -53,14 +53,13 @@ export default function ExplorePage() {
                 className="w-full pl-12 pr-4 py-3.5 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700 transition-colors"
               />
             </div>
-            
+
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-3.5 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                showFilters 
-                  ? 'bg-white text-black' 
-                  : 'bg-zinc-900 border border-zinc-800 text-white hover:bg-zinc-800'
-              }`}
+              className={`px-4 py-3.5 rounded-lg font-medium transition-all flex items-center gap-2 ${showFilters
+                ? 'bg-white text-black'
+                : 'bg-zinc-900 border border-zinc-800 text-white hover:bg-zinc-800'
+                }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -78,11 +77,10 @@ export default function ExplorePage() {
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => setSortBy('recent')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      sortBy === 'recent'
-                        ? 'bg-white text-black'
-                        : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-                    }`}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${sortBy === 'recent'
+                      ? 'bg-white text-black'
+                      : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                      }`}
                   >
                     <div className="flex items-center justify-center gap-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,11 +91,10 @@ export default function ExplorePage() {
                   </button>
                   <button
                     onClick={() => setSortBy('popular')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      sortBy === 'popular'
-                        ? 'bg-white text-black'
-                        : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-                    }`}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${sortBy === 'popular'
+                      ? 'bg-white text-black'
+                      : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                      }`}
                   >
                     <div className="flex items-center justify-center gap-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -7,8 +7,10 @@ import { PlayerProvider } from "@/contexts/PlayerContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { JamProvider } from "@/contexts/JamContext";
 import { PlayerModeProvider } from "@/contexts/PlayerModeContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Player from "@/components/Player/Player";
+import AmbientBackground from "@/components/Layout/AmbientBackground";
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -47,10 +49,15 @@ export default function App({ Component, pageProps }: AppProps) {
         <PlayerProvider>
           <JamProvider>
             <PlayerModeProvider>
-              <Component {...pageProps} />
-              <div style={{ display: hidePlayer ? 'none' : 'block' }}>
-                <Player key="global-player" />
-              </div>
+              <ThemeProvider>
+                <AmbientBackground />
+                <div className="relative z-10">
+                  <Component {...pageProps} />
+                </div>
+                <div style={{ display: hidePlayer ? 'none' : 'block' }}>
+                  <Player key="global-player" />
+                </div>
+              </ThemeProvider>
             </PlayerModeProvider>
           </JamProvider>
         </PlayerProvider>

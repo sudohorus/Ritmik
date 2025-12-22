@@ -16,6 +16,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.13.2",
     "cookie": "^1.1.1",
+    "fast-average-color": "^9.5.0",
     "framer-motion": "^12.23.26",
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.3",

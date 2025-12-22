@@ -63,7 +63,6 @@ export default function SettingsPage() {
       ),
       href: '/settings/appearance',
       items: ['Theme', 'Display density', 'Animations'],
-      badge: 'Coming Soon',
     },
     {
       title: 'Notifications',
@@ -95,8 +94,8 @@ export default function SettingsPage() {
               key={section.href}
               href={section.badge ? '#' : section.href}
               className={`bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 transition-all group ${section.badge
-                  ? 'cursor-not-allowed opacity-60'
-                  : 'hover:border-zinc-700 hover:bg-zinc-800/50'
+                ? 'cursor-not-allowed opacity-60'
+                : 'hover:border-zinc-700 hover:bg-zinc-800/50'
                 }`}
               onClick={(e) => section.badge && e.preventDefault()}
             >

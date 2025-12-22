@@ -669,7 +669,7 @@ export default function Player() {
         </div>
       )}
 
-      <div className="hidden md:block fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 z-50">
+      <div className="hidden md:block fixed bottom-0 left-0 right-0 bg-zinc-900/80 backdrop-blur-md border-t border-zinc-800/50 z-50">
         <div className="w-full px-4 py-3">
           <div className="grid grid-cols-[1fr_2fr_1fr] items-center gap-4 max-w-screen-2xl mx-auto">
             <div className="flex items-center gap-3 min-w-0">

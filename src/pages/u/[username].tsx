@@ -122,7 +122,7 @@ export default function PublicProfilePage() {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">
+      <div className="min-h-screen text-zinc-100 pb-24">
         <Navbar />
 
         <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">

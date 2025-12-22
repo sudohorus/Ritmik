@@ -5,6 +5,7 @@ export interface UserSettings {
   following_public: boolean;
   show_activity: boolean;
   allow_statistics_tracking: boolean;
+  ambient_background: boolean;
 }
 
 export class SettingsService {
@@ -22,6 +23,7 @@ export class SettingsService {
           following_public: true,
           show_activity: true,
           allow_statistics_tracking: false,
+          ambient_background: true,
         };
       }
 
@@ -30,6 +32,7 @@ export class SettingsService {
         following_public: data.following_public,
         show_activity: data.show_activity,
         allow_statistics_tracking: data.allow_statistics_tracking ?? false,
+        ambient_background: data.ambient_background ?? true,
       };
     } catch (err) {
       return {
@@ -37,6 +40,7 @@ export class SettingsService {
         following_public: true,
         show_activity: true,
         allow_statistics_tracking: false,
+        ambient_background: true,
       };
     }
   }
@@ -51,6 +55,7 @@ export class SettingsService {
           following_public: settings.following_public,
           show_activity: settings.show_activity,
           allow_statistics_tracking: settings.allow_statistics_tracking,
+          ambient_background: settings.ambient_background,
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'user_id' }
@@ -59,7 +64,7 @@ export class SettingsService {
 
   static async checkFollowersPublic(userId: string): Promise<boolean> {
     const { data, error } = await supabase.rpc('is_followers_public', { target_user_id: userId });
-    if (error) return true; 
+    if (error) return true;
     return data;
   }
 

@@ -103,7 +103,7 @@ export default function StatsPage() {
     })();
 
     return (
-        <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-40">
+        <div className="min-h-screen text-zinc-100 pb-40">
             <Navbar />
 
             <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
