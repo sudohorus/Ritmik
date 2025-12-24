@@ -17,6 +17,22 @@ export class ProfileService {
       .single();
 
     return { data: data as User | null, error };
+
+  }
+
+  static async getProfile(username: string): Promise<User | null> {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .single();
+
+    if (error) {
+      console.error('Error fetching profile:', error);
+      return null;
+    }
+
+    return data as User;
   }
 
   static async checkUsernameAvailable(username: string, currentUserId: string): Promise<{ available: boolean; error: any }> {

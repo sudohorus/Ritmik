@@ -13,6 +13,8 @@ import { UserActivityService } from '@/services/user-activity-service';
 import UserActivityDisplay from '@/components/UserActivityDisplay';
 import BetaBadge from '@/components/BetaBadge';
 import { Track } from '@/types/track';
+import { ProfileCustomizationService } from '@/services/profile-customization-service';
+import { ProfileCustomization, DEFAULT_CUSTOMIZATION } from '@/types/profile-customization';
 
 export default function PublicProfilePage() {
   const router = useRouter();
@@ -23,6 +25,7 @@ export default function PublicProfilePage() {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [playlists, setPlaylists] = useState<any[]>([]);
   const [activity, setActivity] = useState<Track | null>(null);
+  const [customization, setCustomization] = useState<ProfileCustomization | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFollowersModal, setShowFollowersModal] = useState<'followers' | 'following' | null>(null);
@@ -103,6 +106,21 @@ export default function PublicProfilePage() {
 
       const { data: playlistsData } = await PublicProfileService.getUserPlaylists(profileData.id);
 
+      try {
+        const customizationData = await ProfileCustomizationService.getCustomization(profileData.id);
+        if (active) setCustomization(customizationData);
+      } catch (error) {
+        if (active) {
+          setCustomization({
+            id: '',
+            user_id: profileData.id,
+            ...DEFAULT_CUSTOMIZATION,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        }
+      }
+
       if (!active) return;
 
       setPlaylists(playlistsData || []);
@@ -141,20 +159,36 @@ export default function PublicProfilePage() {
   const avatarLetter = (profile.username || 'U')[0].toUpperCase();
   const isOwnProfile = currentUser?.id === profile.id;
 
+  const activeCustomization = customization || {
+    id: '',
+    user_id: profile.id,
+    ...DEFAULT_CUSTOMIZATION,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const backgroundBlur = `${activeCustomization.background_blur}px`;
+  const backgroundBrightness = activeCustomization.background_brightness / 100;
+  const isFullBg = activeCustomization.background_mode === 'full-bg';
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24 sm:pb-32 relative">
       {profile.banner_url && (
-        <div className="absolute top-0 left-0 right-0 h-[50vh] max-h-[500px] z-0">
-          <div className="absolute inset-0 bg-linear-to-b from-black/30 via-zinc-950/80 to-zinc-950 z-10" />
+        <div
+          className={`absolute z-0 ${isFullBg ? 'inset-0' : 'top-0 left-0 right-0 h-[50vh] max-h-[500px]'}`}
+        >
           <img
             src={profile.banner_url}
             alt=""
             className="w-full h-full object-cover"
+            style={{
+              filter: `blur(${backgroundBlur}) brightness(${backgroundBrightness})`,
+            }}
           />
+          <div className="absolute inset-0 bg-linear-to-b from-black/0 via-zinc-950/50 to-zinc-950 z-10" />
         </div>
       )}
 
-      {/* Beta Badge */}
       <div className="absolute top-20 right-4 z-40 md:top-24 md:right-8">
         <BetaBadge createdAt={profile.created_at} className="scale-125" />
       </div>
@@ -163,11 +197,9 @@ export default function PublicProfilePage() {
 
       <div className="relative z-10">
         <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pt-20 md:pt-32">
-          {/* Profile Header - Mobile */}
           <div className="mb-8 md:hidden">
             <div className="flex flex-col items-center text-center mb-6">
-              {/* Avatar */}
-              <div className="mb-4">
+              <div className="mb-4 relative inline-block">
                 {profile.avatar_url ? (
                   <img
                     src={profile.avatar_url}
@@ -179,15 +211,23 @@ export default function PublicProfilePage() {
                     {avatarLetter}
                   </div>
                 )}
+
+                {customization?.avatar_decoration && (
+                  <div className="absolute left-1/2 top-0 -translate-x-[60%] -translate-y-[36%] -rotate-[8deg] w-[180%] aspect-square pointer-events-none z-20">
+                    <img
+                      src={customization.avatar_decoration.image_url}
+                      alt={customization.avatar_decoration.name}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                )}
               </div>
 
-              {/* Name & Username */}
               <h1 className="text-3xl font-bold mb-1 truncate w-full px-4">{displayName}</h1>
               <p className="text-zinc-400 text-base mb-4">@{profile.username}</p>
 
-              {/* Stats */}
               <div className="flex items-center gap-3 text-sm text-zinc-400 mb-4 flex-wrap justify-center">
-                {followerStats.followersVisible ? (
+                {followerStats.followersVisible || isOwnProfile ? (
                   <button
                     onClick={handleFollowersClick}
                     className="hover:text-white transition-colors"
@@ -207,7 +247,7 @@ export default function PublicProfilePage() {
 
                 <span>•</span>
 
-                {followerStats.followingVisible ? (
+                {followerStats.followingVisible || isOwnProfile ? (
                   <button
                     onClick={handleFollowingClick}
                     className="hover:text-white transition-colors"
@@ -232,7 +272,6 @@ export default function PublicProfilePage() {
                 Joined {new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </div>
 
-              {/* Action Button */}
               <div className="w-full px-4">
                 {isOwnProfile ? (
                   <Link
@@ -251,7 +290,6 @@ export default function PublicProfilePage() {
                 )}
               </div>
 
-              {/* Activity Display - Mobile */}
               {activity && (
                 <div className="w-full flex justify-center mt-4">
                   <UserActivityDisplay track={activity} username={profile.username || 'User'} />
@@ -260,10 +298,9 @@ export default function PublicProfilePage() {
             </div>
           </div>
 
-          {/* Profile Header - Desktop */}
           <div className="hidden md:block mb-8">
             <div className="flex items-center gap-6 mb-8">
-              <div className="shrink-0">
+              <div className="shrink-0 relative">
                 {profile.avatar_url ? (
                   <img
                     src={profile.avatar_url}
@@ -275,6 +312,16 @@ export default function PublicProfilePage() {
                     {avatarLetter}
                   </div>
                 )}
+
+                {customization?.avatar_decoration && (
+                  <div className="absolute left-1/2 top-0 -translate-x-[60%] -translate-y-[36%] -rotate-[8deg] w-[180%] aspect-square pointer-events-none z-20">
+                    <img
+                      src={customization.avatar_decoration.image_url}
+                      alt={customization.avatar_decoration.name}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="flex-1 min-w-0 pb-2">
@@ -282,7 +329,7 @@ export default function PublicProfilePage() {
                 <p className="text-zinc-400 text-lg mb-2">@{profile.username}</p>
 
                 <div className="flex items-center gap-4 text-sm text-zinc-400 mb-4">
-                  {followerStats.followersVisible ? (
+                  {followerStats.followersVisible || isOwnProfile ? (
                     <button
                       onClick={handleFollowersClick}
                       className="hover:text-white transition-colors"
@@ -302,7 +349,7 @@ export default function PublicProfilePage() {
 
                   <span>•</span>
 
-                  {followerStats.followingVisible ? (
+                  {followerStats.followingVisible || isOwnProfile ? (
                     <button
                       onClick={handleFollowingClick}
                       className="hover:text-white transition-colors"
@@ -327,9 +374,6 @@ export default function PublicProfilePage() {
                   Joined {new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </div>
 
-                {/* Badges - Desktop (Removed) */}
-
-                {/* Activity Display - Desktop */}
                 {activity && (
                   <div className="hidden md:block">
                     <UserActivityDisplay track={activity} username={profile.username || 'User'} />
@@ -357,7 +401,6 @@ export default function PublicProfilePage() {
             </div>
           </div>
 
-          {/* Playlists Section */}
           <div>
             <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Public Playlists</h2>
 

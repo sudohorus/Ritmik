@@ -31,6 +31,7 @@ export default function SettingsPage() {
       href: '/settings/account',
       items: ['Username', 'Display name', 'Avatar', 'Email'],
     },
+
     {
       title: 'Privacy',
       description: 'Control who can see your information',

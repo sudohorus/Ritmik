@@ -4,17 +4,22 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Toaster } from 'react-hot-toast';
 import { PlayerProvider } from "@/contexts/PlayerContext";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { JamProvider } from "@/contexts/JamContext";
 import { PlayerModeProvider } from "@/contexts/PlayerModeContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Player from "@/components/Player/Player";
 import AmbientBackground from "@/components/Layout/AmbientBackground";
+import ChristmasHatModal from "@/components/Modals/ChristmasHatModal";
+import { isChristmasEvent, hasUserDismissedChristmasModal } from "@/lib/christmas-utils";
+import { DecorationService } from "@/services/decoration-service";
 
-export default function App({ Component, pageProps }: AppProps) {
+function AppContent({ Component, pageProps }: AppProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
+  const [showChristmasModal, setShowChristmasModal] = useState(false);
   const hidePlayer = router.pathname === '/login' || router.pathname === '/signup';
 
   useEffect(() => {
@@ -43,6 +48,47 @@ export default function App({ Component, pageProps }: AppProps) {
     };
   }, [router]);
 
+  useEffect(() => {
+    const checkChristmasModal = async () => {
+      if (!user) return;
+      if (!isChristmasEvent()) return;
+      if (hasUserDismissedChristmasModal()) return;
+
+      try {
+        const decorations = await DecorationService.getAvailableDecorations(user.id);
+        const hasSantaHat = decorations.some(d => d.name === 'Santa Hat');
+
+        if (!hasSantaHat) {
+          setShowChristmasModal(true);
+        }
+      } catch (error) {
+        console.error('Error checking Christmas modal:', error);
+      }
+    };
+
+    checkChristmasModal();
+  }, [user]);
+
+  return (
+    <>
+      <AmbientBackground />
+      <div className="relative z-10">
+        <Component {...pageProps} />
+      </div>
+      <div style={{ display: hidePlayer ? 'none' : 'block' }}>
+        <Player key="global-player" />
+      </div>
+      {showChristmasModal && user && (
+        <ChristmasHatModal
+          user={user}
+          onClose={() => setShowChristmasModal(false)}
+        />
+      )}
+    </>
+  );
+}
+
+export default function App(props: AppProps) {
   return (
     <ErrorBoundary>
       <AuthProvider>
@@ -50,13 +96,7 @@ export default function App({ Component, pageProps }: AppProps) {
           <JamProvider>
             <PlayerModeProvider>
               <ThemeProvider>
-                <AmbientBackground />
-                <div className="relative z-10">
-                  <Component {...pageProps} />
-                </div>
-                <div style={{ display: hidePlayer ? 'none' : 'block' }}>
-                  <Player key="global-player" />
-                </div>
+                <AppContent {...props} />
               </ThemeProvider>
             </PlayerModeProvider>
           </JamProvider>

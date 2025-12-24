@@ -1,14 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import UserMenu from '@/components/Auth/UserMenu';
 import Loading from '@/components/Loading';
 import { ProfileService } from '@/services/profile-service';
+import { ProfileCustomizationService } from '@/services/profile-customization-service';
+import { DecorationService } from '@/services/decoration-service';
 import ProfilePreview from '@/components/Settings/ProfilePreview';
 import { User } from '@/types/auth';
+import { ProfileCustomization, ProfileCustomizationUpdate } from '@/types/profile-customization';
+import { AvatarDecoration } from '@/types/avatar-decoration';
 import Navbar from '@/components/Navbar';
 import { showToast } from '@/lib/toast';
+import ProfileCustomizationEditor from '@/components/Settings/ProfileCustomizationEditor';
 
 export default function ProfilePage() {
   const { user, loading: authLoading, refreshUser } = useAuth();
@@ -21,23 +26,53 @@ export default function ProfilePage() {
   const [bannerUrl, setBannerUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const [customization, setCustomization] = useState<ProfileCustomization | null>(null);
+  const [showCustomization, setShowCustomization] = useState(false);
+  const [availableDecorations, setAvailableDecorations] = useState<AvatarDecoration[]>([]);
+
+  const loadDecorations = useCallback(async () => {
+    if (!user) return;
+    try {
+      const decorations = await DecorationService.getAvailableDecorations(user.id);
+      setAvailableDecorations(decorations);
+    } catch (error) {
+      showToast.error('Failed to load available decorations');
+    }
+  }, [user]);
+
+  const loadUserData = useCallback(async () => {
+    if (!user || !user.username) return;
+    try {
+      const profile = await ProfileService.getProfile(user.username);
+      if (profile) {
+        setUsername(profile.username || '');
+        setDisplayName(profile.display_name || '');
+        setAvatarUrl(profile.avatar_url || '');
+        setBannerUrl(profile.banner_url || '');
+      }
+
+      const custom = await ProfileCustomizationService.getCustomization(user.id);
+      if (custom) {
+        setCustomization(custom);
+      }
+    } catch (error) {
+      showToast.error('Failed to load profile data');
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login');
+    } else if (user && !initialLoadDone.current) {
+      initialLoadDone.current = true;
+      loadUserData();
+      loadDecorations();
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, loadUserData, loadDecorations]);
 
   useEffect(() => {
-    if (user) {
-      if (!initialLoadDone.current) {
-        setUsername(user.username || '');
-        setDisplayName(user.display_name || '');
-        setAvatarUrl(user.avatar_url || '');
-        setBannerUrl(user.banner_url || '');
-        initialLoadDone.current = true;
-      } else if (user.banner_url && !bannerUrl) {
-        setBannerUrl(user.banner_url);
-      }
+    if (user && user.banner_url && !bannerUrl && initialLoadDone.current) {
+      setBannerUrl(user.banner_url);
     }
   }, [user, bannerUrl]);
 
@@ -123,6 +158,7 @@ export default function ProfilePage() {
             username={username}
             avatarUrl={avatarUrl}
             bannerUrl={bannerUrl}
+            customization={customization || undefined}
           />
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -212,6 +248,52 @@ export default function ProfilePage() {
                 disabled={saving}
               />
               <p className="mt-1 text-xs text-zinc-500">URL to your profile banner image.</p>
+            </div>
+
+            <div className="border-t border-zinc-800 pt-6">
+              <button
+                type="button"
+                onClick={() => setShowCustomization(!showCustomization)}
+                className="flex items-center justify-between w-full text-left mb-4"
+              >
+                <div>
+                  <h3 className="text-sm font-medium text-zinc-300">Other Customization Options</h3>
+                  <p className="text-xs text-zinc-500 mt-1">Adjust additional appearance settings</p>
+                </div>
+                <svg
+                  className={`w-5 h-5 text-zinc-400 transition-transform ${showCustomization ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {showCustomization && customization && (
+                <div className="pl-4 border-l-2 border-zinc-700">
+                  <ProfileCustomizationEditor
+                    customization={customization}
+                    availableDecorations={availableDecorations}
+                    user={user}
+                    onChange={async (updates) => {
+                      setCustomization({ ...customization, ...updates });
+                      const { data } = await ProfileCustomizationService.upsertCustomization(user.id, updates);
+                      if (data) setCustomization(data);
+                    }}
+                    onSave={() => {
+                      showToast.success('Customization saved!');
+                      setShowCustomization(false);
+                    }}
+                    onReset={async () => {
+                      const { data } = await ProfileCustomizationService.resetCustomization(user.id);
+                      if (data) setCustomization(data);
+                      showToast.success('Reset to defaults');
+                    }}
+                    onRefreshDecorations={loadDecorations}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-4 pt-4">
