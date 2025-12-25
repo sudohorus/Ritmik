@@ -65,7 +65,10 @@ export function usePlaylistDetails(playlistId: string | undefined) {
       try {
         const [foundPlaylist, playlistTracks] = await Promise.all([
           PlaylistService.getPlaylistById(playlistId),
-          PlaylistService.getPlaylistTracks(playlistId)
+          fetch(`/api/playlists/${playlistId}/tracks`).then(res => {
+            if (!res.ok) throw new Error('Failed to fetch tracks');
+            return res.json();
+          })
         ]);
 
         if (!mountedRef.current || loadedIdRef.current !== playlistId) {
