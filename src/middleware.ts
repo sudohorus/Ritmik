@@ -12,6 +12,16 @@ export function middleware(request: NextRequest) {
     ].filter(Boolean);
 
     const isAllowedOrigin = origin && allowedOrigins.includes(origin);
+
+    if (process.env.NODE_ENV === 'production') {
+        const proto = request.headers.get('x-forwarded-proto');
+        if (proto && proto !== 'https') {
+            const url = new URL(request.url);
+            url.protocol = 'https:';
+            return NextResponse.redirect(url);
+        }
+    }
+
     const isApiRoute = request.nextUrl.pathname.startsWith('/api');
 
     if (isApiRoute) {

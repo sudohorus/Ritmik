@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, username, display_name, avatar_url, banner_url')
+        .select('id, username, display_name, avatar_url, banner_url, has_completed_onboarding')
         .eq('id', userId)
         .single();
 
@@ -72,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         display_name: data.display_name,
         avatar_url: data.avatar_url,
         banner_url: data.banner_url,
+        has_completed_onboarding: data.has_completed_onboarding,
       };
     } catch {
       return null;

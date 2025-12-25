@@ -120,5 +120,13 @@ export class ProfileService {
       };
     }
   }
+  static async completeOnboarding(userId: string): Promise<{ error: any }> {
+    const { error } = await supabase
+      .from('users')
+      .update({ has_completed_onboarding: true })
+      .eq('id', userId);
+
+    return { error };
+  }
 }
 

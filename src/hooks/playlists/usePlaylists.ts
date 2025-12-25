@@ -11,7 +11,6 @@ export function usePlaylists() {
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isFetchingRef = useRef(false);
   const isCreatingRef = useRef(false);
 
   const [page, setPage] = useState(1);

@@ -28,7 +28,16 @@ export function usePublicPlaylists() {
     }
 
     try {
-      const { data, count } = await PlaylistService.getPublicPlaylists(pageNum, LIMIT, search);
+      const params = new URLSearchParams({
+        page: pageNum.toString(),
+        limit: LIMIT.toString(),
+      });
+      if (search) params.append('search', search);
+
+      const response = await fetch(`/api/playlists/public?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch playlists');
+
+      const { data, count } = await response.json();
 
       if (mountedRef.current) {
         if (isLoadMore) {

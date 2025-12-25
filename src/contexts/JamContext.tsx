@@ -445,7 +445,7 @@ export function JamProvider({ children }: JamProviderProps) {
                 }
 
             } catch { }
-        }, 5000);
+        }, 20000);
 
         return () => clearInterval(interval);
     }, [currentJam?.id]);

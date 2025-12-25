@@ -33,6 +33,18 @@ export class PlaylistService {
   }
 
   static async getPublicPlaylists(page: number = 1, limit: number = 8, search?: string): Promise<{ data: Playlist[], count: number }> {
+    const cacheKey = `public_playlists:page:${page}:limit:${limit}:search:${search || 'all'}`;
+
+    // Try to get from cache first
+    try {
+      const cached = await import('./cache-service').then(m => m.cacheService.get<{ data: Playlist[], count: number }>(cacheKey));
+      if (cached) {
+        return cached;
+      }
+    } catch (err) {
+      console.warn('Cache lookup failed:', err);
+    }
+
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
@@ -64,7 +76,16 @@ export class PlaylistService {
       playlist_tracks: undefined,
     }));
 
-    return { data: playlists, count: count || 0 };
+    const result = { data: playlists, count: count || 0 };
+
+    // Save to cache (5 minutes)
+    try {
+      await import('./cache-service').then(m => m.cacheService.set(cacheKey, result, 300));
+    } catch (err) {
+      console.warn('Cache save failed:', err);
+    }
+
+    return result;
   }
 
   static async getPlaylistById(playlistId: string): Promise<Playlist | null> {
@@ -328,19 +349,15 @@ export class PlaylistService {
     }
 
     const updates = trackIds.map((videoId, index) => ({
-      playlist_id: playlistId,
       video_id: videoId,
       position: index,
     }));
 
-    for (const update of updates) {
-      const { error } = await supabase
-        .from('playlist_tracks')
-        .update({ position: update.position })
-        .eq('playlist_id', update.playlist_id)
-        .eq('video_id', update.video_id);
+    const { error } = await supabase.rpc('reorder_playlist_tracks', {
+      p_playlist_id: playlistId,
+      p_tracks: updates
+    });
 
-      if (error) throw error;
-    }
+    if (error) throw error;
   }
 }

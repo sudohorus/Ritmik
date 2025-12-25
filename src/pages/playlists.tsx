@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlaylists } from '@/hooks/playlists/usePlaylists';
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 import CreatePlaylistModal from '@/components/Playlist/CreatePlaylistModal';
 import ConfirmModal from '@/components/Playlist/ConfirmModal';
 import UserMenu from '@/components/Auth/UserMenu';
@@ -16,6 +17,12 @@ export default function PlaylistsPage() {
   const { playlists, loading, createPlaylist, deletePlaylist, loadMore, hasMore, loadingMore, search, setSearch } = usePlaylists();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  const loadMoreRef = useIntersectionObserver({
+    onIntersect: loadMore,
+    enabled: hasMore && !loadingMore,
+    rootMargin: '200px',
+  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -136,21 +143,11 @@ export default function PlaylistsPage() {
             </div>
 
             {hasMore && (
-              <div className="flex justify-center pt-4">
-                <button
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                  className="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {loadingMore ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                      Loading...
-                    </>
-                  ) : (
-                    'Load More'
-                  )}
-                </button>
+              <div
+                ref={loadMoreRef}
+                className="flex justify-center pt-4 h-20 items-center"
+              >
+                {loadingMore && <Loading size="sm" text="Loading more..." />}
               </div>
             )}
           </div>

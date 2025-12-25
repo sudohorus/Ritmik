@@ -6,12 +6,20 @@ import Navbar from '@/components/Navbar';
 import Loading from '@/components/Loading';
 import { useMemo, useState } from 'react';
 
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
+
 export default function ExplorePage() {
   const { user } = useAuth();
   const router = useRouter();
   const { playlists, loading, searchQuery, setSearchQuery, loadMore, hasMore, loadingMore } = usePublicPlaylists();
   const [sortBy, setSortBy] = useState<'recent' | 'popular'>('recent');
   const [showFilters, setShowFilters] = useState(false);
+
+  const loadMoreRef = useIntersectionObserver({
+    onIntersect: loadMore,
+    enabled: hasMore && !loadingMore,
+    rootMargin: '200px',
+  });
 
   const sortedPlaylists = useMemo(() => {
     const sorted = [...playlists];
@@ -223,21 +231,11 @@ export default function ExplorePage() {
             </div>
 
             {hasMore && (
-              <div className="flex justify-center pt-4">
-                <button
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                  className="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {loadingMore ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                      Loading...
-                    </>
-                  ) : (
-                    'Load More'
-                  )}
-                </button>
+              <div
+                ref={loadMoreRef}
+                className="flex justify-center pt-4 h-20 items-center"
+              >
+                {loadingMore && <Loading size="sm" text="Loading more..." />}
               </div>
             )}
           </div>

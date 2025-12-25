@@ -14,12 +14,14 @@ import AmbientBackground from "@/components/Layout/AmbientBackground";
 import ChristmasHatModal from "@/components/Modals/ChristmasHatModal";
 import { isChristmasEvent, hasUserDismissedChristmasModal } from "@/lib/christmas-utils";
 import { DecorationService } from "@/services/decoration-service";
+import OnboardingModal from "@/components/Onboarding/OnboardingModal";
 
 function AppContent({ Component, pageProps }: AppProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
   const [showChristmasModal, setShowChristmasModal] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const hidePlayer = router.pathname === '/login' || router.pathname === '/signup';
 
   useEffect(() => {
@@ -69,6 +71,12 @@ function AppContent({ Component, pageProps }: AppProps) {
     checkChristmasModal();
   }, [user]);
 
+  useEffect(() => {
+    if (user && user.has_completed_onboarding === false) {
+      setShowOnboarding(true);
+    }
+  }, [user]);
+
   return (
     <>
       <AmbientBackground />
@@ -82,6 +90,15 @@ function AppContent({ Component, pageProps }: AppProps) {
         <ChristmasHatModal
           user={user}
           onClose={() => setShowChristmasModal(false)}
+        />
+      )}
+      {showOnboarding && user && (
+        <OnboardingModal
+          user={user}
+          onClose={async () => {
+            setShowOnboarding(false);
+            await refreshUser();
+          }}
         />
       )}
     </>

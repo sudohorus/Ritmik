@@ -12,6 +12,9 @@ import Navbar from '@/components/Navbar';
 import { useEffect, useRef } from 'react';
 import { showToast } from '@/lib/toast';
 
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
+import Loading from '@/components/Loading';
+
 export default function Home() {
   const router = useRouter();
   const {
@@ -25,6 +28,12 @@ export default function Home() {
     search,
     loadMore
   } = useTracks();
+
+  const loadMoreRef = useIntersectionObserver({
+    onIntersect: loadMore,
+    enabled: hasMore && !loading,
+    rootMargin: '200px',
+  });
 
   const { user } = useAuth();
   const { playTrack } = usePlayer();
@@ -81,14 +90,11 @@ export default function Home() {
             <TrackList tracks={displayTracks} title={listTitle} />
 
             {hasMore && viewMode === 'search' && (
-              <div className="mt-6 text-center">
-                <button
-                  onClick={loadMore}
-                  disabled={loading}
-                  className="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-800/50 disabled:text-zinc-500 border border-zinc-700 rounded-lg transition-all font-medium"
-                >
-                  {loading ? 'Loading...' : 'Load More'}
-                </button>
+              <div
+                ref={loadMoreRef}
+                className="mt-6 flex justify-center h-20 items-center"
+              >
+                {loading && <Loading size="sm" text="Loading more..." />}
               </div>
             )}
           </>
