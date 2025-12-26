@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Turnstile } from '@marsidev/react-turnstile';
+import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile';
 
 interface CreatePlaylistModalProps {
   isOpen: boolean;
@@ -17,7 +17,7 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
   const [token, setToken] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const turnstileRef = useRef(null);
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +73,7 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
           setError(errorMessage);
         }
         if (turnstileRef.current) {
-          turnstileRef.current?.reset();
+          turnstileRef.current.reset();
         }
         setToken(null);
       }

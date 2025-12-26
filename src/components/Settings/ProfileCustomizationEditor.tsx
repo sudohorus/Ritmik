@@ -118,32 +118,6 @@ export default function ProfileCustomizationEditor({
                     Avatar Decoration
                 </label>
 
-                {!availableDecorations.some(d => d.name === 'Santa Hat') && (
-                    <div className="mb-4 p-4 bg-linear-to-r from-red-900/40 to-red-800/40 border border-red-700/50 rounded-xl flex items-center gap-4">
-                        <div className="w-12 h-12 shrink-0 bg-red-950/50 rounded-full flex items-center justify-center border border-red-500/30">
-                            <img src="/decorations/santa-hat.png" alt="Santa Hat" className="w-8 h-8 object-contain" />
-                        </div>
-                        <div className="flex-1">
-                            <h4 className="text-sm font-semibold text-red-100">Christmas Gift! 🎁</h4>
-                            <p className="text-xs text-red-200/70">Claim your exclusive Santa Hat decoration.</p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={async () => {
-                                const santaHat = await DecorationService.getDecorationByName('Santa Hat');
-                                if (santaHat) {
-                                    await DecorationService.claimDecoration(user.id, santaHat.id);
-                                    await onRefreshDecorations();
-                                    showToast.success('Ho ho ho! Santa Hat claimed! 🎅');
-                                }
-                            }}
-                            className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg transition-colors shadow-lg shadow-red-900/20"
-                        >
-                            Claim
-                        </button>
-                    </div>
-                )}
-
                 <div className="grid grid-cols-3 gap-3">
                     <button
                         type="button"

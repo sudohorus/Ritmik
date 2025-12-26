@@ -41,7 +41,7 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
 
     try {
       const tracks = await PlaylistService.getPlaylistTracks(playlistId);
-      const isInPlaylist = tracks.some(t => t.video_id === track.videoId);
+      const isInPlaylist = tracks.some((t: PlaylistTrack) => t.video_id === track.videoId);
 
       setCheckedPlaylists(prev => ({ ...prev, [playlistId]: isInPlaylist }));
       setLoadingChecks(prev => ({ ...prev, [playlistId]: false }));
