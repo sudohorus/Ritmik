@@ -13,6 +13,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const result = await PlaylistService.getPublicPlaylists(page, limit, search);
 
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+
         return res.status(200).json(result);
     } catch (error) {
         console.error('Error fetching public playlists:', error);

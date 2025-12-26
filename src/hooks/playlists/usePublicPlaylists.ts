@@ -41,7 +41,11 @@ export function usePublicPlaylists() {
 
       if (mountedRef.current) {
         if (isLoadMore) {
-          setPlaylists(prev => [...prev, ...data]);
+          setPlaylists(prev => {
+            const existingIds = new Set(prev.map(p => p.id));
+            const newPlaylists = data.filter((p: Playlist) => !existingIds.has(p.id));
+            return [...prev, ...newPlaylists];
+          });
         } else {
           setPlaylists(data);
         }

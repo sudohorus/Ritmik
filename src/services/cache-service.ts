@@ -54,9 +54,12 @@ class CacheService {
         if (!this.isRedisEnabled || !this.redis) return;
 
         try {
+            console.log(`[CacheService] Flushing pattern: ${pattern}`);
             const keys = await this.redis.keys(pattern);
+            console.log(`[CacheService] Found keys to flush:`, keys);
             if (keys.length > 0) {
-                await this.redis.del(...keys);
+                const count = await this.redis.del(...keys);
+                console.log(`[CacheService] Deleted ${count} keys`);
             }
         } catch (error) {
             console.warn(`Cache flush error for pattern ${pattern}:`, error);

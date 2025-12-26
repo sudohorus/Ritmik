@@ -7,7 +7,7 @@ import { useVisibilityReset } from '@/hooks/useVisibilityReset';
 import { showToast } from '@/lib/toast';
 
 export function usePlaylistDetails(playlistId: string | undefined) {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +65,11 @@ export function usePlaylistDetails(playlistId: string | undefined) {
       try {
         const [foundPlaylist, playlistTracks] = await Promise.all([
           PlaylistService.getPlaylistById(playlistId),
-          fetch(`/api/playlists/${playlistId}/tracks`).then(res => {
+          fetch(`/api/playlists/${playlistId}/tracks`, {
+            headers: session?.access_token ? {
+              'Authorization': `Bearer ${session.access_token}`
+            } : undefined
+          }).then(res => {
             if (!res.ok) throw new Error('Failed to fetch tracks');
             return res.json();
           })

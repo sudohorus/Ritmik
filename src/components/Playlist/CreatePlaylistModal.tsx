@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 interface CreatePlaylistModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: { name: string; description?: string; is_public?: boolean; cover_image_url?: string }) => Promise<void>;
+  onCreate: (data: { name: string; description?: string; is_public?: boolean; cover_image_url?: string; token: string }) => Promise<void>;
 }
 
 export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: CreatePlaylistModalProps) {
@@ -13,13 +14,20 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
   const [isPublic, setIsPublic] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+  const [token, setToken] = useState<string | null>(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const turnstileRef = useRef(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (isSubmitting || loading) {
+      return;
+    }
+
+    if (!token) {
+      setError('Please complete the security check');
       return;
     }
 
@@ -29,14 +37,15 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
     setError(null);
 
     try {
-      const createPromise = onCreate({ 
-        name, 
+      const createPromise = onCreate({
+        name,
         description: description || undefined,
         is_public: isPublic,
-        cover_image_url: coverImage || undefined
+        cover_image_url: coverImage || undefined,
+        token
       });
 
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Request timeout - please try again')), 15000)
       );
 
@@ -48,11 +57,12 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
       setDescription('');
       setCoverImage('');
       setIsPublic(true);
+      setToken(null);
       onClose();
     } catch (err) {
       if (active) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to create playlist';
-        
+
         if (errorMessage.includes('timeout')) {
           setError('Connection timeout. Please check your internet and try again.');
         } else if (errorMessage.includes('network')) {
@@ -62,6 +72,10 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
         } else {
           setError(errorMessage);
         }
+        if (turnstileRef.current) {
+          turnstileRef.current?.reset();
+        }
+        setToken(null);
       }
     } finally {
       if (active) {
@@ -175,6 +189,17 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
               </label>
             </div>
 
+            <div className="flex justify-center">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                onSuccess={(token) => {
+                  setToken(token);
+                }}
+                onExpire={() => setToken(null)}
+              />
+            </div>
+
             {error && (
               <div className="p-3 bg-red-950/50 border border-red-900/50 rounded-lg text-red-400 text-sm flex items-start gap-2">
                 <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,7 +228,7 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
               </button>
               <button
                 type="submit"
-                disabled={loading || !name.trim() || isSubmitting}
+                disabled={loading || !name.trim() || isSubmitting || !token}
                 className="flex-1 py-3 bg-white text-black rounded-lg font-semibold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white flex items-center justify-center gap-2"
               >
                 {loading ? (

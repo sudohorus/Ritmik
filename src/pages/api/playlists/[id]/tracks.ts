@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
 import { PlaylistService } from '@/services/playlist-service';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -13,7 +14,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-        const tracks = await PlaylistService.getPlaylistTracks(id);
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+        const supabase = createClient(supabaseUrl, supabaseKey, {
+            global: {
+                headers: req.headers.authorization ? {
+                    Authorization: req.headers.authorization
+                } : undefined
+            }
+        });
+
+        const tracks = await PlaylistService.getPlaylistTracks(id as string, supabase);
 
         return res.status(200).json(tracks);
     } catch (error) {

@@ -39,11 +39,11 @@ export function middleware(request: NextRequest) {
 
     const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com https://www.google.com https://www.gstatic.com;
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com https://www.google.com https://www.gstatic.com https://challenges.cloudflare.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' blob: data: https:;
     font-src 'self' https://fonts.gstatic.com;
-    frame-src 'self' https://www.youtube.com;
+    frame-src 'self' https://www.youtube.com https://challenges.cloudflare.com;
     connect-src 'self' https://www.youtube.com https://s.ytimg.com https://*.supabase.co https://*.supabase.in https://api.ipify.org wss://*.supabase.co;
     object-src 'none';
     base-uri 'self';

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlaylistService } from '@/services/playlist-service';
+import { supabase } from '@/lib/supabase';
 import { Playlist, CreatePlaylistData } from '@/types/playlist';
 import { showToast } from '@/lib/toast';
 
@@ -92,7 +93,7 @@ export function usePlaylists() {
     }
   };
 
-  const createPlaylist = async (data: CreatePlaylistData) => {
+  const createPlaylist = async (data: CreatePlaylistData & { token: string }) => {
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -104,11 +105,26 @@ export function usePlaylists() {
     isCreatingRef.current = true;
 
     try {
-      await PlaylistService.createPlaylist(user.id, data);
+      const { token, ...playlistData } = data;
+      const response = await fetch('/api/playlists/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`,
+        },
+        body: JSON.stringify({ ...playlistData, token }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create playlist');
+      }
+
       await fetchPlaylists(1);
       showToast.success('Playlist created successfully');
     } catch (err) {
-      showToast.error('Failed to create playlist');
+      const message = err instanceof Error ? err.message : 'Failed to create playlist';
+      showToast.error(message);
       throw err;
     } finally {
       isCreatingRef.current = false;

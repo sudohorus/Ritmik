@@ -33,17 +33,6 @@ export class PlaylistService {
   }
 
   static async getPublicPlaylists(page: number = 1, limit: number = 8, search?: string): Promise<{ data: Playlist[], count: number }> {
-    const cacheKey = `public_playlists:page:${page}:limit:${limit}:search:${search || 'all'}`;
-
-    try {
-      const cached = await import('./cache-service').then(m => m.cacheService.get<{ data: Playlist[], count: number }>(cacheKey));
-      if (cached) {
-        return cached;
-      }
-    } catch (err) {
-      console.warn('Cache lookup failed:', err);
-    }
-
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
@@ -77,12 +66,6 @@ export class PlaylistService {
 
     const result = { data: playlists, count: count || 0 };
 
-    try {
-      await import('./cache-service').then(m => m.cacheService.set(cacheKey, result, 300));
-    } catch (err) {
-      console.warn('Cache save failed:', err);
-    }
-
     return result;
   }
 
@@ -115,8 +98,9 @@ export class PlaylistService {
     return data;
   }
 
-  static async createPlaylist(userId: string, playlistData: CreatePlaylistData): Promise<Playlist> {
-    const { data: { user } } = await supabase.auth.getUser();
+  static async createPlaylist(userId: string, playlistData: CreatePlaylistData, client?: any): Promise<Playlist> {
+    const supabaseClient = client || supabase;
+    const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
       throw new Error('Authentication required');
     }
@@ -125,7 +109,7 @@ export class PlaylistService {
       throw new Error('Unauthorized: You can only create playlists for yourself');
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('playlists')
       .insert({
         user_id: userId,
@@ -141,6 +125,7 @@ export class PlaylistService {
     if (error) {
       throw error;
     }
+
     return data;
   }
 
@@ -179,6 +164,7 @@ export class PlaylistService {
       .single();
 
     if (error) throw error;
+
     return updated;
   }
 
@@ -208,10 +194,20 @@ export class PlaylistService {
       .eq('id', playlistId);
 
     if (error) throw error;
+
+    try {
+      await Promise.all([
+        import('./cache-service').then(m => m.cacheService.del(`playlist_tracks:${playlistId}`)),
+        import('./cache-service').then(m => m.cacheService.flushPattern('public_playlists:*'))
+      ]);
+    } catch (err) {
+      console.warn('Cache invalidation failed:', err);
+    }
   }
 
-  static async getPlaylist(playlistId: string, userId?: string): Promise<Playlist> {
-    const { data: playlist, error } = await supabase
+  static async getPlaylist(playlistId: string, userId?: string, client?: any): Promise<Playlist> {
+    const supabaseClient = client || supabase;
+    const { data: playlist, error } = await supabaseClient
       .from('playlists')
       .select('*, users(username, display_name, avatar_url)')
       .eq('id', playlistId)
@@ -228,10 +224,11 @@ export class PlaylistService {
     return playlist;
   }
 
-  static async getPlaylistTracks(playlistId: string) {
-    const { data: { user } } = await supabase.auth.getUser();
+  static async getPlaylistTracks(playlistId: string, client?: any) {
+    const supabaseClient = client || supabase;
+    const { data: { user } } = await supabaseClient.auth.getUser();
 
-    await this.getPlaylist(playlistId, user?.id);
+    await this.getPlaylist(playlistId, user?.id, supabaseClient);
 
     const cacheKey = `playlist_tracks:${playlistId}`;
 
@@ -244,7 +241,7 @@ export class PlaylistService {
       console.warn('Cache lookup failed:', err);
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('playlist_tracks')
       .select('*')
       .eq('playlist_id', playlistId)
