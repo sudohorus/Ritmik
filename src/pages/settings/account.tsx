@@ -25,6 +25,7 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [bannerUrl, setBannerUrl] = useState('');
   const [saving, setSaving] = useState(false);
+  const [usernameError, setUsernameError] = useState('');
 
   const [customization, setCustomization] = useState<ProfileCustomization | null>(null);
   const [showCustomization, setShowCustomization] = useState(false);
@@ -84,19 +85,43 @@ export default function ProfilePage() {
     return null;
   }
 
+  const validateUsername = (value: string): boolean => {
+    const trimmed = value.trim();
+    if (trimmed.length === 0) return true;
+
+    const validPattern = /^[a-z0-9_-]+$/;
+    return validPattern.test(trimmed);
+  };
+
+  const handleUsernameChange = (value: string) => {
+    const lowercase = value.toLowerCase();
+    setUsername(lowercase);
+
+    if (lowercase.trim().length > 0 && !validateUsername(lowercase)) {
+      setUsernameError('Username can only contain lowercase letters, numbers, underscores, and hyphens');
+    } else {
+      setUsernameError('');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (username.length < 3) {
+    if (username.trim().length < 3) {
       showToast.error('Username must be at least 3 characters');
       return;
     }
 
+    if (!validateUsername(username)) {
+      showToast.error('Username contains invalid characters');
+      return;
+    }
+
     const updates: any = {};
-    if (username !== user.username) updates.username = username;
-    if (displayName !== user.display_name) updates.display_name = displayName;
-    if (avatarUrl !== user.avatar_url) updates.avatar_url = avatarUrl || null;
-    if (bannerUrl !== user.banner_url) updates.banner_url = bannerUrl || null;
+    if (username.trim() !== user.username) updates.username = username.trim();
+    if (displayName.trim() !== user.display_name) updates.display_name = displayName.trim();
+    if (avatarUrl.trim() !== user.avatar_url) updates.avatar_url = avatarUrl.trim() || null;
+    if (bannerUrl.trim() !== user.banner_url) updates.banner_url = bannerUrl.trim() || null;
 
     if (Object.keys(updates).length === 0) {
       showToast.success('No changes to save');
@@ -192,14 +217,26 @@ export default function ProfilePage() {
                 id="username"
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-colors"
+                onChange={(e) => handleUsernameChange(e.target.value)}
+                className={`w-full px-4 py-3 bg-zinc-800 border rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-1 transition-colors ${usernameError
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                    : 'border-zinc-700 focus:border-zinc-500 focus:ring-zinc-500'
+                  }`}
                 required
                 minLength={3}
                 placeholder="username"
                 disabled={saving}
               />
-              <p className="mt-1 text-xs text-zinc-500">At least 3 characters. This will be your unique identifier.</p>
+              {usernameError ? (
+                <p className="mt-1 text-xs text-red-400 flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {usernameError}
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-zinc-500">At least 3 characters. Only lowercase letters, numbers, _ and -</p>
+              )}
             </div>
 
             <div>

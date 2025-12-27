@@ -36,11 +36,11 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
 
     try {
       await onUpdate({
-        name,
-        description: description || undefined,
+        name: name.trim(),
+        description: description.trim() || undefined,
         is_public: isPublic,
-        cover_image_url: coverImage || undefined,
-        banner_image_url: bannerImage || undefined
+        cover_image_url: coverImage.trim() || undefined,
+        banner_image_url: bannerImage.trim() || undefined
       });
       if (!active) return;
       onClose();

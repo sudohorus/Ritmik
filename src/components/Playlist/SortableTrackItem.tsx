@@ -105,6 +105,8 @@ export default function SortableTrackItem({
             videoId={track.video_id}
             title={track.title}
             artist={track.artist}
+            thumbnail={track.thumbnail_url}
+            duration={track.duration}
             onRemove={isOwner ? onRemove : undefined}
             showRemove={isOwner}
           />

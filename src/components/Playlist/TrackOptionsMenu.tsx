@@ -2,18 +2,35 @@ import { useState, useRef, useEffect } from 'react';
 import { TrackOptionsMenuProps } from '@/types/track-options';
 import { calculateMenuPosition } from '@/utils/menu-position';
 import { showToast } from '@/lib/toast';
+import { Track } from '@/types/track';
+import AddToPlaylistModal from './AddToPlaylistModal';
 
 export default function TrackOptionsMenu({
     videoId,
     title,
     artist,
+    thumbnail,
+    duration,
     onRemove,
     onAddToPlaylist,
     showRemove = true,
+    track,
 }: TrackOptionsMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
+
+    const trackData: Track | null = track || (videoId ? {
+        id: videoId,
+        videoId,
+        title,
+        artist: artist || '',
+        thumbnail: thumbnail || '',
+        duration: duration || 0,
+        channel: artist || '',
+        viewCount: 0,
+    } : null);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -71,20 +88,19 @@ export default function TrackOptionsMenu({
                             {artist && <p className="text-xs text-zinc-500 truncate">{artist}</p>}
                         </div>
 
-                        {onAddToPlaylist && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleAction(onAddToPlaylist);
-                                }}
-                                className="w-full px-4 py-2.5 text-left hover:bg-zinc-700 transition-colors flex items-center gap-3 text-sm text-zinc-300"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                </svg>
-                                <span>Add to Playlist</span>
-                            </button>
-                        )}
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsOpen(false);
+                                setShowAddToPlaylistModal(true);
+                            }}
+                            className="w-full px-4 py-2.5 text-left hover:bg-zinc-700 transition-colors flex items-center gap-3 text-sm text-zinc-300"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            <span>Add to Playlist</span>
+                        </button>
 
                         <button
                             onClick={handleCopyLink}
@@ -116,6 +132,12 @@ export default function TrackOptionsMenu({
                     </div>
                 </div>
             )}
+
+            <AddToPlaylistModal
+                isOpen={showAddToPlaylistModal}
+                onClose={() => setShowAddToPlaylistModal(false)}
+                track={trackData}
+            />
         </div>
     );
 }

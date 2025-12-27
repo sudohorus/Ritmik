@@ -166,8 +166,8 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-white">{playlist.name}</h3>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-white truncate">{playlist.name}</h3>
                         {playlist.description && (
                           <p className="text-sm text-zinc-400 mt-1 truncate">{playlist.description}</p>
                         )}

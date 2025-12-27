@@ -38,10 +38,10 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
 
     try {
       const createPromise = onCreate({
-        name,
-        description: description || undefined,
+        name: name.trim(),
+        description: description.trim() || undefined,
         is_public: isPublic,
-        cover_image_url: coverImage || undefined,
+        cover_image_url: coverImage.trim() || undefined,
         token
       });
 
