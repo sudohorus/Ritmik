@@ -8,6 +8,8 @@ interface EditPlaylistModalProps {
   playlist: Playlist | null;
 }
 
+import { nsfwValidator } from '@/lib/nsfw-validator';
+
 export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist }: EditPlaylistModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -16,6 +18,13 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
   const [isPublic, setIsPublic] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      nsfwValidator.preload();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (playlist) {
@@ -29,12 +38,24 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    let active = true;
 
+    if (isSubmitting || loading) {
+      return;
+    }
+
+    let active = true;
+    setIsSubmitting(true);
     setLoading(true);
     setError(null);
 
     try {
+      if (coverImage.trim() && coverImage !== playlist?.cover_image_url) {
+        const result = await nsfwValidator.validateImage(coverImage.trim());
+        if (!result.isSafe) {
+          throw new Error(`Cover image rejected: ${result.reason}`);
+        }
+      }
+
       await onUpdate({
         name: name.trim(),
         description: description.trim() || undefined,
@@ -51,6 +72,7 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
     } finally {
       if (active) {
         setLoading(false);
+        setIsSubmitting(false);
       }
     }
   };
@@ -181,10 +203,17 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
               </button>
               <button
                 type="submit"
-                disabled={loading || !name.trim()}
-                className="flex-1 py-3 bg-white text-black rounded-lg font-semibold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                disabled={loading || !name.trim() || isSubmitting}
+                className="flex-1 py-3 bg-white text-black rounded-lg font-semibold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white flex items-center justify-center gap-2"
               >
-                {loading ? 'Saving...' : 'Save'}
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    {isSubmitting ? 'Checking...' : 'Saving...'}
+                  </>
+                ) : (
+                  'Save'
+                )}
               </button>
             </div>
           </form>
