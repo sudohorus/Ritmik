@@ -1,16 +1,17 @@
-import * as tf from '@tensorflow/tfjs';
-import * as nsfwjs from 'nsfwjs';
+import type * as NSFWJS from 'nsfwjs';
 
 class NSFWValidator {
-    private model: nsfwjs.NSFWJS | null = null;
-    private loadingPromise: Promise<nsfwjs.NSFWJS> | null = null;
+    private model: NSFWJS.NSFWJS | null = null;
+    private loadingPromise: Promise<NSFWJS.NSFWJS> | null = null;
     private cache: Map<string, { isSafe: boolean; reason?: string }> = new Map();
 
     public preload(): void {
-        this.loadModel().catch(console.error);
+        if (typeof window !== 'undefined') {
+            this.loadModel().catch(console.error);
+        }
     }
 
-    private async loadModel(): Promise<nsfwjs.NSFWJS> {
+    private async loadModel(): Promise<NSFWJS.NSFWJS> {
         if (this.model) {
             return this.model;
         }
@@ -19,13 +20,21 @@ class NSFWValidator {
             return this.loadingPromise;
         }
 
-        this.loadingPromise = nsfwjs.load();
+        this.loadingPromise = (async () => {
+            const nsfwjs = await import('nsfwjs');
+            return nsfwjs.load();
+        })();
+
         this.model = await this.loadingPromise;
         this.loadingPromise = null;
         return this.model;
     }
 
     async validateImage(url: string): Promise<{ isSafe: boolean; reason?: string }> {
+        if (typeof window === 'undefined') {
+            return { isSafe: true };
+        }
+
         if (this.cache.has(url)) {
             return this.cache.get(url)!;
         }
@@ -45,7 +54,7 @@ class NSFWValidator {
             const predictions = await model.classify(img);
 
             const explicitClasses = ['Porn', 'Hentai'];
-            const threshold = 0.60; 
+            const threshold = 0.60;
 
             const unsafePrediction = predictions.find(
                 (p) => explicitClasses.includes(p.className) && p.probability > threshold
@@ -66,7 +75,7 @@ class NSFWValidator {
 
         } catch (error) {
             console.warn('NSFW validation failed (likely CORS or load error), allowing image:', error);
-        
+
             return { isSafe: true };
         }
     }
