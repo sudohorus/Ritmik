@@ -72,11 +72,7 @@ export default function ProfilePage() {
     }
   }, [user, authLoading, router, loadUserData, loadDecorations]);
 
-  useEffect(() => {
-    if (user && user.banner_url && !bannerUrl && initialLoadDone.current) {
-      setBannerUrl(user.banner_url);
-    }
-  }, [user, bannerUrl]);
+
 
   if (authLoading) {
     return <Loading fullScreen text="Loading..." />;
