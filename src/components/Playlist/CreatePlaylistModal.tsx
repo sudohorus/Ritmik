@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile';
+import { nsfwValidator } from '@/lib/nsfw-validator';
 
 interface CreatePlaylistModalProps {
   isOpen: boolean;
@@ -20,6 +21,10 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
   const [isSubmitting, setIsSubmitting] = useState(false);
   const turnstileRef = useRef<TurnstileInstance | null>(null);
 
+  if (isOpen) {
+    nsfwValidator.preload();
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -38,6 +43,20 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
     setError(null);
 
     try {
+      if (coverImage.trim()) {
+        const result = await nsfwValidator.validateImage(coverImage.trim());
+        if (!result.isSafe) {
+          throw new Error(`Cover image rejected: ${result.reason}`);
+        }
+      }
+
+      if (bannerImage.trim()) {
+        const result = await nsfwValidator.validateImage(bannerImage.trim());
+        if (!result.isSafe) {
+          throw new Error(`Banner image rejected: ${result.reason}`);
+        }
+      }
+
       const createPromise = onCreate({
         name: name.trim(),
         description: description.trim() || undefined,
@@ -252,7 +271,7 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
                 {loading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                    Creating...
+                    {isSubmitting ? 'Checking...' : 'Creating...'}
                   </>
                 ) : (
                   'Create'

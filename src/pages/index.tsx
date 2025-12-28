@@ -215,8 +215,10 @@ export default function LandingPage() {
 
       <footer className="border-t border-zinc-800">
         <div className="max-w-6xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center justify-between text-sm text-zinc-500">
-          <div className="flex items-center gap-2 mb-4 md:mb-0">
+          <div className="flex items-center gap-6 mb-4 md:mb-0">
             <span>© {new Date().getFullYear()} Ritmik. All rights reserved.</span>
+            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
           </div>
           <div>
             <Link href="https://github.com/sudohorus/Ritmik" target="_blank" className="hover:text-white transition-colors">GitHub</Link>

@@ -14,6 +14,7 @@ import { AvatarDecoration } from '@/types/avatar-decoration';
 import Navbar from '@/components/Navbar';
 import { showToast } from '@/lib/toast';
 import ProfileCustomizationEditor from '@/components/Settings/ProfileCustomizationEditor';
+import { supabase } from '@/lib/supabase';
 
 export default function ProfilePage() {
   const { user, loading: authLoading, refreshUser } = useAuth();
@@ -219,8 +220,8 @@ export default function ProfilePage() {
                 value={username}
                 onChange={(e) => handleUsernameChange(e.target.value)}
                 className={`w-full px-4 py-3 bg-zinc-800 border rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-1 transition-colors ${usernameError
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                    : 'border-zinc-700 focus:border-zinc-500 focus:ring-zinc-500'
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                  : 'border-zinc-700 focus:border-zinc-500 focus:ring-zinc-500'
                   }`}
                 required
                 minLength={3}
