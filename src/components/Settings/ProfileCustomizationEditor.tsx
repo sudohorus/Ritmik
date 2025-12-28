@@ -3,6 +3,7 @@ import { ProfileCustomization, ProfileCustomizationUpdate } from '@/types/profil
 import { AvatarDecoration } from '@/types/avatar-decoration';
 import { DecorationService } from '@/services/decoration-service';
 import { showToast } from '@/lib/toast';
+import AvatarDecorationOverlay from '@/components/AvatarDecorationOverlay';
 
 interface ProfileCustomizationEditorProps {
     customization: ProfileCustomization;
@@ -143,13 +144,7 @@ export default function ProfileCustomizationEditor({
                         >
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="w-16 h-16 rounded-full bg-zinc-700 relative">
-                                    <div className="absolute -top-4 -left-2 w-20 h-20 pointer-events-none">
-                                        <img
-                                            src={decoration.image_url}
-                                            alt={decoration.name}
-                                            className="w-full h-full object-contain"
-                                        />
-                                    </div>
+                                    <AvatarDecorationOverlay decoration={decoration} />
                                 </div>
                             </div>
 

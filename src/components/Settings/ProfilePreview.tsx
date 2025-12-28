@@ -1,5 +1,6 @@
 import { User } from '@/types/auth';
 import { ProfileCustomization, DEFAULT_CUSTOMIZATION } from '@/types/profile-customization';
+import AvatarDecorationOverlay from '@/components/AvatarDecorationOverlay';
 
 interface ProfilePreviewProps {
     user: User;
@@ -75,15 +76,7 @@ export default function ProfilePreview({
                             </div>
                         )}
 
-                        {activeCustomization.avatar_decoration && (
-                            <div className="absolute left-1/2 top-0 -translate-x-[60%] -translate-y-[32%] -rotate-[8deg] w-[180%] aspect-square pointer-events-none z-20">
-                                <img
-                                    src={activeCustomization.avatar_decoration.image_url}
-                                    alt={activeCustomization.avatar_decoration.name}
-                                    className="w-full h-full object-contain"
-                                />
-                            </div>
-                        )}
+                        <AvatarDecorationOverlay decoration={(activeCustomization.avatar_decoration as any) || null} />
                     </div>
 
                     <div className="flex-1 min-w-0 pb-1.5">

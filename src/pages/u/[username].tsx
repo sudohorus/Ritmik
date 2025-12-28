@@ -15,6 +15,7 @@ import BetaBadge from '@/components/BetaBadge';
 import { Track } from '@/types/track';
 import { ProfileCustomizationService } from '@/services/profile-customization-service';
 import { ProfileCustomization, DEFAULT_CUSTOMIZATION } from '@/types/profile-customization';
+import AvatarDecorationOverlay from '@/components/AvatarDecorationOverlay';
 
 export default function PublicProfilePage() {
   const router = useRouter();
@@ -213,13 +214,7 @@ export default function PublicProfilePage() {
                 )}
 
                 {customization?.avatar_decoration && (
-                  <div className="absolute left-1/2 top-0 -translate-x-[60%] -translate-y-[36%] -rotate-[8deg] w-[180%] aspect-square pointer-events-none z-20">
-                    <img
-                      src={customization.avatar_decoration.image_url}
-                      alt={customization.avatar_decoration.name}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
+                  <AvatarDecorationOverlay decoration={customization.avatar_decoration as any} />
                 )}
               </div>
 
@@ -314,13 +309,7 @@ export default function PublicProfilePage() {
                 )}
 
                 {customization?.avatar_decoration && (
-                  <div className="absolute left-1/2 top-0 -translate-x-[60%] -translate-y-[36%] -rotate-[8deg] w-[180%] aspect-square pointer-events-none z-20">
-                    <img
-                      src={customization.avatar_decoration.image_url}
-                      alt={customization.avatar_decoration.name}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
+                  <AvatarDecorationOverlay decoration={customization.avatar_decoration as any} />
                 )}
               </div>
 
