@@ -4,13 +4,14 @@ import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile';
 interface CreatePlaylistModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: { name: string; description?: string; is_public?: boolean; cover_image_url?: string; token: string }) => Promise<void>;
+  onCreate: (data: { name: string; description?: string; is_public?: boolean; cover_image_url?: string; banner_image_url?: string; token: string }) => Promise<void>;
 }
 
 export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: CreatePlaylistModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [coverImage, setCoverImage] = useState('');
+  const [bannerImage, setBannerImage] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +43,7 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
         description: description.trim() || undefined,
         is_public: isPublic,
         cover_image_url: coverImage.trim() || undefined,
+        banner_image_url: bannerImage.trim() || undefined,
         token
       });
 
@@ -56,6 +58,7 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
       setName('');
       setDescription('');
       setCoverImage('');
+      setBannerImage('');
       setIsPublic(true);
       setToken(null);
       onClose();
@@ -163,6 +166,21 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
                 onChange={(e) => setCoverImage(e.target.value)}
                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 focus:ring-2 focus:ring-zinc-600/50 transition-all"
                 placeholder="https://example.com/image.jpg"
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="bannerImage" className="block text-sm font-medium text-zinc-300 mb-2">
+                Banner Image URL
+              </label>
+              <input
+                id="bannerImage"
+                type="url"
+                value={bannerImage}
+                onChange={(e) => setBannerImage(e.target.value)}
+                className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 focus:ring-2 focus:ring-zinc-600/50 transition-all"
+                placeholder="https://example.com/banner.jpg"
                 disabled={loading}
               />
             </div>
