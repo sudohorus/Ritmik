@@ -15,6 +15,7 @@ import Navbar from '@/components/Navbar';
 import { showToast } from '@/lib/toast';
 import ProfileCustomizationEditor from '@/components/Settings/ProfileCustomizationEditor';
 import { supabase } from '@/lib/supabase';
+import { nsfwValidator } from '@/lib/nsfw-validator';
 
 export default function ProfilePage() {
   const { user, loading: authLoading, refreshUser } = useAuth();
@@ -69,6 +70,7 @@ export default function ProfilePage() {
       initialLoadDone.current = true;
       loadUserData();
       loadDecorations();
+      nsfwValidator.preload();
     }
   }, [user, authLoading, router, loadUserData, loadDecorations]);
 
@@ -128,6 +130,20 @@ export default function ProfilePage() {
     setSaving(true);
 
     try {
+      if (avatarUrl.trim() && avatarUrl !== user.avatar_url) {
+        const result = await nsfwValidator.validateImage(avatarUrl.trim());
+        if (!result.isSafe) {
+          throw new Error(`Avatar image rejected: ${result.reason}`);
+        }
+      }
+
+      if (bannerUrl.trim() && bannerUrl !== user.banner_url) {
+        const result = await nsfwValidator.validateImage(bannerUrl.trim());
+        if (!result.isSafe) {
+          throw new Error(`Banner image rejected: ${result.reason}`);
+        }
+      }
+
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Update timeout')), 10000)
       );

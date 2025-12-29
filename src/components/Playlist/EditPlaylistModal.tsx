@@ -56,6 +56,13 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
         }
       }
 
+      if (bannerImage.trim() && bannerImage !== playlist?.banner_image_url) {
+        const result = await nsfwValidator.validateImage(bannerImage.trim());
+        if (!result.isSafe) {
+          throw new Error(`Banner image rejected: ${result.reason}`);
+        }
+      }
+
       await onUpdate({
         name: name.trim(),
         description: description.trim() || undefined,
