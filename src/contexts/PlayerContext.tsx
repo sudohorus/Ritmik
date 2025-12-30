@@ -122,8 +122,6 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
     setCurrentIndex(validIndex);
 
     if (isSameTrack) {
-      setSeekToSeconds(0);
-      setProgress(0);
       setIsPlaying(true);
     } else {
       setCurrentTrack(track);

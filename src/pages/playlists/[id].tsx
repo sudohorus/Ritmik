@@ -31,7 +31,7 @@ export default function PlaylistPage() {
   const router = useRouter();
   const playlistId = router.isReady && typeof router.query.id === 'string' ? router.query.id : undefined;
   const { user } = useAuth();
-  const { playTrack, currentTrack, isPlaying } = usePlayer();
+  const { playTrack, currentTrack, isPlaying, seekTo } = usePlayer();
 
   const {
     playlist,
@@ -256,6 +256,7 @@ export default function PlaylistPage() {
                         isPlaying={isPlaying}
                         isOwner={!!isOwner}
                         onPlay={() => handlePlayTrack(track)}
+                        onDoubleClick={() => seekTo(0)}
                         onRemove={() => setRemoveConfirm(track.video_id)}
                         disabled={true}
                       />
@@ -289,6 +290,7 @@ export default function PlaylistPage() {
                           isPlaying={isPlaying}
                           isOwner={!!isOwner}
                           onPlay={() => handlePlayTrack(track)}
+                          onDoubleClick={() => seekTo(0)}
                           onRemove={() => setRemoveConfirm(track.video_id)}
                         />
                       );

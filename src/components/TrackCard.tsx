@@ -11,13 +11,19 @@ interface TrackCardProps {
 }
 
 export default function TrackCard({ track, playlist }: TrackCardProps) {
-  const { playTrack, currentTrack, isPlaying } = usePlayer();
+  const { playTrack, currentTrack, isPlaying, seekTo } = usePlayer();
   const { user } = useAuth();
   const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
   const isCurrentTrack = currentTrack?.videoId === track.videoId;
 
   const handleClick = () => {
     playTrack(track, playlist);
+  };
+
+  const handleDoubleClick = () => {
+    if (isCurrentTrack) {
+      seekTo(0);
+    }
   };
 
   const handleAddToPlaylist = (e: React.MouseEvent) => {
@@ -29,7 +35,7 @@ export default function TrackCard({ track, playlist }: TrackCardProps) {
     <>
       <div className="w-full max-w-full bg-zinc-900 border border-zinc-800 rounded-lg p-3 sm:p-4 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all group cursor-pointer overflow-hidden">
         <div className="flex items-center gap-3 sm:gap-4 w-full">
-          <div className="relative" onClick={handleClick}>
+          <div className="relative" onClick={handleClick} onDoubleClick={handleDoubleClick}>
             <TrackArtwork thumbnail={track.thumbnail} title={track.title} />
             {isCurrentTrack && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-md">
@@ -48,7 +54,7 @@ export default function TrackCard({ track, playlist }: TrackCardProps) {
               </div>
             )}
           </div>
-          <div onClick={handleClick} className="flex-1 min-w-0 w-full overflow-hidden">
+          <div onClick={handleClick} onDoubleClick={handleDoubleClick} className="flex-1 min-w-0 w-full overflow-hidden">
             <TrackInfo track={track} isPlaying={isCurrentTrack && isPlaying} />
           </div>
           {user && (

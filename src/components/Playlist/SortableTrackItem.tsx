@@ -11,6 +11,7 @@ interface SortableTrackItemProps {
   isOwner: boolean;
   onPlay: () => void;
   onRemove: () => void;
+  onDoubleClick?: () => void;
   disabled?: boolean;
 }
 
@@ -22,6 +23,7 @@ export default function SortableTrackItem({
   isOwner,
   onPlay,
   onRemove,
+  onDoubleClick,
   disabled = false,
 }: SortableTrackItemProps) {
   const {
@@ -61,7 +63,7 @@ export default function SortableTrackItem({
 
         <span className="hidden md:block text-zinc-500 text-sm w-6 text-center font-medium">{index + 1}</span>
 
-        <div className="relative shrink-0" onClick={onPlay}>
+        <div className="relative shrink-0" onClick={onPlay} onDoubleClick={onDoubleClick}>
           <img
             src={track.thumbnail_url || '/default-thumbnail.jpg'}
             alt={track.title}
@@ -85,7 +87,7 @@ export default function SortableTrackItem({
           )}
         </div>
 
-        <div onClick={onPlay} className="flex-1 min-w-0">
+        <div onClick={onPlay} onDoubleClick={onDoubleClick} className="flex-1 min-w-0">
           <h3 className={`text-sm md:text-base font-semibold truncate group-hover:text-white transition-colors ${isCurrentTrack && isPlaying ? 'text-white' : 'text-zinc-100'}`}>
             {track.title}
           </h3>
