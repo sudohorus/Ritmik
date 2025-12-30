@@ -64,7 +64,7 @@ export function usePlaylistDetails(playlistId: string | undefined) {
     const load = async () => {
       try {
         const [foundPlaylist, playlistTracks] = await Promise.all([
-          PlaylistService.getPlaylistById(playlistId),
+          PlaylistService.getPlaylistById(playlistId, user?.id),
           fetch(`/api/playlists/${playlistId}/tracks`, {
             headers: session?.access_token ? {
               'Authorization': `Bearer ${session.access_token}`

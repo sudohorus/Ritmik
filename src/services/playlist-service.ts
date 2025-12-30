@@ -69,8 +69,13 @@ export class PlaylistService {
     return result;
   }
 
-  static async getPlaylistById(playlistId: string): Promise<Playlist | null> {
-    const { data: { user } } = await supabase.auth.getUser();
+  static async getPlaylistById(playlistId: string, userId?: string): Promise<Playlist | null> {
+    let currentUserId = userId;
+
+    if (!currentUserId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      currentUserId = user?.id;
+    }
 
     const { data, error } = await supabase
       .from('playlists')
@@ -90,7 +95,7 @@ export class PlaylistService {
     }
 
     if (!data.is_public) {
-      if (!user || data.user_id !== user.id) {
+      if (!currentUserId || data.user_id !== currentUserId) {
         throw new Error('This playlist is private');
       }
     }
