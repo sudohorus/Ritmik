@@ -3,10 +3,6 @@
 ## Phase 1: The "Social" Player
 *Focus: Making music a shared experience, something Spotify/YouTube Music lack in real-time.*
 
-- [ ] **Ritmik Rooms (Listen Together)**
-  - [ ] Create public/private rooms where users listen in perfect sync.
-  - [ ] Pass the control of the queue between users.
-  - [ ] Live chat within the room.
 - [ ] **Discord Integration 2.0**
   - [ ] Rich Presence (via desktop bridge/app).
   - [ ] "Invite to Listen" button in Discord.

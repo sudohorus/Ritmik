@@ -93,6 +93,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         let failed = 0;
         const startTime = Date.now();
 
+        const { data: maxPosData } = await supabaseAdmin
+            .from('playlist_tracks')
+            .select('position')
+            .eq('playlist_id', targetPlaylistId)
+            .order('position', { ascending: false })
+            .limit(1)
+            .single();
+
+        const currentMaxPosition = maxPosData?.position ?? -1;
+        const startPosition = currentMaxPosition + 1;
+
         for (let i = 0; i < total; i++) {
             if (!isConnectionAlive()) break;
 
@@ -101,18 +112,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             const videoId = item.id;
             const title = item.title || 'Unknown Track';
-            
-            const thumbnail = item.thumbnail?.thumbnails?.[0]?.url || 
-                             raw.thumbnail?.url || 
-                             '';
-            
-            const durationStr = item.length?.simpleText || 
-                               raw.lengthText?.simpleText || 
-                               raw.length?.accessibility?.accessibilityData?.label ||
-                               '0:00';
+
+            const thumbnail = item.thumbnail?.thumbnails?.[0]?.url ||
+                raw.thumbnail?.url ||
+                '';
+
+            const durationStr = item.length?.simpleText ||
+                raw.lengthText?.simpleText ||
+                raw.length?.accessibility?.accessibilityData?.label ||
+                '0:00';
             const duration = parseDuration(durationStr);
-            
-            const artist = 
+
+            const artist =
                 item.channelTitle ||
                 raw.channelTitle ||
                 raw.shortBylineText?.runs?.[0]?.text ||
@@ -145,7 +156,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     artist: artist,
                     thumbnail_url: thumbnail,
                     duration: duration,
-                    position: i,
+                    position: startPosition + i,
                 });
 
             if (insertError) {
