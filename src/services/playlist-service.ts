@@ -106,14 +106,17 @@ export class PlaylistService {
 
   static async createPlaylist(userId: string, playlistData: CreatePlaylistData, client?: any): Promise<Playlist> {
     const supabaseClient = client || supabase;
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    const user = session?.user;
-    if (!user) {
-      throw new Error('Authentication required');
-    }
 
-    if (user.id !== userId) {
-      throw new Error('Unauthorized: You can only create playlists for yourself');
+    if (!client) {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const user = session?.user;
+      if (!user) {
+        throw new Error('Authentication required');
+      }
+
+      if (user.id !== userId) {
+        throw new Error('Unauthorized: You can only create playlists for yourself');
+      }
     }
 
     const { data, error } = await supabaseClient

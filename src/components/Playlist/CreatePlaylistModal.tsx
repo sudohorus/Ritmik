@@ -231,9 +231,17 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
                 ref={turnstileRef}
                 siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
                 onSuccess={(token) => {
+                  console.log('[Turnstile Widget] Token received successfully');
                   setToken(token);
                 }}
-                onExpire={() => setToken(null)}
+                onExpire={() => {
+                  console.log('[Turnstile Widget] Token expired');
+                  setToken(null);
+                }}
+                onError={(error) => {
+                  console.error('[Turnstile Widget] Error:', error);
+                  setError('Security verification failed. Please refresh the page and try again.');
+                }}
               />
             </div>
 

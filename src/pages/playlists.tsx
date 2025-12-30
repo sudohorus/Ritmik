@@ -6,6 +6,8 @@ import { usePlaylists } from '@/hooks/playlists/usePlaylists';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 import CreatePlaylistModal from '@/components/Playlist/CreatePlaylistModal';
 import ConfirmModal from '@/components/Playlist/ConfirmModal';
+import IntegrationsModal from '@/components/Modals/IntegrationsModal';
+import YoutubeImportModal from '@/components/Youtube/YoutubeImportModal';
 import UserMenu from '@/components/Auth/UserMenu';
 import Loading from '@/components/Loading';
 import Navbar from '@/components/Navbar';
@@ -16,6 +18,8 @@ export default function PlaylistsPage() {
   const router = useRouter();
   const { playlists, loading, createPlaylist, deletePlaylist, loadMore, hasMore, loadingMore, search, setSearch } = usePlaylists();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showIntegrationsModal, setShowIntegrationsModal] = useState(false);
+  const [showYoutubeModal, setShowYoutubeModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const loadMoreRef = useIntersectionObserver({
@@ -55,21 +59,26 @@ export default function PlaylistsPage() {
             <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-3">My Playlists</h1>
             <p className="text-sm md:text-base text-zinc-400">Manage your music collections</p>
           </div>
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              </div>
-            </div>
+          <div className="flex gap-2 md:gap-3 w-full md:w-auto">
+            <button
+              onClick={() => setShowIntegrationsModal(true)}
+              className="flex-1 md:flex-initial px-5 py-2.5 bg-zinc-800 text-white rounded-lg font-medium hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Export from
+            </button>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex-1 md:flex-initial px-5 py-2.5 bg-white text-black rounded-lg font-medium hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 shrink-0"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Create Playlist
+            </button>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="w-full md:w-auto px-5 py-2.5 bg-white text-black rounded-lg font-medium hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 shrink-0"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Create Playlist
-          </button>
         </div>
 
         {loading && playlists.length === 0 ? (
@@ -170,6 +179,16 @@ export default function PlaylistsPage() {
         cancelText="Cancel"
         isDanger
       />
+
+      <IntegrationsModal
+        isOpen={showIntegrationsModal}
+        onClose={() => setShowIntegrationsModal(false)}
+        onSelectYoutube={() => setShowYoutubeModal(true)}
+      />
+
+      {showYoutubeModal && (
+        <YoutubeImportModal onClose={() => setShowYoutubeModal(false)} />
+      )}
     </div>
   );
 }
