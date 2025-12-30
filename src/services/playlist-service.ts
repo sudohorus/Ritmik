@@ -195,14 +195,7 @@ export class PlaylistService {
 
     if (error) throw error;
 
-    try {
-      await Promise.all([
-        import('./cache-service').then(m => m.cacheService.del(`playlist_tracks:${playlistId}`)),
-        import('./cache-service').then(m => m.cacheService.flushPattern('public_playlists:*'))
-      ]);
-    } catch (err) {
-      console.warn('Cache invalidation failed:', err);
-    }
+    if (error) throw error;
   }
 
   static async getPlaylist(playlistId: string, userId?: string, client?: any): Promise<Playlist> {
@@ -230,17 +223,6 @@ export class PlaylistService {
 
     await this.getPlaylist(playlistId, user?.id, supabaseClient);
 
-    const cacheKey = `playlist_tracks:${playlistId}`;
-
-    try {
-      const cached = await import('./cache-service').then(m => m.cacheService.get<any[]>(cacheKey));
-      if (cached) {
-        return cached;
-      }
-    } catch (err) {
-      console.warn('Cache lookup failed:', err);
-    }
-
     const { data, error } = await supabaseClient
       .from('playlist_tracks')
       .select('*')
@@ -248,12 +230,6 @@ export class PlaylistService {
       .order('position', { ascending: true });
 
     if (error) throw error;
-
-    try {
-      await import('./cache-service').then(m => m.cacheService.set(cacheKey, data || [], 300));
-    } catch (err) {
-      console.warn('Cache save failed:', err);
-    }
 
     return data || [];
   }
@@ -310,12 +286,6 @@ export class PlaylistService {
       }
       throw error;
     }
-
-    try {
-      await import('./cache-service').then(m => m.cacheService.del(`playlist_tracks:${trackData.playlist_id}`));
-    } catch (err) {
-      console.warn('Cache invalidation failed:', err);
-    }
   }
 
   static async removeTrackFromPlaylist(playlistId: string, trackId: string): Promise<void> {
@@ -345,12 +315,6 @@ export class PlaylistService {
       .eq('video_id', trackId);
 
     if (error) throw error;
-
-    try {
-      await import('./cache-service').then(m => m.cacheService.del(`playlist_tracks:${playlistId}`));
-    } catch (err) {
-      console.warn('Cache invalidation failed:', err);
-    }
   }
 
   static async reorderPlaylistTracks(playlistId: string, trackIds: string[]): Promise<void> {
@@ -384,11 +348,5 @@ export class PlaylistService {
     });
 
     if (error) throw error;
-
-    try {
-      await import('./cache-service').then(m => m.cacheService.del(`playlist_tracks:${playlistId}`));
-    } catch (err) {
-      console.warn('Cache invalidation failed:', err);
-    }
   }
 }
