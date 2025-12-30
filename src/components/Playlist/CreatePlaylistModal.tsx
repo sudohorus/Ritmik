@@ -5,7 +5,7 @@ import { nsfwValidator } from '@/lib/nsfw-validator';
 interface CreatePlaylistModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: { name: string; description?: string; is_public?: boolean; cover_image_url?: string; banner_image_url?: string; token: string }) => Promise<void>;
+  onCreate: (data: { name: string; description?: string; is_public?: boolean; cover_image_url?: string | null; banner_image_url?: string | null; token: string }) => Promise<void>;
 }
 
 export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: CreatePlaylistModalProps) {
@@ -61,8 +61,8 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
         name: name.trim(),
         description: description.trim() || undefined,
         is_public: isPublic,
-        cover_image_url: coverImage.trim() || undefined,
-        banner_image_url: bannerImage.trim() || undefined,
+        cover_image_url: coverImage.trim() || null,
+        banner_image_url: bannerImage.trim() || null,
         token
       });
 

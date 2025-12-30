@@ -3,8 +3,8 @@ export interface Playlist {
   user_id: string;
   name: string;
   description?: string;
-  cover_image_url?: string;
-  banner_image_url?: string;
+  cover_image_url?: string | null;
+  banner_image_url?: string | null;
   is_public: boolean;
   created_at: string;
   updated_at: string;
@@ -31,8 +31,8 @@ export interface CreatePlaylistData {
   name: string;
   description?: string;
   is_public?: boolean;
-  cover_image_url?: string;
-  banner_image_url?: string;
+  cover_image_url?: string | null;
+  banner_image_url?: string | null;
 }
 
 export interface AddTrackToPlaylistData {

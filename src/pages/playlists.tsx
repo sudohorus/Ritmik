@@ -38,7 +38,7 @@ export default function PlaylistsPage() {
     return null;
   }
 
-  const handleCreate = async (data: { name: string; description?: string; is_public?: boolean; cover_image_url?: string; banner_image_url?: string; token: string }) => {
+  const handleCreate = async (data: { name: string; description?: string; is_public?: boolean; cover_image_url?: string | null; banner_image_url?: string | null; token: string }) => {
     await createPlaylist(data);
   };
 

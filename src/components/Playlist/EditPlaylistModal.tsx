@@ -4,7 +4,7 @@ import { Playlist } from '@/types/playlist';
 interface EditPlaylistModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: (data: { name: string; description?: string; is_public?: boolean; cover_image_url?: string; banner_image_url?: string }) => Promise<void>;
+  onUpdate: (data: { name: string; description?: string; is_public?: boolean; cover_image_url?: string | null; banner_image_url?: string | null }) => Promise<void>;
   playlist: Playlist | null;
 }
 
@@ -67,8 +67,8 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
         name: name.trim(),
         description: description.trim() || undefined,
         is_public: isPublic,
-        cover_image_url: coverImage.trim() || undefined,
-        banner_image_url: bannerImage.trim() || undefined
+        cover_image_url: coverImage.trim() || null,
+        banner_image_url: bannerImage.trim() || null
       });
       if (!active) return;
       onClose();
