@@ -133,11 +133,13 @@ export default function TrackOptionsMenu({
                 </div>
             )}
 
-            <AddToPlaylistModal
-                isOpen={showAddToPlaylistModal}
-                onClose={() => setShowAddToPlaylistModal(false)}
-                track={trackData}
-            />
+            {showAddToPlaylistModal && (
+                <AddToPlaylistModal
+                    isOpen={showAddToPlaylistModal}
+                    onClose={() => setShowAddToPlaylistModal(false)}
+                    track={trackData}
+                />
+            )}
         </div>
     );
 }

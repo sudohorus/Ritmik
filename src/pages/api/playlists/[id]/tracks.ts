@@ -25,7 +25,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
         });
 
-        const tracks = await PlaylistService.getPlaylistTracks(id as string, supabase);
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const tracks = await PlaylistService.getPlaylistTracks(id as string, user.id, supabase);
 
         return res.status(200).json(tracks);
     } catch (error) {

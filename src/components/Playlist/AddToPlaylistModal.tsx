@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePlaylists } from '@/hooks/playlists/usePlaylists';
+import { useAuth } from '@/contexts/AuthContext';
 import { PlaylistService } from '@/services/playlist-service';
 import { Track } from '@/types/track';
 import { PlaylistTrack } from '@/types/playlist';
@@ -13,6 +14,7 @@ interface AddToPlaylistModalProps {
 }
 
 export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlaylistModalProps) {
+  const { user } = useAuth();
   const { playlists, loading: loadingPlaylists } = usePlaylists();
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
     setLoadingChecks(prev => ({ ...prev, [playlistId]: true }));
 
     try {
-      const tracks = await PlaylistService.getPlaylistTracks(playlistId);
+      const tracks = await PlaylistService.getPlaylistTracks(playlistId, user?.id);
       const isInPlaylist = tracks.some((t: PlaylistTrack) => t.video_id === track.videoId);
 
       setCheckedPlaylists(prev => ({ ...prev, [playlistId]: isInPlaylist }));
@@ -48,10 +50,11 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
 
       return isInPlaylist;
     } catch (err) {
+      setCheckedPlaylists(prev => ({ ...prev, [playlistId]: false }));
       setLoadingChecks(prev => ({ ...prev, [playlistId]: false }));
       return false;
     }
-  }, [track, checkedPlaylists]);
+  }, [track, checkedPlaylists, user?.id]);
 
   useEffect(() => {
     if (isOpen && playlists.length > 0 && track) {

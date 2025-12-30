@@ -3,7 +3,8 @@ import { Playlist, CreatePlaylistData, AddTrackToPlaylistData } from '@/types/pl
 
 export class PlaylistService {
   static async getUserPlaylists(userId: string, page: number = 1, limit: number = 8, search?: string): Promise<{ data: Playlist[], count: number }> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     if (!user) {
       throw new Error('Authentication required');
     }
@@ -73,8 +74,8 @@ export class PlaylistService {
     let currentUserId = userId;
 
     if (!currentUserId) {
-      const { data: { user } } = await supabase.auth.getUser();
-      currentUserId = user?.id;
+      const { data: { session } } = await supabase.auth.getSession();
+      currentUserId = session?.user?.id;
     }
 
     const { data, error } = await supabase
@@ -105,7 +106,8 @@ export class PlaylistService {
 
   static async createPlaylist(userId: string, playlistData: CreatePlaylistData, client?: any): Promise<Playlist> {
     const supabaseClient = client || supabase;
-    const { data: { user } } = await supabaseClient.auth.getUser();
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const user = session?.user;
     if (!user) {
       throw new Error('Authentication required');
     }
@@ -135,7 +137,8 @@ export class PlaylistService {
   }
 
   static async updatePlaylist(playlistId: string, data: Partial<CreatePlaylistData>): Promise<Playlist> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     if (!user) {
       throw new Error('Authentication required');
     }
@@ -174,7 +177,8 @@ export class PlaylistService {
   }
 
   static async deletePlaylist(playlistId: string): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     if (!user) {
       throw new Error('Authentication required');
     }
@@ -222,11 +226,16 @@ export class PlaylistService {
     return playlist;
   }
 
-  static async getPlaylistTracks(playlistId: string, client?: any) {
+  static async getPlaylistTracks(playlistId: string, userId?: string, client?: any) {
     const supabaseClient = client || supabase;
-    const { data: { user } } = await supabaseClient.auth.getUser();
+    let currentUserId = userId;
 
-    await this.getPlaylist(playlistId, user?.id, supabaseClient);
+    if (!currentUserId) {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      currentUserId = session?.user?.id;
+    }
+
+    await this.getPlaylist(playlistId, currentUserId, supabaseClient);
 
     const { data, error } = await supabaseClient
       .from('playlist_tracks')
@@ -240,7 +249,8 @@ export class PlaylistService {
   }
 
   static async addTrackToPlaylist(trackData: AddTrackToPlaylistData): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     if (!user) {
       throw new Error('Authentication required');
     }
@@ -294,7 +304,8 @@ export class PlaylistService {
   }
 
   static async removeTrackFromPlaylist(playlistId: string, trackId: string): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     if (!user) {
       throw new Error('Authentication required');
     }
@@ -323,7 +334,8 @@ export class PlaylistService {
   }
 
   static async reorderPlaylistTracks(playlistId: string, trackIds: string[]): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     if (!user) {
       throw new Error('Authentication required');
     }

@@ -71,11 +71,13 @@ export default function TrackCard({ track, playlist }: TrackCardProps) {
         </div>
       </div>
 
-      <AddToPlaylistModal
-        isOpen={showAddToPlaylist}
-        onClose={() => setShowAddToPlaylist(false)}
-        track={track}
-      />
+      {showAddToPlaylist && (
+        <AddToPlaylistModal
+          isOpen={showAddToPlaylist}
+          onClose={() => setShowAddToPlaylist(false)}
+          track={track}
+        />
+      )}
     </>
   );
 }
