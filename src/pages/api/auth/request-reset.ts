@@ -21,13 +21,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     try {
-        const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers();
+        let user;
+        let page = 1;
+        const perPage = 1000;
+        let hasNextPage = true;
 
-        if (userError) throw userError;
+        while (hasNextPage && !user) {
+            const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
 
-        const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+            if (userError) throw userError;
+
+            user = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+
+            if (users.length < perPage) {
+                hasNextPage = false;
+            } else {
+                page++;
+            }
+        }
 
         if (!user) {
+            // We return 200 even if user is not found to prevent email enumeration
             return res.status(200).json({ message: 'If an account exists, a reset email has been sent.' });
         }
 

@@ -12,6 +12,7 @@ import { useJam } from '@/contexts/JamContext';
 import { CreateJamModal } from '../Jam/CreateJamModal';
 import { JoinJamModal } from '../Jam/JoinJamModal';
 import { JamView } from '../Jam/JamView';
+import Link from 'next/link';
 
 declare global {
   interface Window {
@@ -48,6 +49,7 @@ export default function Player() {
     setDuration,
     clearSeek,
     playTrack,
+    sourcePlaylist,
   } = usePlayer();
 
   const { currentJam, isHost, isInJam, updateJamState, timeOffset } = useJam();
@@ -700,8 +702,20 @@ export default function Player() {
                 <div className="text-sm font-medium text-white truncate">
                   {currentTrack.title}
                 </div>
-                <div className="text-xs text-zinc-400 truncate">
-                  {currentTrack.artist}
+                <div className="text-xs text-zinc-400 truncate flex items-center gap-1">
+                  <span>{currentTrack.artist}</span>
+                  {sourcePlaylist && (
+                    <>
+                      <span>•</span>
+                      <span className="text-zinc-500">Playing from</span>
+                      <Link
+                        href={`/playlists/${sourcePlaylist.id}`}
+                        className="text-zinc-400 hover:text-white hover:underline truncate max-w-[150px]"
+                      >
+                        {sourcePlaylist.name}
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

@@ -115,7 +115,10 @@ export default function PlaylistPage() {
       thumbnail: track.thumbnail_url || '',
       duration: track.duration || 0,
       viewCount: 0,
-    }, playlistAsQueue);
+    }, playlistAsQueue, {
+      id: playlist!.id,
+      name: playlist!.name
+    });
   };
 
   return (

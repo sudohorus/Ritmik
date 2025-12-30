@@ -14,7 +14,8 @@ interface PlayerContextValue {
   seekToSeconds: number | null;
   isShuffle: boolean;
   repeatMode: 'off' | 'context' | 'track';
-  playTrack: (track: Track, playlist?: Track[]) => void;
+  sourcePlaylist: { id: string; name: string } | null;
+  playTrack: (track: Track, playlist?: Track[], sourcePlaylist?: { id: string; name: string }) => void;
   togglePlay: () => void;
   playNext: (auto?: boolean) => void;
   playPrevious: () => void;
@@ -50,6 +51,7 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
   const [seekToSeconds, setSeekToSeconds] = useState<number | null>(null);
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'off' | 'context' | 'track'>('off');
+  const [sourcePlaylist, setSourcePlaylist] = useState<{ id: string; name: string } | null>(null);
 
   const queueRef = useRef<Track[]>([]);
   const originalQueueRef = useRef<Track[]>([]);
@@ -101,7 +103,7 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
     return newArray;
   };
 
-  const playTrack = (track: Track, playlist?: Track[]) => {
+  const playTrack = (track: Track, playlist?: Track[], sourcePlaylist?: { id: string; name: string }) => {
     const isSameTrack = currentTrack?.videoId === track.videoId;
     const newOriginalQueue = playlist || [track];
 
@@ -120,6 +122,7 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
     setOriginalQueue(newOriginalQueue);
     setQueue(newQueue);
     setCurrentIndex(validIndex);
+    setSourcePlaylist(sourcePlaylist || null);
 
     if (isSameTrack) {
       setIsPlaying(true);
@@ -372,6 +375,7 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
     setIsPlaying(false);
     setProgress(0);
     setDuration(0);
+    setSourcePlaylist(null);
   };
 
   const playFromQueue = (index: number) => {
@@ -401,6 +405,7 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
         seekToSeconds,
         isShuffle,
         repeatMode,
+        sourcePlaylist,
         playTrack,
         togglePlay,
         playNext,

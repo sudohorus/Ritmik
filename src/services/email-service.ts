@@ -136,12 +136,17 @@ export class EmailService {
     const resetLink = `${baseUrl}/update-password?token=${token}`;
     const template = resetPasswordEmailTemplate(resetLink);
 
-    await transporter.sendMail({
-      from: '"Ritmik Security" <ritmiksec@gmail.com>',
-      to: toEmail,
-      subject: template.subject,
-      html: template.html
-    });
+    try {
+      await transporter.sendMail({
+        from: '"Ritmik Security" <ritmiksec@gmail.com>',
+        to: toEmail,
+        subject: template.subject,
+        html: template.html
+      });
+    } catch (error) {
+      console.error('Failed to send password reset email:', error);
+      throw error;
+    }
   }
 
   static async verifyConnection(): Promise<boolean> {
