@@ -54,10 +54,21 @@ class NSFWValidator {
             const predictions = await model.classify(img);
 
             const explicitClasses = ['Porn', 'Hentai'];
-            const threshold = 0.85;
+            const explicitThreshold = 0.60;
+
+            const suggestiveClasses = ['Sexy'];
+            const suggestiveThreshold = 0.90;
 
             const unsafePrediction = predictions.find(
-                (p) => explicitClasses.includes(p.className) && p.probability > threshold
+                (p) => {
+                    if (explicitClasses.includes(p.className)) {
+                        return p.probability > explicitThreshold;
+                    }
+                    if (suggestiveClasses.includes(p.className)) {
+                        return p.probability > suggestiveThreshold;
+                    }
+                    return false;
+                }
             );
 
             let result;

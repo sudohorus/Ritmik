@@ -161,14 +161,25 @@ export default function FocusModal({
         if (response.ok) {
           const data = await response.json();
           if (!cancelled && mountedRef.current) {
-            cachedVideoIdRef.current = videoId;
-            cachedLyricsRef.current = {
-              lyrics: data.lyrics,
-              syncedLyrics: data.syncedLyrics || null,
-            };
-            setLyrics(data.lyrics);
-            setSyncedLyrics(data.syncedLyrics || null);
-            setLyricsNotFound(false);
+            const hasLyrics = data.lyrics && data.lyrics.trim().length > 0;
+            const hasSyncedLyrics = data.syncedLyrics && data.syncedLyrics.length > 0;
+
+            if (hasLyrics || hasSyncedLyrics) {
+              cachedVideoIdRef.current = videoId;
+              cachedLyricsRef.current = {
+                lyrics: data.lyrics,
+                syncedLyrics: hasSyncedLyrics ? data.syncedLyrics : null,
+              };
+              setLyrics(data.lyrics);
+              setSyncedLyrics(hasSyncedLyrics ? data.syncedLyrics : null);
+              setLyricsNotFound(false);
+            } else {
+              cachedVideoIdRef.current = videoId;
+              cachedLyricsRef.current = null;
+              setLyrics(null);
+              setSyncedLyrics(null);
+              setLyricsNotFound(true);
+            }
           }
         } else {
           if (!cancelled && mountedRef.current) {
