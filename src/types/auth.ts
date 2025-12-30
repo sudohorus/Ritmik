@@ -6,6 +6,7 @@ export interface User {
   avatar_url?: string;
   banner_url?: string;
   has_completed_onboarding?: boolean;
+  created_at: string;
 }
 
 export interface AuthSession {

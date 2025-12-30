@@ -53,13 +53,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     username: authUser.user_metadata?.username,
     display_name: authUser.user_metadata?.display_name,
     avatar_url: authUser.user_metadata?.avatar_url,
+    created_at: authUser.created_at,
   });
 
   const fetchUserProfile = async (userId: string): Promise<User | null> => {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, username, display_name, avatar_url, banner_url, has_completed_onboarding')
+        .select('id, username, display_name, avatar_url, banner_url, has_completed_onboarding, created_at')
         .eq('id', userId)
         .single();
 
@@ -73,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         avatar_url: data.avatar_url,
         banner_url: data.banner_url,
         has_completed_onboarding: data.has_completed_onboarding,
+        created_at: data.created_at,
       };
     } catch {
       return null;
