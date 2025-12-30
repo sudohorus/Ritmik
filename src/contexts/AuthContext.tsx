@@ -40,7 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       current?.display_name === newUser?.display_name &&
       current?.avatar_url === newUser?.avatar_url &&
       current?.banner_url === newUser?.banner_url &&
-      current?.email === newUser?.email
+      current?.email === newUser?.email &&
+      current?.has_completed_onboarding === newUser?.has_completed_onboarding &&
+      current?.created_at === newUser?.created_at
     ) return;
 
     userRef.current = newUser;

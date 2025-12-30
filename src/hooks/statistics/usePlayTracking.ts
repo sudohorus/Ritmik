@@ -25,7 +25,7 @@ export function usePlayTracking(
             totalPausedTimeRef.current = 0;
             lastPauseStartRef.current = null;
         }
-    }, [currentTrack?.videoId, user]);
+    }, [currentTrack?.videoId]); 
 
     useEffect(() => {
         if (isPlaying) {

@@ -36,6 +36,21 @@ const nextConfig: NextConfig & { eslint?: { ignoreDuringBuilds?: boolean } } = {
       },
     ];
   },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'buffer/': 'buffer',
+    };
+    return config;
+  },
+  experimental: {
+    // @ts-expect-error
+    turbo: {
+      resolveAlias: {
+        'buffer/': 'buffer',
+      },
+    },
+  },
 };
 
 export default nextConfig;

@@ -21,6 +21,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@upstash/redis": "^1.35.8",
     "axios": "^1.13.2",
+    "buffer": "^6.0.3",
     "cookie": "^1.1.1",
     "fast-average-color": "^9.5.0",
     "framer-motion": "^12.23.26",
