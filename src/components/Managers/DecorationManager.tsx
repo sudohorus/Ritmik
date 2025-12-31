@@ -4,11 +4,13 @@ import { DecorationService } from '@/services/decoration-service';
 import { StatisticsService } from '@/services/statistics-service';
 import TenHoursDecorationModal from '@/components/Modals/TenHoursDecorationModal';
 import BizarreListenerDecorationModal from '@/components/Modals/BizarreListenerDecorationModal';
+import UFCBeltDecorationModal from '@/components/Modals/UFCBeltDecorationModal';
 
 export default function DecorationManager() {
     const { user } = useAuth();
     const [showTenHoursModal, setShowTenHoursModal] = useState(false);
     const [showBizarreListenerModal, setShowBizarreListenerModal] = useState(false);
+    const [showUFCBeltModal, setShowUFCBeltModal] = useState(false);
 
     useEffect(() => {
         const checkTenHoursAchievement = async () => {
@@ -58,6 +60,30 @@ export default function DecorationManager() {
         checkBizarreListenerAchievement();
     }, [user]);
 
+    useEffect(() => {
+        const checkUFCBeltAvailability = async () => {
+            if (!user) return;
+
+            if (user.username !== 'horus') return;
+
+            try {
+                const decorations = await DecorationService.getAvailableDecorations(user.id);
+                const hasDecoration = decorations.some(d => d.name === 'UFC Belt');
+
+                if (!hasDecoration) {
+                    const decoration = await DecorationService.getDecorationByName('UFC Belt');
+                    if (decoration) {
+                        setShowUFCBeltModal(true);
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking UFC Belt availability:', error);
+            }
+        };
+
+        checkUFCBeltAvailability();
+    }, [user]);
+
     return (
         <>
             {showTenHoursModal && user && (
@@ -70,6 +96,12 @@ export default function DecorationManager() {
                 <BizarreListenerDecorationModal
                     user={user}
                     onClose={() => setShowBizarreListenerModal(false)}
+                />
+            )}
+            {showUFCBeltModal && user && (
+                <UFCBeltDecorationModal
+                    user={user}
+                    onClose={() => setShowUFCBeltModal(false)}
                 />
             )}
         </>
