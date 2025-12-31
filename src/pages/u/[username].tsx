@@ -391,7 +391,17 @@ export default function PublicProfilePage() {
           </div>
 
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Public Playlists</h2>
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold">Public Playlists</h2>
+              {playlists.length > 12 && (
+                <Link
+                  href={`/u/${profile.username}/playlists`}
+                  className="text-sm text-zinc-400 hover:text-white hover:underline transition-all"
+                >
+                  View all
+                </Link>
+              )}
+            </div>
 
             {playlists.length === 0 ? (
               <div className="text-center py-12 bg-zinc-900/50 rounded-lg border border-zinc-800">
@@ -399,7 +409,7 @@ export default function PublicProfilePage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                {playlists.map((playlist) => (
+                {playlists.slice(0, 12).map((playlist) => (
                   <Link
                     key={playlist.id}
                     href={`/playlists/${playlist.id}`}
