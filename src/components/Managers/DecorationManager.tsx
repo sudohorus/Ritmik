@@ -64,7 +64,7 @@ export default function DecorationManager() {
         const checkUFCBeltAvailability = async () => {
             if (!user) return;
 
-            const allowedUsers = ['horus', 'kiuzo'];
+            const allowedUsers = ['sudohorus', 'kiuzo'];
             if (!allowedUsers.includes(user.username || '')) return;
 
             try {
