@@ -64,7 +64,8 @@ export default function DecorationManager() {
         const checkUFCBeltAvailability = async () => {
             if (!user) return;
 
-            if (user.username !== 'horus') return;
+            const allowedUsers = ['horus', 'kiuzo'];
+            if (!allowedUsers.includes(user.username || '')) return;
 
             try {
                 const decorations = await DecorationService.getAvailableDecorations(user.id);
