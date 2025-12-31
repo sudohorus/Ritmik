@@ -84,20 +84,33 @@ export default function ProfilePage() {
     return null;
   }
 
-  const validateUsername = (value: string): boolean => {
+  const getUsernameErrorMessage = (value: string): string => {
     const trimmed = value.trim();
-    if (trimmed.length === 0) return true;
+    if (trimmed.length === 0) return '';
 
-    const validPattern = /^[a-z0-9_-]+$/;
-    return validPattern.test(trimmed);
+    if (trimmed.length < 3) {
+      return 'Username must be at least 3 characters long';
+    }
+
+    if (/\s/.test(trimmed)) {
+      return 'Username cannot contain spaces';
+    }
+
+    const validPattern = /^[a-z0-9_.-]+$/;
+    if (!validPattern.test(trimmed)) {
+      return 'Username can only contain lowercase letters, numbers, underscores, hyphens, and periods';
+    }
+
+    return '';
   };
 
   const handleUsernameChange = (value: string) => {
     const lowercase = value.toLowerCase();
     setUsername(lowercase);
 
-    if (lowercase.trim().length > 0 && !validateUsername(lowercase)) {
-      setUsernameError('Username can only contain lowercase letters, numbers, underscores, and hyphens');
+    if (lowercase.trim().length > 0) {
+      const error = getUsernameErrorMessage(lowercase);
+      setUsernameError(error);
     } else {
       setUsernameError('');
     }
@@ -106,13 +119,9 @@ export default function ProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (username.trim().length < 3) {
-      showToast.error('Username must be at least 3 characters');
-      return;
-    }
-
-    if (!validateUsername(username)) {
-      showToast.error('Username contains invalid characters');
+    const validationError = getUsernameErrorMessage(username);
+    if (validationError) {
+      showToast.error(validationError);
       return;
     }
 

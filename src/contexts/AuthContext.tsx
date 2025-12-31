@@ -226,13 +226,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: { message } };
       }
 
+      const normalizedUsername = username.toLowerCase();
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: undefined,
           data: {
-            username,
+            username: normalizedUsername,
             display_name: username,
           },
         },
@@ -248,7 +250,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           await supabase.from('users').insert({
             id: data.user.id,
-            username,
+            username: normalizedUsername,
             display_name: username,
           });
 
