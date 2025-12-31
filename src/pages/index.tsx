@@ -145,7 +145,7 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5 }}
               >
-                <PlaylistCard playlist={playlist} />
+                <PlaylistCard playlist={playlist} disableLink={true} />
               </motion.div>
             ))}
           </div>
