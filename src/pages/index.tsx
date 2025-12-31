@@ -220,7 +220,8 @@ export default function LandingPage() {
             <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
           </div>
-          <div>
+          <div className="flex items-center gap-6">
+            <Link href="https://discord.gg/Vb6Pfyddjz" target="_blank" className="hover:text-white transition-colors">Discord</Link>
             <Link href="https://github.com/sudohorus/Ritmik" target="_blank" className="hover:text-white transition-colors">GitHub</Link>
           </div>
         </div>
