@@ -16,6 +16,7 @@ import { Track } from '@/types/track';
 import { ProfileCustomizationService } from '@/services/profile-customization-service';
 import { ProfileCustomization, DEFAULT_CUSTOMIZATION } from '@/types/profile-customization';
 import AvatarDecorationOverlay from '@/components/AvatarDecorationOverlay';
+import { usePlayer } from '@/contexts/PlayerContext';
 
 export default function PublicProfilePage() {
   const router = useRouter();
@@ -52,6 +53,25 @@ export default function PublicProfilePage() {
     if (followerStats.followingVisible) {
       setShowFollowersModal('following');
     }
+  };
+
+  const { playTrack } = usePlayer();
+
+  const handlePlayFavorite = () => {
+    if (!customization?.favorite_music) return;
+
+    const track: Track = {
+      id: customization.favorite_music.id || customization.favorite_music.videoId,
+      videoId: customization.favorite_music.videoId,
+      title: customization.favorite_music.custom_title || customization.favorite_music.title,
+      artist: customization.favorite_music.custom_artist || customization.favorite_music.artist,
+      thumbnail: customization.favorite_music.custom_thumbnail || customization.favorite_music.thumbnail,
+      channel: '',
+      duration: 0,
+      viewCount: 0
+    };
+
+    playTrack(track);
   };
 
   useEffect(() => {
@@ -389,6 +409,54 @@ export default function PublicProfilePage() {
               </div>
             </div>
           </div>
+
+          {customization?.favorite_music && (
+            <div className="mb-8">
+              <div
+                onClick={handlePlayFavorite}
+                className="relative overflow-hidden rounded-xl bg-zinc-900/40 border border-white/10 group cursor-pointer hover:bg-zinc-900/60 transition-colors"
+              >
+                <div className="absolute inset-0 bg-linear-to-r from-zinc-900/90 via-zinc-900/60 to-transparent z-10" />
+
+                <div className="absolute inset-0 opacity-30 blur-xl scale-110">
+                  <img
+                    src={customization.favorite_music.custom_thumbnail || customization.favorite_music.thumbnail}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="relative z-20 p-4 flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-lg overflow-hidden shadow-lg shrink-0 relative group/image">
+                    <img
+                      src={customization.favorite_music.custom_thumbnail || customization.favorite_music.thumbnail}
+                      alt={customization.favorite_music.custom_title || customization.favorite_music.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition-opacity">
+                      <svg className="w-8 h-8 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-bold uppercase tracking-wider text-white/80 border border-white/5">
+                        Favorite Track
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-bold text-white truncate drop-shadow-md">
+                      {customization.favorite_music.custom_title || customization.favorite_music.title}
+                    </h3>
+                    <p className="text-zinc-300 truncate drop-shadow-md font-medium">
+                      {customization.favorite_music.custom_artist || customization.favorite_music.artist}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div>
             <div className="flex items-center justify-between mb-4 sm:mb-6">

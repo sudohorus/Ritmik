@@ -30,6 +30,7 @@ export default function ProfilePage() {
   const [usernameError, setUsernameError] = useState('');
 
   const [customization, setCustomization] = useState<ProfileCustomization | null>(null);
+  const initialCustomization = useRef<ProfileCustomization | null>(null);
   const [showCustomization, setShowCustomization] = useState(false);
   const [availableDecorations, setAvailableDecorations] = useState<AvatarDecoration[]>([]);
 
@@ -57,6 +58,7 @@ export default function ProfilePage() {
       const custom = await ProfileCustomizationService.getCustomization(user.id);
       if (custom) {
         setCustomization(custom);
+        initialCustomization.current = custom;
       }
     } catch (error) {
       showToast.error('Failed to load profile data');
@@ -131,9 +133,24 @@ export default function ProfilePage() {
     if (avatarUrl.trim() !== user.avatar_url) updates.avatar_url = avatarUrl.trim() || null;
     if (bannerUrl.trim() !== user.banner_url) updates.banner_url = bannerUrl.trim() || null;
 
-    if (Object.keys(updates).length === 0) {
+    const initialCustomizationJson = JSON.stringify(initialCustomization.current);
+    const currentCustomizationJson = JSON.stringify(customization);
+    const hasCustomizationChanges = initialCustomizationJson !== currentCustomizationJson;
+
+    if (Object.keys(updates).length === 0 && !hasCustomizationChanges) {
       showToast.success('No changes to save');
       return;
+    }
+
+    if (customization?.favorite_music) {
+      if (customization.favorite_music.custom_title !== undefined && !customization.favorite_music.custom_title.trim()) {
+        showToast.error('Favorite music title cannot be empty');
+        return;
+      }
+      if (customization.favorite_music.custom_artist !== undefined && !customization.favorite_music.custom_artist.trim()) {
+        showToast.error('Favorite music artist cannot be empty');
+        return;
+      }
     }
 
     setSaving(true);
@@ -157,19 +174,40 @@ export default function ProfilePage() {
         setTimeout(() => reject(new Error('Update timeout')), 10000)
       );
 
-      const updatePromise = ProfileService.updateProfile(user.id, updates);
+      const promises: Promise<any>[] = [];
 
-      const { data, error: updateError } = await Promise.race([updatePromise, timeoutPromise]) as any;
+      if (Object.keys(updates).length > 0) {
+        promises.push(ProfileService.updateProfile(user.id, updates));
+      }
 
-      if (updateError) {
-        if (updateError.code === 'USERNAME_TAKEN' || updateError.message?.includes('username')) {
+      if (customization) {
+        const customizationUpdates = {
+          background_mode: customization.background_mode,
+          background_brightness: customization.background_brightness,
+          background_blur: customization.background_blur,
+          avatar_decoration_id: customization.avatar_decoration_id,
+          favorite_music: customization.favorite_music,
+        };
+        promises.push(ProfileCustomizationService.upsertCustomization(user.id, customizationUpdates));
+      }
+
+      const results = await Promise.race([Promise.all(promises), timeoutPromise]) as any[];
+
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) {
+        const firstError = errors[0].error;
+        if (firstError.code === 'USERNAME_TAKEN' || firstError.message?.includes('username')) {
           showToast.error('This username is already taken. Please choose another one.');
         } else {
-          showToast.error(updateError.message || 'Failed to update profile');
+          showToast.error(firstError.message || 'Failed to update profile');
         }
       } else {
         showToast.success('Profile updated successfully!');
+        if (customization) {
+          initialCustomization.current = JSON.parse(JSON.stringify(customization));
+        }
         await refreshUser();
+        setShowCustomization(false);
       }
     } catch (err) {
       showToast.error(err instanceof Error ? err.message : 'Failed to update profile');
@@ -335,15 +373,11 @@ export default function ProfilePage() {
                     customization={customization}
                     availableDecorations={availableDecorations}
                     user={user}
-                    onChange={async (updates) => {
-                      setCustomization({ ...customization, ...updates });
-                      const { data } = await ProfileCustomizationService.upsertCustomization(user.id, updates);
-                      if (data) setCustomization(data);
+                    onChange={(updates) => {
+                      setCustomization((prev) => prev ? { ...prev, ...updates } : null);
                     }}
-                    onSave={() => {
-                      showToast.success('Customization saved!');
-                      setShowCustomization(false);
-                    }}
+                    onSave={() => { }}
+                    showSaveButton={false}
                     onReset={async () => {
                       const { data } = await ProfileCustomizationService.resetCustomization(user.id);
                       if (data) setCustomization(data);
