@@ -1,3 +1,5 @@
+import { CropData } from './profile-customization';
+
 export interface Playlist {
   id: string;
   user_id: string;
@@ -5,6 +7,8 @@ export interface Playlist {
   description?: string;
   cover_image_url?: string | null;
   banner_image_url?: string | null;
+  cover_crop?: CropData | null;
+  banner_crop?: CropData | null;
   is_public: boolean;
   created_at: string;
   updated_at: string;
@@ -33,6 +37,8 @@ export interface CreatePlaylistData {
   is_public?: boolean;
   cover_image_url?: string | null;
   banner_image_url?: string | null;
+  cover_crop?: CropData | null;
+  banner_crop?: CropData | null;
 }
 
 export interface AddTrackToPlaylistData {

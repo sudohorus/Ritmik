@@ -213,6 +213,7 @@ export default function PublicProfilePage() {
             alt=""
             blur={backgroundBlur}
             brightness={backgroundBrightness}
+            crop={activeCustomization.banner_crop}
           />
           <div className="absolute inset-0 bg-linear-to-b from-black/0 via-zinc-950/50 to-zinc-950 z-10" />
         </div>
@@ -230,11 +231,20 @@ export default function PublicProfilePage() {
             <div className="flex flex-col items-center text-center mb-6">
               <div className="mb-4 relative inline-block">
                 {profile.avatar_url ? (
-                  <img
-                    src={profile.avatar_url}
-                    alt={displayName}
-                    className="w-24 h-24 rounded-full object-cover shadow-2xl border-2 border-zinc-700"
-                  />
+                  <div className="w-24 h-24 rounded-full shadow-2xl border-2 border-zinc-700 overflow-hidden relative">
+                    <img
+                      src={profile.avatar_url}
+                      alt={displayName}
+                      className="w-full h-full object-cover"
+                      style={customization?.avatar_crop ? {
+                        objectPosition: customization.avatar_crop.percentage
+                          ? `${customization.avatar_crop.percentage.x}% ${customization.avatar_crop.percentage.y}%`
+                          : `${customization.avatar_crop.x}% ${customization.avatar_crop.y}%`,
+                        transform: `scale(${customization.avatar_crop.zoom})`,
+                        transformOrigin: 'center',
+                      } : {}}
+                    />
+                  </div>
                 ) : (
                   <div className="w-24 h-24 rounded-full bg-zinc-700 flex items-center justify-center text-white font-semibold text-4xl shadow-2xl border-2 border-zinc-600">
                     {avatarLetter}
@@ -325,11 +335,20 @@ export default function PublicProfilePage() {
             <div className="flex items-center gap-6 mb-8">
               <div className="shrink-0 relative">
                 {profile.avatar_url ? (
-                  <img
-                    src={profile.avatar_url}
-                    alt={displayName}
-                    className="w-32 h-32 rounded-full object-cover shadow-2xl border-2 border-zinc-700"
-                  />
+                  <div className="w-32 h-32 rounded-full shadow-2xl border-2 border-zinc-700 overflow-hidden relative">
+                    <img
+                      src={profile.avatar_url}
+                      alt={displayName}
+                      className="w-full h-full object-cover"
+                      style={customization?.avatar_crop ? {
+                        objectPosition: customization.avatar_crop.percentage
+                          ? `${customization.avatar_crop.percentage.x}% ${customization.avatar_crop.percentage.y}%`
+                          : `${customization.avatar_crop.x}% ${customization.avatar_crop.y}%`,
+                        transform: `scale(${customization.avatar_crop.zoom})`,
+                        transformOrigin: 'center',
+                      } : {}}
+                    />
+                  </div>
                 ) : (
                   <div className="w-32 h-32 rounded-full bg-zinc-700 flex items-center justify-center text-white font-semibold text-5xl shadow-2xl border-2 border-zinc-600">
                     {avatarLetter}

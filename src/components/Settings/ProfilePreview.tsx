@@ -49,6 +49,7 @@ export default function ProfilePreview({
                         alt="Banner preview"
                         blur={backgroundBlur}
                         brightness={backgroundBrightness}
+                        crop={activeCustomization.banner_crop}
                     />
                 ) : (
                     <div className="w-full h-full bg-zinc-900 flex items-center justify-center text-zinc-600">
@@ -61,11 +62,13 @@ export default function ProfilePreview({
                 <div className="flex items-end gap-5">
                     <div className="shrink-0 relative">
                         {avatar ? (
-                            <img
-                                src={avatar}
-                                alt="Avatar preview"
-                                className="w-28 h-28 rounded-full object-cover shadow-2xl border-2 border-zinc-700 bg-zinc-800"
-                            />
+                            <div className="w-28 h-28 rounded-full shadow-2xl border-2 border-zinc-700 bg-zinc-800 overflow-hidden relative">
+                                <img
+                                    src={avatar}
+                                    alt="Avatar preview"
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
                         ) : (
                             <div className="w-28 h-28 rounded-full bg-zinc-700 flex items-center justify-center text-white font-semibold text-4xl shadow-2xl border-2 border-zinc-600">
                                 {avatarLetter}

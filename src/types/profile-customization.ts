@@ -1,5 +1,15 @@
 export type BackgroundMode = 'banner' | 'full-bg';
 
+export interface CropData {
+    x: number;
+    y: number;
+    zoom: number;
+    percentage?: {
+        x: number;
+        y: number;
+    };
+}
+
 export interface FavoriteMusic {
     id: string;
     title: string;
@@ -17,6 +27,8 @@ export interface ProfileCustomization {
     background_mode: BackgroundMode;
     background_blur: number;
     background_brightness: number;
+    banner_crop?: CropData | null;
+    avatar_crop?: CropData | null;
     avatar_decoration_id?: string | null;
     avatar_decoration?: {
         image_url: string;
@@ -31,6 +43,8 @@ export interface ProfileCustomizationUpdate {
     background_mode?: BackgroundMode;
     background_blur?: number;
     background_brightness?: number;
+    banner_crop?: CropData | null;
+    avatar_crop?: CropData | null;
     avatar_decoration_id?: string | null;
     favorite_music?: FavoriteMusic | null;
 }
@@ -39,6 +53,8 @@ export const DEFAULT_CUSTOMIZATION: Omit<ProfileCustomization, 'id' | 'user_id' 
     background_mode: 'banner',
     background_blur: 0,
     background_brightness: 100,
+    banner_crop: null,
+    avatar_crop: null,
     avatar_decoration_id: null,
     favorite_music: null,
 };

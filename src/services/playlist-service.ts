@@ -127,6 +127,8 @@ export class PlaylistService {
         description: playlistData.description,
         cover_image_url: playlistData.cover_image_url,
         banner_image_url: playlistData.banner_image_url,
+        cover_crop: playlistData.cover_crop,
+        banner_crop: playlistData.banner_crop,
         is_public: playlistData.is_public ?? true,
       })
       .select()
@@ -166,6 +168,8 @@ export class PlaylistService {
     if (data.is_public !== undefined) updateData.is_public = data.is_public;
     if (data.cover_image_url !== undefined) updateData.cover_image_url = data.cover_image_url;
     if (data.banner_image_url !== undefined) updateData.banner_image_url = data.banner_image_url;
+    if (data.cover_crop !== undefined) updateData.cover_crop = data.cover_crop;
+    if (data.banner_crop !== undefined) updateData.banner_crop = data.banner_crop;
 
     const { data: updated, error } = await supabase
       .from('playlists')
@@ -343,7 +347,7 @@ export class PlaylistService {
     const { error } = await supabase
       .from('playlist_tracks')
       .insert(tracksToInsert)
-      .select(); 
+      .select();
 
     if (error) {
       if (error.code === '23505') {

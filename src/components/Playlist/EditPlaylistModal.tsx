@@ -1,10 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Playlist } from '@/types/playlist';
+import { CropData } from '@/types/profile-customization';
+import ImageCropperModal from '@/components/Modals/ImageCropperModal';
 
 interface EditPlaylistModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: (data: { name: string; description?: string; is_public?: boolean; cover_image_url?: string | null; banner_image_url?: string | null }) => Promise<void>;
+  onUpdate: (data: {
+    name: string;
+    description?: string;
+    is_public?: boolean;
+    cover_image_url?: string | null;
+    banner_image_url?: string | null;
+    cover_crop?: CropData | null;
+    banner_crop?: CropData | null;
+  }) => Promise<void>;
   playlist: Playlist | null;
 }
 
@@ -15,10 +25,24 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
   const [description, setDescription] = useState('');
   const [coverImage, setCoverImage] = useState('');
   const [bannerImage, setBannerImage] = useState('');
+  const [coverCrop, setCoverCrop] = useState<CropData | null>(null);
+  const [bannerCrop, setBannerCrop] = useState<CropData | null>(null);
   const [isPublic, setIsPublic] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [cropperState, setCropperState] = useState<{
+    isOpen: boolean;
+    type: 'banner' | 'cover';
+    imageUrl: string;
+    aspectRatio: number;
+  }>({
+    isOpen: false,
+    type: 'banner',
+    imageUrl: '',
+    aspectRatio: 16 / 9
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -32,6 +56,8 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
       setDescription(playlist.description || '');
       setCoverImage(playlist.cover_image_url || '');
       setBannerImage(playlist.banner_image_url || '');
+      setCoverCrop(playlist.cover_crop || null);
+      setBannerCrop(playlist.banner_crop || null);
       setIsPublic(playlist.is_public);
     }
   }, [playlist]);
@@ -68,7 +94,9 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
         description: description.trim() || undefined,
         is_public: isPublic,
         cover_image_url: coverImage.trim() || null,
-        banner_image_url: bannerImage.trim() || null
+        banner_image_url: bannerImage.trim() || null,
+        cover_crop: coverCrop,
+        banner_crop: bannerCrop
       });
       if (!active) return;
       onClose();
@@ -150,10 +178,14 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
                 id="coverImage"
                 type="url"
                 value={coverImage}
-                onChange={(e) => setCoverImage(e.target.value)}
+                onChange={(e) => {
+                  setCoverImage(e.target.value);
+                  setCoverCrop(null);
+                }}
                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 focus:ring-2 focus:ring-zinc-600/50 transition-all"
                 placeholder="https://example.com/image.jpg"
               />
+
             </div>
 
             <div>
@@ -164,10 +196,31 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
                 id="bannerImage"
                 type="url"
                 value={bannerImage}
-                onChange={(e) => setBannerImage(e.target.value)}
+                onChange={(e) => {
+                  setBannerImage(e.target.value);
+                  setBannerCrop(null);
+                }}
                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 focus:ring-2 focus:ring-zinc-600/50 transition-all"
                 placeholder="https://example.com/banner.jpg"
               />
+              <div className="mt-2">
+                <button
+                  type="button"
+                  onClick={() => setCropperState({
+                    isOpen: true,
+                    type: 'banner',
+                    imageUrl: bannerImage,
+                    aspectRatio: 3 / 1
+                  })}
+                  disabled={!bannerImage}
+                  className="text-sm text-blue-400 hover:text-blue-300 disabled:text-zinc-600 disabled:cursor-not-allowed flex items-center gap-1"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                  Adjust Crop
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-lg border border-zinc-800">
@@ -226,6 +279,23 @@ export default function EditPlaylistModal({ isOpen, onClose, onUpdate, playlist 
           </form>
         </div>
       </div>
+
+      <ImageCropperModal
+        isOpen={cropperState.isOpen}
+        imageUrl={cropperState.imageUrl}
+        aspectRatio={cropperState.aspectRatio}
+        initialCrop={cropperState.type === 'banner' ? bannerCrop : coverCrop}
+        onCancel={() => setCropperState(prev => ({ ...prev, isOpen: false }))}
+        onSave={(cropData) => {
+          if (cropperState.type === 'banner') {
+            setBannerCrop(cropData);
+          } else {
+            setCoverCrop(cropData);
+          }
+          setCropperState(prev => ({ ...prev, isOpen: false }));
+        }}
+        title={cropperState.type === 'banner' ? 'Adjust Banner' : 'Adjust Cover'}
+      />
     </div>
   );
 }

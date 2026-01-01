@@ -3,6 +3,7 @@ import { ProfileCustomization, ProfileCustomizationUpdate } from '@/types/profil
 import { AvatarDecoration } from '@/types/avatar-decoration';
 import { DecorationService } from '@/services/decoration-service';
 import { showToast } from '@/lib/toast';
+import ImageCropperModal from '@/components/Modals/ImageCropperModal';
 import AvatarDecorationOverlay from '@/components/AvatarDecorationOverlay';
 import { TrackService } from '@/services/track-service';
 import { Track } from '@/types/track';
@@ -17,6 +18,8 @@ interface ProfileCustomizationEditorProps {
     saving?: boolean;
     user: any;
     showSaveButton?: boolean;
+    currentBannerUrl?: string;
+    currentAvatarUrl?: string;
 }
 
 export default function ProfileCustomizationEditor({
@@ -29,6 +32,8 @@ export default function ProfileCustomizationEditor({
     saving = false,
     user,
     showSaveButton = true,
+    currentBannerUrl,
+    currentAvatarUrl,
 }: ProfileCustomizationEditorProps) {
     const [localCustomization, setLocalCustomization] = useState(customization);
     const [searchQuery, setSearchQuery] = useState('');
@@ -36,6 +41,18 @@ export default function ProfileCustomizationEditor({
     const [isSearching, setIsSearching] = useState(false);
 
     const [activeSection, setActiveSection] = useState<'layout' | 'appearance' | 'avatar' | 'music' | null>('layout');
+
+    const [cropperState, setCropperState] = useState<{
+        isOpen: boolean;
+        type: 'banner' | 'avatar';
+        imageUrl: string;
+        aspectRatio: number;
+    }>({
+        isOpen: false,
+        type: 'banner',
+        imageUrl: '',
+        aspectRatio: 16 / 9
+    });
 
     useEffect(() => {
         setLocalCustomization(customization);
@@ -116,34 +133,65 @@ export default function ProfileCustomizationEditor({
                     }
                 />
                 {activeSection === 'layout' && (
-                    <div className="p-4 bg-zinc-900/30 rounded-lg border border-zinc-800/50 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <label className="block text-sm font-medium text-zinc-300 mb-3">
-                            Background Mode
-                        </label>
-                        <div className="grid grid-cols-2 gap-3">
-                            <button
-                                type="button"
-                                onClick={() => handleChange({ background_mode: 'banner' })}
-                                className={`p-4 rounded-lg border-2 transition-all ${localCustomization.background_mode === 'banner'
-                                    ? 'border-white bg-white/10'
-                                    : 'border-zinc-700 bg-zinc-800/50 hover:border-zinc-600'
-                                    }`}
-                            >
-                                <div className="text-sm font-medium mb-1">Banner</div>
-                                <div className="text-xs text-zinc-400">Fixed at top</div>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleChange({ background_mode: 'full-bg' })}
-                                className={`p-4 rounded-lg border-2 transition-all ${localCustomization.background_mode === 'full-bg'
-                                    ? 'border-white bg-white/10'
-                                    : 'border-zinc-700 bg-zinc-800/50 hover:border-zinc-600'
-                                    }`}
-                            >
-                                <div className="text-sm font-medium mb-1">Full Background</div>
-                                <div className="text-xs text-zinc-400">Covers entire page</div>
-                            </button>
+                    <div className="p-4 bg-zinc-900/30 rounded-lg border border-zinc-800/50 animate-in fade-in slide-in-from-top-2 duration-200 space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-zinc-300 mb-3">
+                                Background Mode
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => handleChange({ background_mode: 'banner' })}
+                                    className={`p-4 rounded-lg border-2 transition-all ${localCustomization.background_mode === 'banner'
+                                        ? 'border-white bg-white/10'
+                                        : 'border-zinc-700 bg-zinc-800/50 hover:border-zinc-600'
+                                        }`}
+                                >
+                                    <div className="text-sm font-medium mb-1">Banner</div>
+                                    <div className="text-xs text-zinc-400">Fixed at top</div>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleChange({ background_mode: 'full-bg' })}
+                                    className={`p-4 rounded-lg border-2 transition-all ${localCustomization.background_mode === 'full-bg'
+                                        ? 'border-white bg-white/10'
+                                        : 'border-zinc-700 bg-zinc-800/50 hover:border-zinc-600'
+                                        }`}
+                                >
+                                    <div className="text-sm font-medium mb-1">Full Background</div>
+                                    <div className="text-xs text-zinc-400">Covers entire page</div>
+                                </button>
+                            </div>
                         </div>
+
+                        {localCustomization.background_mode === 'banner' && (
+                            <div className="pt-2 border-t border-zinc-800/50">
+                                <label className="block text-sm font-medium text-zinc-300 mb-3">
+                                    Banner Position
+                                </label>
+                                <div className="flex items-center gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setCropperState({
+                                            isOpen: true,
+                                            type: 'banner',
+                                            imageUrl: currentBannerUrl || user.banner_url || '',
+                                            aspectRatio: 3 / 1
+                                        })}
+                                        disabled={!currentBannerUrl && !user.banner_url}
+                                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                        </svg>
+                                        Adjust Crop & Zoom
+                                    </button>
+                                    {(!currentBannerUrl && !user.banner_url) && (
+                                        <span className="text-xs text-zinc-500">Upload a banner first to adjust position</span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -244,6 +292,13 @@ export default function ProfileCustomizationEditor({
                                     </div>
                                 </button>
                             ))}
+                        </div>
+
+                        <div className="mt-4 pt-4 border-t border-zinc-800/50">
+                            <label className="block text-sm font-medium text-zinc-300 mb-3">
+                                Avatar Position
+                            </label>
+                            <p className="text-xs text-zinc-500">Avatar is always centered.</p>
                         </div>
                     </div>
                 )}
@@ -399,6 +454,23 @@ export default function ProfileCustomizationEditor({
                     Reset to Default
                 </button>
             </div>
+
+            <ImageCropperModal
+                isOpen={cropperState.isOpen}
+                imageUrl={cropperState.imageUrl}
+                aspectRatio={cropperState.aspectRatio}
+                initialCrop={cropperState.type === 'banner' ? localCustomization.banner_crop : localCustomization.avatar_crop}
+                onCancel={() => setCropperState(prev => ({ ...prev, isOpen: false }))}
+                onSave={(cropData) => {
+                    if (cropperState.type === 'banner') {
+                        handleChange({ banner_crop: cropData });
+                    } else {
+                        handleChange({ avatar_crop: cropData });
+                    }
+                    setCropperState(prev => ({ ...prev, isOpen: false }));
+                }}
+                title={cropperState.type === 'banner' ? 'Adjust Banner' : 'Adjust Avatar'}
+            />
         </div>
     );
 }

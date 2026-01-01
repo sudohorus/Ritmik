@@ -187,6 +187,8 @@ export default function ProfilePage() {
           background_blur: customization.background_blur,
           avatar_decoration_id: customization.avatar_decoration_id,
           favorite_music: customization.favorite_music,
+          banner_crop: customization.banner_crop,
+          avatar_crop: customization.avatar_crop,
         };
         promises.push(ProfileCustomizationService.upsertCustomization(user.id, customizationUpdates));
       }
@@ -323,7 +325,12 @@ export default function ProfilePage() {
                 id="avatarUrl"
                 type="url"
                 value={avatarUrl}
-                onChange={(e) => setAvatarUrl(e.target.value)}
+                onChange={(e) => {
+                  setAvatarUrl(e.target.value);
+                  if (customization) {
+                    setCustomization({ ...customization, avatar_crop: null });
+                  }
+                }}
                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-colors"
                 placeholder="https://example.com/avatar.jpg"
                 disabled={saving}
@@ -339,7 +346,12 @@ export default function ProfilePage() {
                 id="bannerUrl"
                 type="url"
                 value={bannerUrl}
-                onChange={(e) => setBannerUrl(e.target.value)}
+                onChange={(e) => {
+                  setBannerUrl(e.target.value);
+                  if (customization) {
+                    setCustomization({ ...customization, banner_crop: null });
+                  }
+                }}
                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-colors"
                 placeholder="https://example.com/banner.jpg"
                 disabled={saving}
@@ -384,6 +396,8 @@ export default function ProfilePage() {
                       showToast.success('Reset to defaults');
                     }}
                     onRefreshDecorations={loadDecorations}
+                    currentBannerUrl={bannerUrl}
+                    currentAvatarUrl={avatarUrl}
                   />
                 </div>
               )}

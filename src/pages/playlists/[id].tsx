@@ -191,6 +191,7 @@ export default function PlaylistPage() {
           <div className="absolute inset-0 bg-linear-to-b from-black/30 via-zinc-950/80 to-zinc-950 z-10" />
           <BannerImage
             src={playlist.banner_image_url}
+            crop={playlist.banner_crop}
             alt=""
           />
         </div>
