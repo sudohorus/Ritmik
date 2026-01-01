@@ -136,7 +136,7 @@ export default function DecorationManager() {
 
             try {
                 const decorations = await DecorationService.getAvailableDecorations(user.id);
-                const hasSiff = decorations.some(d => d.name === 'Siff Dog');
+                const hasSiff = decorations.some(d => d.name === 'Sif Wolf');
                 const hasDarksign = decorations.some(d => d.name === 'Darksign');
 
                 if (!hasSiff || !hasDarksign) {

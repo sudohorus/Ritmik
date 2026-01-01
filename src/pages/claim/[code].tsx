@@ -28,7 +28,7 @@ export default function ClaimPage() {
         const fetchDecoration = async () => {
             try {
                 let targetDecoration = '';
-                if (code === 'siff-dog') targetDecoration = 'Siff Dog';
+                if (code === 'sif-wolf') targetDecoration = 'Sif Wolf';
                 else if (code === 'darksign') targetDecoration = 'Darksign';
                 else {
                     setStatus('error');
