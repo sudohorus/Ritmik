@@ -295,10 +295,7 @@ export default function ProfileCustomizationEditor({
                         </div>
 
                         <div className="mt-4 pt-4 border-t border-zinc-800/50">
-                            <label className="block text-sm font-medium text-zinc-300 mb-3">
-                                Avatar Position
-                            </label>
-                            <p className="text-xs text-zinc-500">Avatar is always centered.</p>
+
                         </div>
                     </div>
                 )}
