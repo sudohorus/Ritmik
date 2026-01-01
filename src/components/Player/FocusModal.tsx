@@ -415,7 +415,7 @@ export default function FocusModal({
         <AddToPlaylistModal
           isOpen={showAddToPlaylist}
           onClose={() => setShowAddToPlaylist(false)}
-          track={track}
+          tracks={[track]}
         />
       )}
     </>

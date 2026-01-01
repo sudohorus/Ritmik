@@ -10,103 +10,106 @@ import { showToast } from '@/lib/toast';
 interface AddToPlaylistModalProps {
   isOpen: boolean;
   onClose: () => void;
-  track: Track | null;
+  tracks: Track[];
 }
 
-export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlaylistModalProps) {
+export default function AddToPlaylistModal({ isOpen, onClose, tracks }: AddToPlaylistModalProps) {
   const { user } = useAuth();
   const { playlists, loading: loadingPlaylists } = usePlaylists();
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [checkedPlaylists, setCheckedPlaylists] = useState<Record<string, boolean>>({});
+  const [existingTrackCounts, setExistingTrackCounts] = useState<Record<string, number>>({});
   const [loadingChecks, setLoadingChecks] = useState<Record<string, boolean>>({});
   const processingRef = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!isOpen) {
-      setCheckedPlaylists({});
+      setExistingTrackCounts({});
       setLoadingChecks({});
       setAddingTo(null);
       setError(null);
       processingRef.current = {};
     }
-  }, [isOpen, track?.videoId]);
+  }, [isOpen, tracks]);
 
-  const checkPlaylist = useCallback(async (playlistId: string): Promise<boolean> => {
-    if (!track) return false;
+  const checkPlaylist = useCallback(async (playlistId: string): Promise<number> => {
+    if (tracks.length === 0) return 0;
 
-    if (checkedPlaylists[playlistId] !== undefined) {
-      return checkedPlaylists[playlistId];
+    if (existingTrackCounts[playlistId] !== undefined) {
+      return existingTrackCounts[playlistId];
     }
 
     setLoadingChecks(prev => ({ ...prev, [playlistId]: true }));
 
     try {
-      const tracks = await PlaylistService.getPlaylistTracks(playlistId, user?.id);
-      const isInPlaylist = tracks.some((t: PlaylistTrack) => t.video_id === track.videoId);
+      const playlistTracks = await PlaylistService.getPlaylistTracks(playlistId, user?.id);
+      const existingCount = tracks.filter(t => playlistTracks.some((pt: PlaylistTrack) => pt.video_id === t.videoId)).length;
 
-      setCheckedPlaylists(prev => ({ ...prev, [playlistId]: isInPlaylist }));
+      setExistingTrackCounts(prev => ({ ...prev, [playlistId]: existingCount }));
       setLoadingChecks(prev => ({ ...prev, [playlistId]: false }));
 
-      return isInPlaylist;
+      return existingCount;
     } catch (err) {
-      setCheckedPlaylists(prev => ({ ...prev, [playlistId]: false }));
+      console.error(`Failed to check playlist ${playlistId}:`, err);
+      setExistingTrackCounts(prev => ({ ...prev, [playlistId]: 0 }));
       setLoadingChecks(prev => ({ ...prev, [playlistId]: false }));
-      return false;
+      return 0;
     }
-  }, [track, checkedPlaylists, user?.id]);
+  }, [tracks, existingTrackCounts, user?.id]);
 
   useEffect(() => {
-    if (isOpen && playlists.length > 0 && track) {
+    if (isOpen && playlists.length > 0 && tracks.length > 0) {
       playlists.slice(0, 5).forEach(playlist => {
-        if (!(playlist.id in checkedPlaylists) && !loadingChecks[playlist.id]) {
+        if (!(playlist.id in existingTrackCounts) && !loadingChecks[playlist.id]) {
           checkPlaylist(playlist.id);
         }
       });
     }
-  }, [isOpen, playlists, track, checkPlaylist, checkedPlaylists, loadingChecks]);
+  }, [isOpen, playlists, tracks, checkPlaylist, existingTrackCounts, loadingChecks]);
 
   const handleAddToPlaylist = async (playlistId: string) => {
-    if (!track || processingRef.current[playlistId]) return;
+    if (tracks.length === 0 || processingRef.current[playlistId]) return;
 
     processingRef.current[playlistId] = true;
     setAddingTo(playlistId);
     setError(null);
 
     try {
-      const isAlreadyIn = await checkPlaylist(playlistId);
-      if (isAlreadyIn) {
-        showToast.error('Track already in playlist');
+      const existingCount = await checkPlaylist(playlistId);
+      if (existingCount === tracks.length) {
+        showToast.error('All tracks already in playlist');
         return;
       }
 
-      await PlaylistService.addTrackToPlaylist({
+      const tracksToAdd = tracks.map(track => ({
         playlist_id: playlistId,
         track_id: track.videoId,
         title: track.title,
         artist: track.artist,
         thumbnail: track.thumbnail,
         duration: track.duration,
-      });
+      }));
 
-      setCheckedPlaylists(prev => ({ ...prev, [playlistId]: true }));
+      await PlaylistService.addTracksToPlaylist(playlistId, tracksToAdd);
 
-      showToast.success('Track added to playlist');
+      setExistingTrackCounts(prev => ({ ...prev, [playlistId]: tracks.length }));
+
+      showToast.success(`${tracks.length} tracks added to playlist`);
 
       setTimeout(() => {
         onClose();
       }, 1000);
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to add track';
+      const errorMsg = err instanceof Error ? err.message : 'Failed to add tracks';
       setError(errorMsg);
-      showToast.error('Failed to add track');
+      showToast.error('Failed to add tracks');
     } finally {
       setAddingTo(null);
       processingRef.current[playlistId] = false;
     }
   };
 
-  if (!isOpen || !track) return null;
+  if (!isOpen || tracks.length === 0) return null;
 
   return (
     <div
@@ -119,7 +122,9 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-white">Add to Playlist</h2>
+            <h2 className="text-xl font-bold text-white">
+              {tracks.length > 1 ? `Add ${tracks.length} tracks to Playlist` : 'Add to Playlist'}
+            </h2>
             <button
               onClick={onClose}
               className="text-zinc-400 hover:text-white transition-colors"
@@ -148,22 +153,23 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
           ) : (
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {playlists.map((playlist) => {
-                const alreadyAdded = checkedPlaylists[playlist.id] === true;
+                const existingCount = existingTrackCounts[playlist.id] || 0;
                 const isChecking = loadingChecks[playlist.id];
                 const isAdding = addingTo === playlist.id;
-                const isDisabled = isAdding || alreadyAdded;
+                const allIn = existingCount === tracks.length && tracks.length > 0;
+                const isDisabled = isAdding || allIn;
 
                 return (
                   <button
                     key={playlist.id}
                     onClick={() => handleAddToPlaylist(playlist.id)}
                     onMouseEnter={() => {
-                      if (checkedPlaylists[playlist.id] === undefined && !loadingChecks[playlist.id]) {
+                      if (existingTrackCounts[playlist.id] === undefined && !loadingChecks[playlist.id]) {
                         checkPlaylist(playlist.id);
                       }
                     }}
                     disabled={isDisabled}
-                    className={`w-full p-4 rounded-lg text-left transition-colors ${alreadyAdded
+                    className={`w-full p-4 rounded-lg text-left transition-colors ${allIn
                       ? 'bg-zinc-800/50 cursor-not-allowed opacity-60'
                       : 'bg-zinc-800 hover:bg-zinc-700'
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
@@ -184,12 +190,18 @@ export default function AddToPlaylistModal({ isOpen, onClose, track }: AddToPlay
                         </div>
                       ) : isChecking ? (
                         <span className="text-xs text-zinc-500 ml-2">Checking...</span>
-                      ) : alreadyAdded ? (
-                        <span className="text-xs text-green-500 ml-2 flex items-center gap-1">
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                          Added
+                      ) : existingCount > 0 ? (
+                        <span className="text-xs text-zinc-400 ml-2 flex items-center gap-1">
+                          {existingCount === tracks.length ? (
+                            <span className="text-green-500 flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                              All Added
+                            </span>
+                          ) : (
+                            <span>{existingCount}/{tracks.length} in playlist</span>
+                          )}
                         </span>
                       ) : null}
                     </div>

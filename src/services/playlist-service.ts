@@ -306,6 +306,59 @@ export class PlaylistService {
     }
   }
 
+  static async addTracksToPlaylist(playlistId: string, tracks: AddTrackToPlaylistData[]): Promise<void> {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+    if (!user) {
+      throw new Error('Authentication required');
+    }
+
+    const { data: playlist, error: fetchError } = await supabase
+      .from('playlists')
+      .select('user_id')
+      .eq('id', playlistId)
+      .single();
+
+    if (fetchError || !playlist) {
+      throw new Error('Playlist not found');
+    }
+
+    if (playlist.user_id !== user.id) {
+      throw new Error('Unauthorized: You can only add tracks to your own playlists');
+    }
+
+    const currentTracks = await this.getPlaylistTracks(playlistId);
+    let nextPosition = currentTracks.length;
+
+    const tracksToInsert = tracks.map((track, index) => ({
+      playlist_id: playlistId,
+      video_id: track.track_id,
+      title: track.title,
+      artist: track.artist,
+      thumbnail_url: track.thumbnail,
+      duration: track.duration,
+      position: nextPosition + index,
+    }));
+
+    const { error } = await supabase
+      .from('playlist_tracks')
+      .insert(tracksToInsert)
+      .select(); 
+
+    if (error) {
+      if (error.code === '23505') {
+        const { error: retryError } = await supabase
+          .from('playlist_tracks')
+          .insert(tracksToInsert)
+          .select();
+
+        if (retryError) throw retryError;
+        return;
+      }
+      throw error;
+    }
+  }
+
   static async removeTrackFromPlaylist(playlistId: string, trackId: string): Promise<void> {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
@@ -332,6 +385,36 @@ export class PlaylistService {
       .delete()
       .eq('playlist_id', playlistId)
       .eq('video_id', trackId);
+
+    if (error) throw error;
+  }
+
+  static async removeTracksFromPlaylist(playlistId: string, trackIds: string[]): Promise<void> {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+    if (!user) {
+      throw new Error('Authentication required');
+    }
+
+    const { data: playlist, error: fetchError } = await supabase
+      .from('playlists')
+      .select('user_id')
+      .eq('id', playlistId)
+      .single();
+
+    if (fetchError || !playlist) {
+      throw new Error('Playlist not found');
+    }
+
+    if (playlist.user_id !== user.id) {
+      throw new Error('Unauthorized: You can only remove tracks from your own playlists');
+    }
+
+    const { error } = await supabase
+      .from('playlist_tracks')
+      .delete()
+      .eq('playlist_id', playlistId)
+      .in('video_id', trackIds);
 
     if (error) throw error;
   }

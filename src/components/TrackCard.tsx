@@ -75,7 +75,7 @@ export default function TrackCard({ track, playlist }: TrackCardProps) {
         <AddToPlaylistModal
           isOpen={showAddToPlaylist}
           onClose={() => setShowAddToPlaylist(false)}
-          track={track}
+          tracks={[track]}
         />
       )}
     </>

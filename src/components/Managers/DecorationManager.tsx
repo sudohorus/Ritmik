@@ -2,15 +2,19 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { DecorationService } from '@/services/decoration-service';
 import { StatisticsService } from '@/services/statistics-service';
+import { supabase } from '@/lib/supabase';
 import TenHoursDecorationModal from '@/components/Modals/TenHoursDecorationModal';
 import BizarreListenerDecorationModal from '@/components/Modals/BizarreListenerDecorationModal';
 import UFCBeltDecorationModal from '@/components/Modals/UFCBeltDecorationModal';
+
+import NewYearDecorationModal from '@/components/Modals/NewYearDecorationModal';
 
 export default function DecorationManager() {
     const { user } = useAuth();
     const [showTenHoursModal, setShowTenHoursModal] = useState(false);
     const [showBizarreListenerModal, setShowBizarreListenerModal] = useState(false);
     const [showUFCBeltModal, setShowUFCBeltModal] = useState(false);
+    const [showNewYearModal, setShowNewYearModal] = useState(false);
 
     useEffect(() => {
         const checkTenHoursAchievement = async () => {
@@ -85,6 +89,48 @@ export default function DecorationManager() {
         checkUFCBeltAvailability();
     }, [user]);
 
+    useEffect(() => {
+        const checkNewYearAvailability = async () => {
+            if (!user) return;
+
+            const cacheKey = `new_year_2026_checked_${user.id}`;
+            const hasChecked = localStorage.getItem(cacheKey);
+            
+            if (hasChecked) return;
+
+            const now = new Date();
+            const start = new Date('2025-12-31T00:00:00-03:00'); 
+            const end = new Date('2026-01-02T23:59:59-03:00');
+
+            if (now >= start && now <= end) {
+                try {
+                    const decoration = await DecorationService.getDecorationByName('New Year 2026');
+
+                    if (!decoration) {
+                        return;
+                    }
+
+                    const { data: userDecoration } = await supabase
+                        .from('user_decorations')
+                        .select('id')
+                        .eq('user_id', user.id)
+                        .eq('decoration_id', decoration.id)
+                        .single();
+
+                    if (!userDecoration) {
+                        setShowNewYearModal(true);
+                    }
+                    
+                    localStorage.setItem(cacheKey, 'true');
+                } catch (error) {
+                    console.error('[New Year] Error:', error);
+                }
+            }
+        };
+
+        checkNewYearAvailability();
+    }, [user]);
+
     return (
         <>
             {showTenHoursModal && user && (
@@ -103,6 +149,12 @@ export default function DecorationManager() {
                 <UFCBeltDecorationModal
                     user={user}
                     onClose={() => setShowUFCBeltModal(false)}
+                />
+            )}
+            {showNewYearModal && user && (
+                <NewYearDecorationModal
+                    user={user}
+                    onClose={() => setShowNewYearModal(false)}
                 />
             )}
         </>

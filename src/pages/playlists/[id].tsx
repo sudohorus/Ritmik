@@ -4,8 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PlaylistTrack } from '@/types/playlist';
 import { usePlayer } from '@/contexts/PlayerContext';
 import { usePlaylistDetails } from '@/hooks/playlists/usePlaylistDetails';
-import ConfirmModal from '@/components/Playlist/ConfirmModal';
+import ConfirmModal from '@/components/Modal/ConfirmModal';
 import EditPlaylistModal from '@/components/Playlist/EditPlaylistModal';
+import AddToPlaylistModal from '@/components/Playlist/AddToPlaylistModal';
 import UserMenu from '@/components/Auth/UserMenu';
 import SortableTrackItem from '@/components/Playlist/SortableTrackItem';
 import Link from 'next/link';
@@ -40,6 +41,7 @@ export default function PlaylistPage() {
     error,
     isOwner,
     removeTrack,
+    removeTracks,
     updatePlaylist,
     reorderTracks,
   } = usePlaylistDetails(playlistId);
@@ -47,6 +49,11 @@ export default function PlaylistPage() {
   const [removeConfirm, setRemoveConfirm] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState(false);
 
   const filteredTracks = useMemo(() => {
     if (!searchQuery.trim()) return tracks;
@@ -92,6 +99,61 @@ export default function PlaylistPage() {
     } catch (err) {
       console.error('Error reordering tracks:', err);
     }
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    setSelectedTrackIds(new Set());
+  };
+
+  const toggleTrackSelection = (trackId: string) => {
+    const newSelected = new Set(selectedTrackIds);
+    if (newSelected.has(trackId)) {
+      newSelected.delete(trackId);
+    } else {
+      newSelected.add(trackId);
+    }
+    setSelectedTrackIds(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedTrackIds.size === tracks.length) {
+      setSelectedTrackIds(new Set());
+    } else {
+      setSelectedTrackIds(new Set(tracks.map(t => t.video_id)));
+    }
+  };
+
+  const handleLongPress = (trackId: string) => {
+    if (!isSelectionMode) {
+      setIsSelectionMode(true);
+      setSelectedTrackIds(new Set([trackId]));
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }
+  };
+
+  const confirmBulkDelete = async () => {
+    if (selectedTrackIds.size === 0) return;
+
+    setIsDeleting(true);
+    try {
+      await removeTracks(Array.from(selectedTrackIds));
+
+      setIsSelectionMode(false);
+      setSelectedTrackIds(new Set());
+      setShowBulkDeleteConfirm(false);
+    } catch (error) {
+      showToast.error('Failed to remove tracks');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedTrackIds.size === 0) return;
+    setShowBulkDeleteConfirm(true);
   };
 
   const handlePlayTrack = (track: PlaylistTrack) => {
@@ -201,15 +263,17 @@ export default function PlaylistPage() {
                 </div>
 
                 {isOwner && (
-                  <button
-                    onClick={() => setShowEditModal(true)}
-                    className="w-full md:w-auto px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 backdrop-blur-sm border border-white/10"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit
-                  </button>
+                  <div className="flex gap-2 w-full md:w-auto">
+                    <button
+                      onClick={() => setShowEditModal(true)}
+                      className="flex-1 md:flex-none px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 backdrop-blur-sm border border-white/10"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Edit
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -262,6 +326,10 @@ export default function PlaylistPage() {
                         onDoubleClick={() => seekTo(0)}
                         onRemove={() => setRemoveConfirm(track.video_id)}
                         disabled={true}
+                        isSelectionMode={isSelectionMode}
+                        isSelected={selectedTrackIds.has(track.video_id)}
+                        onToggleSelection={() => toggleTrackSelection(track.video_id)}
+                        onLongPress={() => handleLongPress(track.video_id)}
                       />
                     );
                   })
@@ -295,6 +363,10 @@ export default function PlaylistPage() {
                           onPlay={() => handlePlayTrack(track)}
                           onDoubleClick={() => seekTo(0)}
                           onRemove={() => setRemoveConfirm(track.video_id)}
+                          isSelectionMode={isSelectionMode}
+                          isSelected={selectedTrackIds.has(track.video_id)}
+                          onToggleSelection={() => toggleTrackSelection(track.video_id)}
+                          onLongPress={() => handleLongPress(track.video_id)}
                         />
                       );
                     })}
@@ -316,12 +388,109 @@ export default function PlaylistPage() {
           isDanger
         />
 
+        <ConfirmModal
+          isOpen={showBulkDeleteConfirm}
+          onClose={() => setShowBulkDeleteConfirm(false)}
+          onConfirm={confirmBulkDelete}
+          title="Remove Tracks"
+          message={`Are you sure you want to remove ${selectedTrackIds.size} tracks from this playlist? This action cannot be undone.`}
+          confirmText={isDeleting ? "Removing..." : "Remove All"}
+          cancelText="Cancel"
+          isDanger
+        />
+
         <EditPlaylistModal
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
           onUpdate={handleUpdatePlaylist}
           playlist={playlist}
         />
+
+        <AddToPlaylistModal
+          isOpen={showAddToPlaylistModal}
+          onClose={() => setShowAddToPlaylistModal(false)}
+          tracks={tracks.filter(t => selectedTrackIds.has(t.video_id)).map(t => ({
+            id: t.video_id,
+            videoId: t.video_id,
+            title: t.title,
+            artist: t.artist || 'Unknown Artist',
+            thumbnail: t.thumbnail_url || '/default-thumbnail.jpg',
+            duration: t.duration || 0,
+            channel: t.artist || 'Unknown Artist',
+            viewCount: 0,
+          }))}
+        />
+
+        {isSelectionMode && (
+          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-100 animate-in slide-in-from-bottom-10 fade-in duration-300 w-auto">
+            <div className="bg-zinc-900/90 backdrop-blur-xl border border-zinc-700/50 rounded-full shadow-2xl shadow-black/80 p-1.5 flex items-center gap-2 ring-1 ring-white/5">
+
+              <div className="flex items-center gap-2 pl-3 pr-2 border-r border-zinc-800/50">
+                <span className="flex items-center justify-center w-6 h-6 bg-white text-black text-xs font-bold rounded-full">
+                  {selectedTrackIds.size}
+                </span>
+                <button
+                  onClick={handleSelectAll}
+                  className="p-2 text-zinc-400 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                  title={selectedTrackIds.size === tracks.length ? 'Deselect All' : 'Select All'}
+                >
+                  {selectedTrackIds.size === tracks.length ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setShowAddToPlaylistModal(true)}
+                  disabled={selectedTrackIds.size === 0}
+                  className="p-2.5 text-zinc-300 hover:text-white hover:bg-white/10 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Add to Playlist"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={selectedTrackIds.size === 0 || isDeleting}
+                  className="p-2.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Delete"
+                >
+                  {isDeleting ? (
+                    <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+
+              <div className="w-px h-6 bg-zinc-800/50 mx-1" />
+
+              <button
+                onClick={() => {
+                  setIsSelectionMode(false);
+                  setSelectedTrackIds(new Set());
+                }}
+                className="p-2 text-zinc-400 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                title="Cancel"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

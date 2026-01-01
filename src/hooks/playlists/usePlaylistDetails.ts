@@ -156,6 +156,23 @@ export function usePlaylistDetails(playlistId: string | undefined) {
     }
   };
 
+  const removeTracks = async (trackIds: string[]) => {
+    if (!playlistId || !user) throw new Error('Not authorized');
+
+    try {
+      await PlaylistService.removeTracksFromPlaylist(playlistId, trackIds);
+
+      if (mountedRef.current) {
+        setTracks(prev => prev.filter(t => !trackIds.includes(t.video_id)));
+      }
+
+      showToast.success(`${trackIds.length} tracks removed from playlist`);
+    } catch (err) {
+      showToast.error('Failed to remove tracks');
+      throw err;
+    }
+  };
+
   const updatePlaylist = async (data: Partial<CreatePlaylistData>) => {
     if (!playlistId || !user) throw new Error('Not authorized');
 
@@ -198,6 +215,7 @@ export function usePlaylistDetails(playlistId: string | undefined) {
     error,
     isOwner,
     removeTrack,
+    removeTracks,
     updatePlaylist,
     reorderTracks,
   };

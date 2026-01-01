@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import Loading from '@/components/Loading';
-import ConfirmModal from '@/components/Playlist/ConfirmModal';
+import ConfirmModal from '@/components/Modal/ConfirmModal';
 import { supabase } from '@/lib/supabase';
 import { showToast } from '@/lib/toast';
 

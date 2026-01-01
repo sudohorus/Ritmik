@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePlaylists } from '@/hooks/playlists/usePlaylists';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 import CreatePlaylistModal from '@/components/Playlist/CreatePlaylistModal';
-import ConfirmModal from '@/components/Playlist/ConfirmModal';
+import ConfirmModal from '@/components/Modal/ConfirmModal';
 import IntegrationsModal from '@/components/Modals/IntegrationsModal';
 import YoutubeImportModal from '@/components/Youtube/YoutubeImportModal';
 import UserMenu from '@/components/Auth/UserMenu';
