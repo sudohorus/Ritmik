@@ -6,8 +6,8 @@ import { supabase } from '@/lib/supabase';
 import TenHoursDecorationModal from '@/components/Modals/TenHoursDecorationModal';
 import BizarreListenerDecorationModal from '@/components/Modals/BizarreListenerDecorationModal';
 import UFCBeltDecorationModal from '@/components/Modals/UFCBeltDecorationModal';
-
 import NewYearDecorationModal from '@/components/Modals/NewYearDecorationModal';
+import DiscordPromoModal from '@/components/Modals/DiscordPromoModal';
 
 export default function DecorationManager() {
     const { user } = useAuth();
@@ -15,6 +15,7 @@ export default function DecorationManager() {
     const [showBizarreListenerModal, setShowBizarreListenerModal] = useState(false);
     const [showUFCBeltModal, setShowUFCBeltModal] = useState(false);
     const [showNewYearModal, setShowNewYearModal] = useState(false);
+    const [showDiscordPromoModal, setShowDiscordPromoModal] = useState(false);
 
     useEffect(() => {
         const checkTenHoursAchievement = async () => {
@@ -126,6 +127,30 @@ export default function DecorationManager() {
         checkNewYearAvailability();
     }, [user]);
 
+    useEffect(() => {
+        const checkDiscordPromo = async () => {
+            if (!user) return;
+
+            const hasSeenPromo = localStorage.getItem('discord_promo_seen');
+            if (hasSeenPromo) return;
+
+            try {
+                const decorations = await DecorationService.getAvailableDecorations(user.id);
+                const hasSiff = decorations.some(d => d.name === 'Siff Dog');
+                const hasDarksign = decorations.some(d => d.name === 'Darksign');
+
+                if (!hasSiff || !hasDarksign) {
+                    setShowDiscordPromoModal(true);
+                    localStorage.setItem('discord_promo_seen', 'true');
+                }
+            } catch (error) {
+                console.error('Error checking Discord promo:', error);
+            }
+        };
+
+        checkDiscordPromo();
+    }, [user]);
+
     return (
         <>
             {showTenHoursModal && user && (
@@ -150,6 +175,12 @@ export default function DecorationManager() {
                 <NewYearDecorationModal
                     user={user}
                     onClose={() => setShowNewYearModal(false)}
+                />
+            )}
+            {showDiscordPromoModal && user && (
+                <DiscordPromoModal
+                    isOpen={showDiscordPromoModal}
+                    onClose={() => setShowDiscordPromoModal(false)}
                 />
             )}
         </>
