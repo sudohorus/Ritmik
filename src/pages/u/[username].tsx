@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState, useCallback } from 'react';
+import BannerImage from '@/components/BannerImage';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { PublicProfileService, PublicProfile } from '@/services/public-profile-service';
@@ -207,13 +208,11 @@ export default function PublicProfilePage() {
         <div
           className={`absolute z-0 ${isFullBg ? 'inset-0' : 'top-0 left-0 right-0 h-[50vh] max-h-[500px]'}`}
         >
-          <img
+          <BannerImage
             src={profile.banner_url}
             alt=""
-            className="w-full h-full object-cover"
-            style={{
-              filter: `blur(${backgroundBlur}) brightness(${backgroundBrightness})`,
-            }}
+            blur={backgroundBlur}
+            brightness={backgroundBrightness}
           />
           <div className="absolute inset-0 bg-linear-to-b from-black/0 via-zinc-950/50 to-zinc-950 z-10" />
         </div>

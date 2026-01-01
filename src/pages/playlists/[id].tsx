@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router';
 import { useState, useMemo } from 'react';
+import BannerImage from '@/components/BannerImage';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlaylistTrack } from '@/types/playlist';
 import { usePlayer } from '@/contexts/PlayerContext';
@@ -188,10 +189,9 @@ export default function PlaylistPage() {
       {playlist?.banner_image_url && (
         <div className="absolute top-0 left-0 right-0 h-[50vh] max-h-[500px] z-0">
           <div className="absolute inset-0 bg-linear-to-b from-black/30 via-zinc-950/80 to-zinc-950 z-10" />
-          <img
+          <BannerImage
             src={playlist.banner_image_url}
             alt=""
-            className="w-full h-full object-cover"
           />
         </div>
       )}

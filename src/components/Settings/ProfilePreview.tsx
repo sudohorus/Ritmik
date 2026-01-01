@@ -1,5 +1,6 @@
 import { User } from '@/types/auth';
 import { ProfileCustomization, DEFAULT_CUSTOMIZATION } from '@/types/profile-customization';
+import BannerImage from '@/components/BannerImage';
 import AvatarDecorationOverlay from '@/components/AvatarDecorationOverlay';
 
 interface ProfilePreviewProps {
@@ -43,17 +44,12 @@ export default function ProfilePreview({
                 className={`absolute top-0 left-0 right-0 z-0 ${isFullBg ? 'bottom-0' : 'h-64'}`}
             >
                 {banner ? (
-                    <>
-                        <img
-                            src={banner}
-                            alt="Banner preview"
-                            className="w-full h-full object-cover"
-                            style={{
-                                filter: `blur(${backgroundBlur}) brightness(${backgroundBrightness})`,
-                            }}
-                        />
-                        <div className="absolute inset-0 bg-linear-to-b from-black/0 via-zinc-950/50 to-zinc-950 z-10" />
-                    </>
+                    <BannerImage
+                        src={banner}
+                        alt="Banner preview"
+                        blur={backgroundBlur}
+                        brightness={backgroundBrightness}
+                    />
                 ) : (
                     <div className="w-full h-full bg-zinc-900 flex items-center justify-center text-zinc-600">
                         <span className="text-sm">No banner image</span>
