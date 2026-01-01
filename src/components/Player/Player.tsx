@@ -3,6 +3,7 @@ import { useKeyboardShortcuts } from '@/hooks/player/useKeyboardShortcuts';
 import { usePlayTracking } from '@/hooks/statistics/usePlayTracking';
 import { useEffect, useRef, useState, useMemo, useCallback, memo } from 'react';
 import { useRouter } from 'next/router';
+import { showToast } from '@/lib/toast';
 import PlayerControls from './PlayerControls';
 import ProgressBar from './ProgressBar';
 import VolumeControl from './VolumeControl';
@@ -72,6 +73,7 @@ export default function Player() {
   const trackJustChangedRef = useRef(false);
   const trackChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const volumeRef = useRef(volume);
+  const stuckAtZeroCountRef = useRef(0);
 
   useEffect(() => {
     volumeRef.current = volume;
@@ -456,6 +458,25 @@ export default function Player() {
                 console.error('Error in onStateChange:', err);
               }
             },
+            onError: (event: any) => {
+              if (!mountedRef.current) return;
+              console.warn('YouTube Player Error:', event.data);
+
+              if (event.data === 100 || event.data === 101 || event.data === 150) {
+                showToast.error('Track unavailable on YouTube, skipping...');
+                playNext(true);
+              } else {
+                if (isPlayingRef.current && event.target && typeof event.target.playVideo === 'function') {
+                  setTimeout(() => {
+                    try {
+                      if (mountedRef.current) {
+                        event.target.playVideo();
+                      }
+                    } catch (e) { }
+                  }, 1000);
+                }
+              }
+            },
           },
         });
       } catch { }
@@ -496,6 +517,23 @@ export default function Player() {
             if (timeDiff >= 0.3) {
               setProgress(currentTime);
               lastProgressUpdateRef.current = currentTime;
+            }
+
+            if (isPlayingRef.current && currentTime === 0) {
+              stuckAtZeroCountRef.current += 1;
+              if (stuckAtZeroCountRef.current > 4) {
+                if (playerRef.current && typeof playerRef.current.playVideo === 'function') {
+                  playerRef.current.playVideo();
+                }
+
+                if (stuckAtZeroCountRef.current > 8) {
+                  showToast.error('Track unavailable on YouTube, skipping...');
+                  playNext(true);
+                  stuckAtZeroCountRef.current = 0;
+                }
+              }
+            } else {
+              stuckAtZeroCountRef.current = 0;
             }
 
             if (!durationSetRef.current && (duration === 0 || duration === Infinity)) {
