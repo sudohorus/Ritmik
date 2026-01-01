@@ -83,69 +83,78 @@ export default function PublicProfilePage() {
     let active = true;
 
     const fetchProfile = async () => {
-      setLoading(true);
-      setError(null);
-      setPlaylists([]);
-      setActivity(null);
-
-      const { data: profileData, error: profileError } = await PublicProfileService.getProfileByUsername(normalizedUsername);
-
-      if (!active) return;
-
-      if (profileError || !profileData) {
-        setError('User not found');
-        setProfile(null);
+      try {
+        setLoading(true);
+        setError(null);
         setPlaylists([]);
-        setLoading(false);
-        return;
-      }
+        setActivity(null);
 
-      setProfile(profileData);
+        const { data: profileData, error: profileError } = await PublicProfileService.getProfileByUsername(normalizedUsername);
 
-      let canViewActivity = false;
-      if (currentUser) {
-        if (currentUser.id === profileData.id) {
-          canViewActivity = true;
-        } else {
-          const { data: followData } = await supabase
-            .from('followers')
-            .select('id')
-            .eq('follower_id', profileData.id)
-            .eq('following_id', currentUser.id)
-            .maybeSingle();
+        if (!active) return;
 
-          if (followData) {
+        if (profileError || !profileData) {
+          setError('User not found');
+          setProfile(null);
+          setPlaylists([]);
+          return;
+        }
+
+        setProfile(profileData);
+
+        let canViewActivity = false;
+        if (currentUser) {
+          if (currentUser.id === profileData.id) {
             canViewActivity = true;
+          } else {
+            const { data: followData } = await supabase
+              .from('followers')
+              .select('id')
+              .eq('follower_id', profileData.id)
+              .eq('following_id', currentUser.id)
+              .maybeSingle();
+
+            if (followData) {
+              canViewActivity = true;
+            }
           }
         }
-      }
 
-      if (canViewActivity) {
-        const activityData = await UserActivityService.getActivity(profileData.id);
-        if (active) setActivity(activityData);
-      }
+        if (canViewActivity) {
+          const activityData = await UserActivityService.getActivity(profileData.id);
+          if (active) setActivity(activityData);
+        }
 
-      const { data: playlistsData } = await PublicProfileService.getUserPlaylists(profileData.id);
+        const { data: playlistsData } = await PublicProfileService.getUserPlaylists(profileData.id);
 
-      try {
-        const customizationData = await ProfileCustomizationService.getCustomization(profileData.id);
-        if (active) setCustomization(customizationData);
-      } catch (error) {
+        try {
+          const customizationData = await ProfileCustomizationService.getCustomization(profileData.id);
+          if (active) setCustomization(customizationData);
+        } catch (error) {
+          if (active) {
+            setCustomization({
+              id: '',
+              user_id: profileData.id,
+              ...DEFAULT_CUSTOMIZATION,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+          }
+        }
+
+        if (!active) return;
+
+        setPlaylists(playlistsData || []);
+      } catch (err) {
+        console.error('Error fetching profile:', err);
         if (active) {
-          setCustomization({
-            id: '',
-            user_id: profileData.id,
-            ...DEFAULT_CUSTOMIZATION,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          });
+          setError('An error occurred while loading the profile');
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
         }
       }
-
-      if (!active) return;
-
-      setPlaylists(playlistsData || []);
-      setLoading(false);
     };
 
     fetchProfile();

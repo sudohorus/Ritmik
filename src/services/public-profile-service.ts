@@ -15,7 +15,7 @@ export class PublicProfileService {
     const { data, error } = await supabase
       .from('users')
       .select('id, username, display_name, avatar_url, banner_url, email, created_at')
-      .eq('username', username)
+      .ilike('username', username)
       .single();
 
     return { data: data as PublicProfile | null, error };
