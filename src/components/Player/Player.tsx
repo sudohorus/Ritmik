@@ -71,6 +71,11 @@ export default function Player() {
   const prevJamTrackIdRef = useRef<string | null>(null);
   const trackJustChangedRef = useRef(false);
   const trackChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const volumeRef = useRef(volume);
+
+  useEffect(() => {
+    volumeRef.current = volume;
+  }, [volume]);
 
   useEffect(() => {
     isPlayingRef.current = isPlaying;
@@ -495,6 +500,15 @@ export default function Player() {
 
             if (!durationSetRef.current && (duration === 0 || duration === Infinity)) {
               tryGetDuration();
+            }
+          }
+
+          if (typeof playerRef.current.getVolume === 'function' && typeof playerRef.current.setVolume === 'function') {
+            const currentVol = playerRef.current.getVolume();
+            const expectedVol = Math.round(volumeRef.current * 100);
+
+            if (Math.abs(currentVol - expectedVol) > 1) {
+              playerRef.current.setVolume(expectedVol);
             }
           }
         } catch (err) {
