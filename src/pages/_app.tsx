@@ -2,6 +2,7 @@ import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { Analytics } from '@vercel/analytics/next';
 import { Toaster } from 'react-hot-toast';
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
@@ -93,6 +94,7 @@ export default function App(props: AppProps) {
         </PlayerProvider>
       </AuthProvider>
       <Toaster />
+      <Analytics />
     </ErrorBoundary>
   );
 }
