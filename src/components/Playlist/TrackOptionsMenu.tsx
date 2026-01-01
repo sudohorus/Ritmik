@@ -133,11 +133,11 @@ export default function TrackOptionsMenu({
                 </div>
             )}
 
-            {showAddToPlaylistModal && (
+            {showAddToPlaylistModal && trackData && (
                 <AddToPlaylistModal
                     isOpen={showAddToPlaylistModal}
                     onClose={() => setShowAddToPlaylistModal(false)}
-                    track={trackData}
+                    tracks={[trackData]}
                 />
             )}
         </div>
