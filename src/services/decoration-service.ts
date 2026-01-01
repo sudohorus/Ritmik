@@ -71,5 +71,33 @@ export const DecorationService = {
 
         if (error) return null;
         return data;
+    },
+
+    async claimDecorationSecure(decorationName: string): Promise<{ success: boolean; error?: any }> {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (!session) {
+                return { success: false, error: 'Not authenticated' };
+            }
+
+            const response = await fetch('/api/decorations/claim', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ decorationName }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                return { success: false, error: errorData.error || 'Failed to claim decoration' };
+            }
+
+            return { success: true };
+        } catch (error) {
+            return { success: false, error };
+        }
     }
 };

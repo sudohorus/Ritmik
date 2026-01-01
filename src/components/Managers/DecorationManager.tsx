@@ -93,22 +93,19 @@ export default function DecorationManager() {
         const checkNewYearAvailability = async () => {
             if (!user) return;
 
-            const cacheKey = `new_year_2026_checked_${user.id}`;
-            const hasChecked = localStorage.getItem(cacheKey);
-            
-            if (hasChecked) return;
-
             const now = new Date();
-            const start = new Date('2025-12-31T00:00:00-03:00'); 
+            const start = new Date('2025-12-31T00:00:00-03:00');
             const end = new Date('2026-01-02T23:59:59-03:00');
 
             if (now >= start && now <= end) {
                 try {
-                    const decoration = await DecorationService.getDecorationByName('New Year 2026');
+                    const { data: decoration } = await supabase
+                        .from('avatar_decorations')
+                        .select('id')
+                        .eq('name', 'New Year 2026')
+                        .single();
 
-                    if (!decoration) {
-                        return;
-                    }
+                    if (!decoration) return;
 
                     const { data: userDecoration } = await supabase
                         .from('user_decorations')
@@ -120,8 +117,6 @@ export default function DecorationManager() {
                     if (!userDecoration) {
                         setShowNewYearModal(true);
                     }
-                    
-                    localStorage.setItem(cacheKey, 'true');
                 } catch (error) {
                     console.error('[New Year] Error:', error);
                 }
