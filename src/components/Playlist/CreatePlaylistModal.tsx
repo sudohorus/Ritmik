@@ -117,7 +117,7 @@ export default function CreatePlaylistModal({ isOpen, onClose, onCreate }: Creat
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm p-4 overflow-y-auto"
+      className="fixed inset-0 z-80 bg-black/80 backdrop-blur-sm p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div className="min-h-screen flex items-center justify-center py-8">

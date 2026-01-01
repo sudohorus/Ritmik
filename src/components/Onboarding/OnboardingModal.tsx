@@ -86,7 +86,7 @@ export default function OnboardingModal({ user, onClose }: OnboardingModalProps)
                             <h2 className="text-2xl font-bold text-white mb-3">
                                 {steps[currentStep].title}
                             </h2>
-                            <p className="text-zinc-400 mb-8 min-h-[3rem]">
+                            <p className="text-zinc-400 mb-8 min-h-3rem">
                                 {steps[currentStep].description}
                             </p>
                         </motion.div>
