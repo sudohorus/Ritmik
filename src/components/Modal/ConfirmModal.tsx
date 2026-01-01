@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -24,14 +25,26 @@ export default function ConfirmModal({
   confirmString,
 }: ConfirmModalProps) {
   const [inputValue, setInputValue] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
       setInputValue('');
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
     }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!mounted || !isOpen) return null;
 
   const isConfirmDisabled = confirmString ? inputValue !== confirmString : false;
 
@@ -41,15 +54,15 @@ export default function ConfirmModal({
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      <div className="relative bg-zinc-900 border border-zinc-800 rounded-lg p-6 max-w-md w-full shadow-xl">
-        <h2 className="text-xl font-bold mb-3">{title}</h2>
+      <div className="relative bg-zinc-900 border border-zinc-800 rounded-lg p-6 max-w-md w-full shadow-xl animate-in fade-in zoom-in-95 duration-200">
+        <h2 className="text-xl font-bold mb-3 text-white">{title}</h2>
         <p className="text-zinc-400 mb-6">{message}</p>
 
         {confirmString && (
@@ -79,15 +92,16 @@ export default function ConfirmModal({
             onClick={handleConfirm}
             disabled={isConfirmDisabled}
             className={`px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isDanger
-                ? 'bg-red-600 hover:bg-red-700 text-white'
-                : 'bg-white hover:bg-zinc-200 text-black'
+              ? 'bg-red-600 hover:bg-red-700 text-white'
+              : 'bg-white hover:bg-zinc-200 text-black'
               }`}
           >
             {confirmText}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
