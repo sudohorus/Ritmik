@@ -26,7 +26,7 @@ export default function PlaylistCard({ playlist, disableLink }: PlaylistCardProp
                         <img
                             src={playlist.cover_image_url}
                             alt={playlist.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out will-change-transform transform-gpu"
                             onError={(e) => {
                                 (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=800&q=80';
                             }}
@@ -77,7 +77,7 @@ export default function PlaylistCard({ playlist, disableLink }: PlaylistCardProp
                     <img
                         src={playlist.cover_image_url}
                         alt={playlist.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out will-change-transform transform-gpu"
                         onError={(e) => {
                             (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=800&q=80';
                         }}
