@@ -4,7 +4,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg) ![Version](https://img.shields.io/badge/version-1.0.0-purple) ![Status](https://img.shields.io/badge/status-live-green)
 
-[![Visit Site](https://img.shields.io/badge/%F0%9F%9A%80_Launch_App-Visit_Site-2ea44f?style=for-the-badge)](https://ritmik.vercel.app/)
+[![Visit Site](https://img.shields.io/badge/%F0%9F%9A%80_Launch_App-Visit_Site-2ea44f?style=for-the-badge)](https://ritmik.vercel.app/) [![Discord](https://img.shields.io/badge/Discord-Join_Server-7289DA?style=for-the-badge&logo=discord)](https://discord.gg/Vb6Pfyddjz)
 
 > **Social Music Streaming, Reimagined.**
 > Ritmik is a modern music platform designed for shared listening experiences.
