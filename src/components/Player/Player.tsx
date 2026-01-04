@@ -14,6 +14,8 @@ import { CreateJamModal } from '../Jam/CreateJamModal';
 import { JoinJamModal } from '../Jam/JoinJamModal';
 import { JamView } from '../Jam/JamView';
 import Link from 'next/link';
+import MiniPlayer from './MiniPlayer';
+import { PictureInPicture2 } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -62,6 +64,7 @@ export default function Player() {
   const [showCreateJam, setShowCreateJam] = useState(false);
   const [showJoinJam, setShowJoinJam] = useState(false);
   const [showJamMenu, setShowJamMenu] = useState(false);
+  const [pipWindow, setPipWindow] = useState<Window | null>(null);
   const router = useRouter();
   const currentRouteRef = useRef(router.pathname);
   const mountedRef = useRef(true);
@@ -237,6 +240,35 @@ export default function Player() {
     if (isInJam && !isHost) return;
     recordSkip();
     playPrevious();
+  };
+
+  const toggleMiniPlayer = async () => {
+    if (pipWindow) {
+      pipWindow.close();
+      setPipWindow(null);
+      return;
+    }
+
+    if (!('documentPictureInPicture' in window)) {
+      showToast.error('Mini Player is not supported in this browser');
+      return;
+    }
+
+    try {
+      const pip = await window.documentPictureInPicture.requestWindow({
+        width: 400,
+        height: 400,
+      });
+
+      setPipWindow(pip);
+
+      pip.addEventListener('pagehide', () => {
+        setPipWindow(null);
+      });
+    } catch (err) {
+      console.error('Failed to open Mini Player:', err);
+      showToast.error('Failed to open Mini Player');
+    }
   };
 
   useKeyboardShortcuts({
@@ -815,6 +847,14 @@ export default function Player() {
                 </button>
 
                 <button
+                  onClick={toggleMiniPlayer}
+                  className={`p-2 rounded-lg transition-colors ${pipWindow ? 'text-green-500 bg-white/10' : 'text-zinc-400 hover:text-white hover:bg-white/5'}`}
+                  title="Mini Player"
+                >
+                  <PictureInPicture2 className="w-5 h-5" />
+                </button>
+
+                <button
                   onClick={() => setIsQueueOpen(!isQueueOpen)}
                   className={`p-2 rounded-lg transition-colors ${isQueueOpen ? 'text-green-500 bg-white/10' : 'text-zinc-400 hover:text-white hover:bg-white/5'
                     }`}
@@ -908,6 +948,31 @@ export default function Player() {
             </button>
           </div>
         </div>
+      )}
+
+
+      {pipWindow && currentTrack && (
+        <MiniPlayer
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          progress={progress}
+          duration={duration}
+          volume={volume}
+          onVolumeChange={setVolume}
+          isShuffle={isShuffle}
+          repeatMode={repeatMode}
+          onTogglePlay={handleTogglePlay}
+          onNext={handlePlayNext}
+          onPrevious={handlePlayPrevious}
+          onSeek={handleSeek}
+          onToggleShuffle={toggleShuffle}
+          onToggleRepeat={toggleRepeat}
+          pipWindow={pipWindow}
+          closePip={() => {
+            pipWindow.close();
+            setPipWindow(null);
+          }}
+        />
       )}
     </>
   );
