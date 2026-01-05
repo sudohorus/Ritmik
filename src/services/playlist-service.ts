@@ -43,7 +43,7 @@ export class PlaylistService {
       data2 = result.data || [];
       error2 = result.error;
     } catch (e) {
-      
+
     }
 
     if (error1) throw error1;
@@ -148,16 +148,6 @@ export class PlaylistService {
       }
       data = fallbackData;
     }
-
-    if (!data.is_public) {
-      const isOwner = currentUserId && data.user_id === currentUserId;
-      const isCollaborator = currentUserId && data.playlist_collaborators?.some((c: any) => c.user_id === currentUserId);
-
-      if (!isOwner && !isCollaborator) {
-        throw new Error('This playlist is private');
-      }
-    }
-
     return {
       ...data,
       collaborators: data.playlist_collaborators
@@ -300,13 +290,6 @@ export class PlaylistService {
       playlist = fallbackPlaylist;
     } else if (!playlist) {
       throw new Error('Playlist not found');
-    }
-
-    const isOwner = userId && playlist.user_id === userId;
-    const isCollaborator = userId && playlist.playlist_collaborators?.some((c: any) => c.user_id === userId);
-
-    if (!playlist.is_public && !isOwner && !isCollaborator) {
-      throw new Error('This playlist is private');
     }
 
     return {
@@ -676,42 +659,22 @@ export class PlaylistService {
   }
 
   static async validateInvite(token: string): Promise<{ playlist: Playlist, invite: any }> {
-    const { data: invite, error } = await supabase
-      .from('playlist_invites')
-      .select(`
-        *,
-        playlists (
-          *,
-          users (username, display_name, avatar_url),
-          playlist_collaborators (
-            user_id,
-            users:users!playlist_collaborators_user_id_fkey (
-              username,
-              display_name,
-              avatar_url
-            )
-          )
-        ),
-        inviter:users!created_by (
-          username,
-          display_name,
-          avatar_url
-        )
-      `)
-      .eq('token', token)
-      .single();
+    const { data, error } = await supabase.rpc('validate_playlist_invite', {
+      invite_token: token
+    });
 
-    if (error || !invite) throw new Error('Invalid invite link');
+    if (error) throw new Error(error.message || 'Invalid invite link');
+    if (!data) throw new Error('Invalid invite link');
 
-    if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
-      throw new Error('Invite link has expired');
-    }
+    const result = typeof data === 'string' ? JSON.parse(data) : data;
 
-    if (invite.max_uses && invite.used_count >= invite.max_uses) {
-      throw new Error('Invite link has reached maximum uses');
-    }
-
-    return { playlist: invite.playlists, invite };
+    return {
+      playlist: result.playlist,
+      invite: {
+        ...result.invite,
+        inviter: result.inviter
+      }
+    };
   }
 
   static async acceptInvite(token: string): Promise<void> {

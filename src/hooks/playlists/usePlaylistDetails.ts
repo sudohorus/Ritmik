@@ -91,23 +91,6 @@ export function usePlaylistDetails(playlistId: string | undefined) {
 
         const currentUserId = user?.id;
 
-        if (!foundPlaylist.is_public) {
-          if (!currentUserId) {
-            if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
-            setLoading(false);
-            return;
-          }
-
-          if (foundPlaylist.user_id !== currentUserId) {
-            if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
-            setError('This playlist is private');
-            setPlaylist(null);
-            setTracks([]);
-            setLoading(false);
-            return;
-          }
-        }
-
         if (mountedRef.current && loadedIdRef.current === playlistId) {
           if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
           setPlaylist(foundPlaylist);

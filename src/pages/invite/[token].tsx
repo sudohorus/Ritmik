@@ -78,7 +78,7 @@ export default function InvitePage() {
                     ) : inviteData ? (
                         <div>
                             <div className="w-24 h-24 mx-auto mb-6 rounded-lg overflow-hidden shadow-lg">
-                                {inviteData.playlist.cover_image_url ? (
+                                {inviteData.playlist?.cover_image_url ? (
                                     <img src={inviteData.playlist.cover_image_url} alt="" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
@@ -89,7 +89,7 @@ export default function InvitePage() {
                                 )}
                             </div>
 
-                            <h1 className="text-2xl font-bold mb-2">{inviteData.playlist.name}</h1>
+                            <h1 className="text-2xl font-bold mb-2">{inviteData.playlist?.name || 'Playlist'}</h1>
                             <p className="text-zinc-400 mb-6">
                                 Invited by <span className="text-white font-medium">
                                     {inviteData.invite.created_by === user?.id
@@ -98,7 +98,7 @@ export default function InvitePage() {
                                 </span>
                             </p>
 
-                            {inviteData.playlist.playlist_collaborators && inviteData.playlist.playlist_collaborators.length > 0 && (
+                            {inviteData.playlist?.playlist_collaborators && inviteData.playlist.playlist_collaborators.length > 0 && (
                                 <div className="mb-6">
                                     <p className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-3">Collaborators</p>
                                     <div className="flex justify-center -space-x-2">
