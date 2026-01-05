@@ -1,56 +1,26 @@
--- Create user_activity table
-create table if not exists public.user_activity (
-  user_id uuid references public.users(id) on delete cascade primary key,
-  current_track jsonb,
-  updated_at timestamp with time zone default now() not null
-);
-
--- Enable RLS
-alter table public.user_activity enable row level security;
-
--- Policies
--- Activity is viewable ONLY if the user has enabled 'show_activity' in settings.
-create policy "User activity is viewable based on settings."
-  on public.user_activity for select
-  using (
-    user_id = auth.uid() -- Always view own activity
-    OR
-    exists (
-      select 1 from public.user_settings
-      where user_id = public.user_activity.user_id
-      and show_activity = true
-    )
-  );
-
-create policy "Users can update their own activity."
-  on public.user_activity for insert
-  with check (auth.uid() = user_id);
-
-create policy "Users can update their own activity (update)."
-  on public.user_activity for update
-  using (auth.uid() = user_id);
-
--- Realtime
-alter publication supabase_realtime add table public.user_activity;
-
-drop policy if exists "User activity is viewable based on settings." on public.user_activity;
-
-create policy "User activity is viewable based on settings and following."
-  on public.user_activity for select
-  using (
-    user_id = auth.uid() 
-    OR
+create table public.rate_limit_attempts (
+  id uuid not null default gen_random_uuid (),
+  ip_address text not null,
+  action_type text not null,
+  attempt_count integer not null default 1,
+  blocked_until timestamp with time zone null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint rate_limit_attempts_pkey primary key (id),
+  constraint rate_limit_attempts_ip_address_action_type_key unique (ip_address, action_type),
+  constraint rate_limit_attempts_action_type_check check (
     (
-      exists (
-        select 1 from public.user_settings
-        where user_id = public.user_activity.user_id
-        and show_activity = true
-      )
-      AND
-      exists (
-        select 1 from public.followers
-        where follower_id = public.user_activity.user_id
-        and following_id = auth.uid()
-      )
+      action_type = any (array['login'::text, 'signup'::text])
     )
-  );
+  )
+) TABLESPACE pg_default;
+
+create index IF not exists idx_rate_limit_ip_action on public.rate_limit_attempts using btree (ip_address, action_type) TABLESPACE pg_default;
+
+create index IF not exists idx_rate_limit_blocked on public.rate_limit_attempts using btree (blocked_until) TABLESPACE pg_default
+where
+  (blocked_until is not null);
+
+create trigger update_rate_limit_attempts_timestamp BEFORE
+update on rate_limit_attempts for EACH row
+execute FUNCTION update_rate_limit_timestamp ();

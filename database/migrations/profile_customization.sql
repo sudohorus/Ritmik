@@ -1,41 +1,40 @@
-create table if not exists public.profile_customization (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid references public.users(id) on delete cascade not null unique,
-  
-  background_mode text not null default 'banner' check (background_mode in ('banner', 'full-bg')),
-  background_blur integer not null default 0 check (background_blur >= 0 and background_blur <= 20),
-  background_brightness integer not null default 100 check (background_brightness >= 0 and background_brightness <= 200),
-  
-  created_at timestamp with time zone default now() not null,
-  updated_at timestamp with time zone default now() not null
-);
+create table public.profile_customization (
+  id uuid not null default gen_random_uuid (),
+  user_id uuid not null,
+  background_mode text not null default 'banner'::text,
+  background_blur integer not null default 0,
+  background_brightness integer not null default 100,
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone not null default now(),
+  avatar_decoration_id uuid null,
+  favorite_music jsonb null,
+  avatar_crop jsonb null,
+  banner_crop jsonb null,
+  constraint profile_customization_pkey primary key (id),
+  constraint profile_customization_user_id_key unique (user_id),
+  constraint profile_customization_user_id_fkey foreign KEY (user_id) references users (id) on delete CASCADE,
+  constraint profile_customization_avatar_decoration_id_fkey foreign KEY (avatar_decoration_id) references avatar_decorations (id) on delete set null,
+  constraint profile_customization_background_mode_check check (
+    (
+      background_mode = any (array['banner'::text, 'full-bg'::text])
+    )
+  ),
+  constraint profile_customization_background_blur_check check (
+    (
+      (background_blur >= 0)
+      and (background_blur <= 20)
+    )
+  ),
+  constraint profile_customization_background_brightness_check check (
+    (
+      (background_brightness >= 0)
+      and (background_brightness <= 200)
+    )
+  )
+) TABLESPACE pg_default;
 
-create index if not exists idx_profile_customization_user_id on public.profile_customization(user_id);
+create index IF not exists idx_profile_customization_user_id on public.profile_customization using btree (user_id) TABLESPACE pg_default;
 
-create trigger update_profile_customization_updated_at
-before update on public.profile_customization
-for each row
-execute function public.update_updated_at_column();
-
-alter table public.profile_customization enable row level security;
-
-create policy "Profile customizations are viewable by everyone."
-on public.profile_customization
-for select
-using (true);
-
-create policy "Users can insert their own customization."
-on public.profile_customization
-for insert
-with check (auth.uid() = user_id);
-
-create policy "Users can update own customization."
-on public.profile_customization
-for update
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
-
-create policy "Users can delete own customization."
-on public.profile_customization
-for delete
-using (auth.uid() = user_id);
+create trigger update_profile_customization_updated_at BEFORE
+update on profile_customization for EACH row
+execute FUNCTION update_updated_at_column ();

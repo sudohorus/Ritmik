@@ -1,49 +1,26 @@
--- Spotify Connections Table
--- Stores Spotify OAuth connections for playlist import functionality
+create table public.rate_limit_attempts (
+  id uuid not null default gen_random_uuid (),
+  ip_address text not null,
+  action_type text not null,
+  attempt_count integer not null default 1,
+  blocked_until timestamp with time zone null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint rate_limit_attempts_pkey primary key (id),
+  constraint rate_limit_attempts_ip_address_action_type_key unique (ip_address, action_type),
+  constraint rate_limit_attempts_action_type_check check (
+    (
+      action_type = any (array['login'::text, 'signup'::text])
+    )
+  )
+) TABLESPACE pg_default;
 
-CREATE TABLE IF NOT EXISTS spotify_connections (
-  id UUID NOT NULL DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
-  spotify_user_id TEXT NOT NULL,
-  access_token TEXT NOT NULL,
-  refresh_token TEXT NOT NULL,
-  token_expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-  connected_at TIMESTAMP WITH TIME ZONE NULL DEFAULT NOW(),
-  last_synced_at TIMESTAMP WITH TIME ZONE NULL,
-  CONSTRAINT spotify_connections_pkey PRIMARY KEY (id),
-  CONSTRAINT spotify_connections_user_id_key UNIQUE (user_id),
-  CONSTRAINT spotify_connections_user_id_fkey FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
+create index IF not exists idx_rate_limit_ip_action on public.rate_limit_attempts using btree (ip_address, action_type) TABLESPACE pg_default;
 
--- Create indexes for faster lookups
-CREATE INDEX IF NOT EXISTS idx_spotify_connections_user_id ON spotify_connections USING btree (user_id);
-CREATE INDEX IF NOT EXISTS idx_spotify_connections_spotify_user_id ON spotify_connections USING btree (spotify_user_id);
+create index IF not exists idx_rate_limit_blocked on public.rate_limit_attempts using btree (blocked_until) TABLESPACE pg_default
+where
+  (blocked_until is not null);
 
--- Enable RLS
-ALTER TABLE spotify_connections ENABLE ROW LEVEL SECURITY;
-
--- Users can only view and manage their own Spotify connections
-CREATE POLICY "Users can view own spotify connections"
-    ON spotify_connections
-    FOR SELECT
-    TO authenticated
-    USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own spotify connections"
-    ON spotify_connections
-    FOR INSERT
-    TO authenticated
-    WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own spotify connections"
-    ON spotify_connections
-    FOR UPDATE
-    TO authenticated
-    USING (auth.uid() = user_id)
-    WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own spotify connections"
-    ON spotify_connections
-    FOR DELETE
-    TO authenticated
-    USING (auth.uid() = user_id);
+create trigger update_rate_limit_attempts_timestamp BEFORE
+update on rate_limit_attempts for EACH row
+execute FUNCTION update_rate_limit_timestamp ();
