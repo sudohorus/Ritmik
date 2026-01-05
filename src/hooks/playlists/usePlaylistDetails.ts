@@ -207,6 +207,7 @@ export function usePlaylistDetails(playlistId: string | undefined) {
   };
 
   const isOwner = user && playlist && playlist.user_id === user.id;
+  const isCollaborator = user && playlist && playlist.collaborators?.some((c: any) => c.user_id === user.id);
 
   return {
     playlist,
@@ -214,9 +215,13 @@ export function usePlaylistDetails(playlistId: string | undefined) {
     loading,
     error,
     isOwner,
+    isCollaborator,
     removeTrack,
     removeTracks,
     updatePlaylist,
     reorderTracks,
+    refreshPlaylist: () => {
+      loadedIdRef.current = null;
+    }
   };
 }

@@ -28,7 +28,6 @@ export class ProfileService {
       .single();
 
     if (error) {
-      console.error('Error fetching profile:', error);
       return null;
     }
 
@@ -127,6 +126,20 @@ export class ProfileService {
       .eq('id', userId);
 
     return { error };
+  }
+
+  static async searchUsers(query: string, limit: number = 5): Promise<User[]> {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
+      .limit(limit);
+
+    if (error) {
+      return [];
+    }
+
+    return data as User[];
   }
 }
 

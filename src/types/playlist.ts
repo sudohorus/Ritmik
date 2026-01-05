@@ -17,6 +17,15 @@ export interface Playlist {
     username?: string;
     display_name?: string;
   };
+  collaborators?: {
+    user_id: string;
+    added_at: string;
+    users: {
+      username: string;
+      display_name: string;
+      avatar_url: string | null;
+    };
+  }[];
 }
 
 export interface PlaylistTrack {
@@ -29,6 +38,12 @@ export interface PlaylistTrack {
   duration?: number;
   position: number;
   added_at: string;
+  added_by?: string | null;
+  added_by_user?: {
+    username: string;
+    display_name: string;
+    avatar_url: string | null;
+  };
 }
 
 export interface CreatePlaylistData {

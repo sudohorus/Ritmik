@@ -18,6 +18,11 @@ interface SortableTrackItemProps {
   isSelected?: boolean;
   onToggleSelection?: () => void;
   onLongPress?: () => void;
+  addedByUser?: {
+    username: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  };
 }
 
 export default function SortableTrackItem({
@@ -34,6 +39,7 @@ export default function SortableTrackItem({
   isSelected = false,
   onToggleSelection,
   onLongPress,
+  addedByUser,
 }: SortableTrackItemProps) {
   const {
     attributes,
@@ -54,7 +60,7 @@ export default function SortableTrackItem({
     longPressTimerRef.current = setTimeout(() => {
       longPressTriggeredRef.current = true;
       onLongPress();
-    }, 500); 
+    }, 500);
   }, [isSelectionMode, onLongPress]);
 
   const cancelLongPress = useCallback(() => {
@@ -164,6 +170,25 @@ export default function SortableTrackItem({
           <p className={`text-xs md:text-sm truncate ${isCurrentTrack && isPlaying && !isSelectionMode ? 'text-zinc-300' : 'text-zinc-400'}`}>
             {track.artist}
           </p>
+          {addedByUser && (
+            <div className="flex items-center gap-1.5 mt-1">
+              <div
+                className="w-4 h-4 rounded-full bg-zinc-800 overflow-hidden shrink-0 border border-zinc-700"
+                title={`Added by ${addedByUser.display_name || addedByUser.username}`}
+              >
+                {addedByUser.avatar_url ? (
+                  <img src={addedByUser.avatar_url} alt={addedByUser.username} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[8px] text-zinc-400 font-bold">
+                    {addedByUser.username?.[0]?.toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <span className="text-[10px] md:text-xs text-zinc-500 truncate">
+                {addedByUser.display_name || addedByUser.username}
+              </span>
+            </div>
+          )}
         </div>
 
         {track.duration && (

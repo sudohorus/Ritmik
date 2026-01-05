@@ -100,12 +100,36 @@ export default function PlaylistCard({ playlist, disableLink }: PlaylistCardProp
                 <p className="text-sm text-zinc-400 mb-3 line-clamp-2">{playlist.description}</p>
             )}
             <div className="mt-4 pt-4 flex flex-col pb-2">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
-                    Tracks
-                </span>
-                <span className="text-xl font-bold text-white">
-                    {playlist.track_count || 0}
-                </span>
+                <div className="flex justify-between items-end">
+                    <div className="flex flex-col">
+                        <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+                            Tracks
+                        </span>
+                        <span className="text-xl font-bold text-white">
+                            {playlist.track_count || 0}
+                        </span>
+                    </div>
+                    {playlist.collaborators && playlist.collaborators.length > 0 && (
+                        <div className="flex -space-x-2" title="Collaborative Playlist">
+                            {playlist.collaborators.slice(0, 3).map((c, i) => (
+                                <div key={i} className="w-6 h-6 rounded-full border-2 border-zinc-950 bg-zinc-800 overflow-hidden relative z-0">
+                                    {c.users?.avatar_url ? (
+                                        <img src={c.users.avatar_url} alt={c.users.username} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-[8px] text-zinc-400 font-bold">
+                                            {c.users?.username?.[0]?.toUpperCase()}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                            {playlist.collaborators.length > 3 && (
+                                <div className="w-6 h-6 rounded-full border-2 border-zinc-950 bg-zinc-800 flex items-center justify-center text-[8px] text-zinc-400 font-bold relative z-10">
+                                    +{playlist.collaborators.length - 3}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
         </Link>
     );

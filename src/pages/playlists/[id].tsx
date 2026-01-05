@@ -8,6 +8,7 @@ import { usePlaylistDetails } from '@/hooks/playlists/usePlaylistDetails';
 import ConfirmModal from '@/components/Modal/ConfirmModal';
 import EditPlaylistModal from '@/components/Playlist/EditPlaylistModal';
 import AddToPlaylistModal from '@/components/Playlist/AddToPlaylistModal';
+import CollaboratorModal from '@/components/Playlist/CollaboratorModal';
 import UserMenu from '@/components/Auth/UserMenu';
 import SortableTrackItem from '@/components/Playlist/SortableTrackItem';
 import Link from 'next/link';
@@ -41,6 +42,7 @@ export default function PlaylistPage() {
     loading,
     error,
     isOwner,
+    isCollaborator,
     removeTrack,
     removeTracks,
     updatePlaylist,
@@ -49,6 +51,7 @@ export default function PlaylistPage() {
 
   const [removeConfirm, setRemoveConfirm] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCollaboratorModal, setShowCollaboratorModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(new Set());
@@ -248,12 +251,26 @@ export default function PlaylistPage() {
                   <div className="flex items-center gap-2 text-xs md:text-sm flex-wrap shadow-black drop-shadow-md">
                     {playlist.users && playlist.users.username && (
                       <>
-                        <Link
-                          href={`/u/${playlist.users.username}`}
-                          className="font-semibold text-white hover:text-zinc-300 transition-colors hover:underline"
-                        >
-                          {playlist.users.display_name || playlist.users.username}
-                        </Link>
+                        <div className="flex items-center">
+                          <Link
+                            href={`/u/${playlist.users.username}`}
+                            className="font-semibold text-white hover:text-zinc-300 transition-colors hover:underline"
+                          >
+                            {playlist.users.display_name || playlist.users.username}
+                          </Link>{playlist.collaborators && playlist.collaborators.length > 0 && (
+                            <span className="text-zinc-400">, {playlist.collaborators?.map((c: any, i: number) => (
+                              <span key={c.user_id}>
+                                <Link
+                                  href={`/u/${c.users?.username}`}
+                                  className="font-semibold text-white hover:text-zinc-300 transition-colors hover:underline"
+                                >
+                                  {c.users?.display_name || c.users?.username}
+                                </Link>{i < (playlist.collaborators?.length || 0) - 1 ? ', ' : ''}
+                              </span>
+                            ))}
+                            </span>
+                          )}
+                        </div>
                         <span className="text-zinc-500">•</span>
                       </>
                     )}
@@ -261,10 +278,23 @@ export default function PlaylistPage() {
                     <span className="text-zinc-500">•</span>
                     <span className="text-zinc-400">{playlist.is_public ? 'Public' : 'Private'}</span>
                   </div>
+
+
                 </div>
 
-                {isOwner && (
-                  <div className="flex gap-2 w-full md:w-auto">
+                <div className="flex gap-2 w-full md:w-auto">
+                  {isOwner && (
+                    <button
+                      onClick={() => setShowCollaboratorModal(true)}
+                      className="flex-1 md:flex-none px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 backdrop-blur-sm border border-white/10"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                      </svg>
+                      Invite
+                    </button>
+                  )}
+                  {isOwner && (
                     <button
                       onClick={() => setShowEditModal(true)}
                       className="flex-1 md:flex-none px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 backdrop-blur-sm border border-white/10"
@@ -274,8 +304,8 @@ export default function PlaylistPage() {
                       </svg>
                       Edit
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -322,7 +352,7 @@ export default function PlaylistPage() {
                         index={originalIndex}
                         isCurrentTrack={isCurrentTrack}
                         isPlaying={isPlaying}
-                        isOwner={!!isOwner}
+                        isOwner={!!isOwner || !!isCollaborator}
                         onPlay={() => handlePlayTrack(track)}
                         onDoubleClick={() => seekTo(0)}
                         onRemove={() => setRemoveConfirm(track.video_id)}
@@ -331,6 +361,7 @@ export default function PlaylistPage() {
                         isSelected={selectedTrackIds.has(track.video_id)}
                         onToggleSelection={() => toggleTrackSelection(track.video_id)}
                         onLongPress={() => handleLongPress(track.video_id)}
+                        addedByUser={track.added_by_user}
                       />
                     );
                   })
@@ -360,7 +391,7 @@ export default function PlaylistPage() {
                           index={index}
                           isCurrentTrack={isCurrentTrack}
                           isPlaying={isPlaying}
-                          isOwner={!!isOwner}
+                          isOwner={!!isOwner || !!isCollaborator}
                           onPlay={() => handlePlayTrack(track)}
                           onDoubleClick={() => seekTo(0)}
                           onRemove={() => setRemoveConfirm(track.video_id)}
@@ -368,6 +399,7 @@ export default function PlaylistPage() {
                           isSelected={selectedTrackIds.has(track.video_id)}
                           onToggleSelection={() => toggleTrackSelection(track.video_id)}
                           onLongPress={() => handleLongPress(track.video_id)}
+                          addedByUser={track.added_by_user}
                         />
                       );
                     })}
@@ -406,6 +438,17 @@ export default function PlaylistPage() {
           onUpdate={handleUpdatePlaylist}
           playlist={playlist}
         />
+
+        {playlist && (
+          <CollaboratorModal
+            isOpen={showCollaboratorModal}
+            onClose={() => setShowCollaboratorModal(false)}
+            playlist={playlist}
+            onUpdate={() => {
+              window.location.reload();
+            }}
+          />
+        )}
 
         <AddToPlaylistModal
           isOpen={showAddToPlaylistModal}
