@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Playlist } from '@/types/playlist';
+import UserHoverCard from '@/components/User/UserHoverCard';
 
 interface PlaylistCardProps {
     playlist: Playlist;
@@ -42,7 +43,9 @@ export default function PlaylistCard({ playlist, disableLink }: PlaylistCardProp
                 </h3>
                 {ownerUsername && (
                     <p className="text-xs text-zinc-500 mb-2">
-                        by <span className="hover:text-zinc-400 transition-colors">{owner.display_name || ownerUsername}</span>
+                        by <UserHoverCard username={ownerUsername || ''} className="inline-block">
+                            <span className="hover:text-zinc-400 transition-colors">{owner.display_name || ownerUsername}</span>
+                        </UserHoverCard>
                     </p>
                 )}
                 {playlist.description && (
@@ -93,7 +96,9 @@ export default function PlaylistCard({ playlist, disableLink }: PlaylistCardProp
             </h3>
             {ownerUsername && (
                 <p className="text-xs text-zinc-500 mb-2">
-                    by <span className="hover:text-zinc-400 transition-colors">{owner.display_name || ownerUsername}</span>
+                    by <UserHoverCard username={ownerUsername || ''} className="inline-block">
+                        <span className="hover:text-zinc-400 transition-colors">{owner.display_name || ownerUsername}</span>
+                    </UserHoverCard>
                 </p>
             )}
             {playlist.description && (

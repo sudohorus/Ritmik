@@ -1,9 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
+import { createPagesServerClient } from '@/utils/supabase/server';
 import { getUserIdFromRequest } from '@/utils/auth';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'GET') {
@@ -11,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-        const userId = await getUserIdFromRequest(req);
+        const userId = await getUserIdFromRequest(req, res);
 
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -23,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const from = (page - 1) * limit;
         const to = from + limit - 1;
 
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        const supabase = createPagesServerClient(req, res);
 
         let query = supabase
             .from('playlists')

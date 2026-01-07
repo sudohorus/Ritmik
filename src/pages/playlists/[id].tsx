@@ -12,6 +12,7 @@ import CollaboratorModal from '@/components/Playlist/CollaboratorModal';
 import UserMenu from '@/components/Auth/UserMenu';
 import SortableTrackItem from '@/components/Playlist/SortableTrackItem';
 import Link from 'next/link';
+import UserHoverCard from '@/components/User/UserHoverCard';
 import Loading from '@/components/Loading';
 import { showToast } from '@/lib/toast';
 import {
@@ -252,20 +253,24 @@ export default function PlaylistPage() {
                     {playlist.users && playlist.users.username && (
                       <>
                         <div className="flex items-center">
-                          <Link
-                            href={`/u/${playlist.users.username}`}
-                            className="font-semibold text-white hover:text-zinc-300 transition-colors hover:underline"
-                          >
-                            {playlist.users.display_name || playlist.users.username}
-                          </Link>{playlist.collaborators && playlist.collaborators.length > 0 && (
+                          <UserHoverCard username={playlist.users.username} className="inline-block">
+                            <Link
+                              href={`/u/${playlist.users.username}`}
+                              className="font-semibold text-white hover:text-zinc-300 transition-colors hover:underline"
+                            >
+                              {playlist.users.display_name || playlist.users.username}
+                            </Link>
+                          </UserHoverCard>{playlist.collaborators && playlist.collaborators.length > 0 && (
                             <span className="text-zinc-400">, {playlist.collaborators?.map((c: any, i: number) => (
                               <span key={c.user_id}>
-                                <Link
-                                  href={`/u/${c.users?.username}`}
-                                  className="font-semibold text-white hover:text-zinc-300 transition-colors hover:underline"
-                                >
-                                  {c.users?.display_name || c.users?.username}
-                                </Link>{i < (playlist.collaborators?.length || 0) - 1 ? ', ' : ''}
+                                <UserHoverCard username={c.users?.username} className="inline-block">
+                                  <Link
+                                    href={`/u/${c.users?.username}`}
+                                    className="font-semibold text-white hover:text-zinc-300 transition-colors hover:underline"
+                                  >
+                                    {c.users?.display_name || c.users?.username}
+                                  </Link>
+                                </UserHoverCard>{i < (playlist.collaborators?.length || 0) - 1 ? ', ' : ''}
                               </span>
                             ))}
                             </span>

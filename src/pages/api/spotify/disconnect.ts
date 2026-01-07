@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
+import { createPagesServerClient } from '@/utils/supabase/server';
 import { getUserIdFromRequest } from '@/utils/auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -10,13 +10,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const userId = await getUserIdFromRequest(req);
+    const userId = await getUserIdFromRequest(req, res);
 
     if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createPagesServerClient(req, res);
 
     const { error } = await supabase
         .from('spotify_connections')

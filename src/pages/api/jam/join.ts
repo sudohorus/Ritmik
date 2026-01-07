@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { JamService } from '@/services/jam-service';
-import { createClient } from '@supabase/supabase-js';
+import { createPagesServerClient } from '@/utils/supabase/server';
+import { getUserIdFromRequest } from '@/utils/auth';
 import { validateJamCode } from '@/utils/jam-utils';
 import { withRateLimit } from '@/middleware/rate-limit';
 
@@ -10,27 +11,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     try {
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        if (!token) {
+        const userId = await getUserIdFromRequest(req, res);
+        if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                global: {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                },
-            }
-        );
-
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
+        const supabase = createPagesServerClient(req, res);
 
         const { code } = req.body;
         if (!code || typeof code !== 'string') {
@@ -46,7 +32,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             return res.status(404).json({ error: 'Jam not found' });
         }
 
-        await JamService.joinJam(jam.id, user.id, supabase);
+        await JamService.joinJam(jam.id, userId, supabase);
 
         return res.status(200).json({ jam, serverTime: Date.now() });
     } catch (error: any) {

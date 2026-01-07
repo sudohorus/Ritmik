@@ -1,13 +1,13 @@
 import handler from '@/pages/api/playlists';
 import { getUserIdFromRequest } from '@/utils/auth';
-import { createClient } from '@supabase/supabase-js';
+import { createPagesServerClient } from '@/utils/supabase/server';
 
 jest.mock('@/utils/auth', () => ({
     getUserIdFromRequest: jest.fn(),
 }));
 
-jest.mock('@supabase/supabase-js', () => ({
-    createClient: jest.fn(),
+jest.mock('@/utils/supabase/server', () => ({
+    createPagesServerClient: jest.fn(),
 }));
 
 const createMocks = (method: string, query: any = {}) => {
@@ -70,7 +70,7 @@ describe('/api/playlists', () => {
             }))
         };
 
-        (createClient as jest.Mock).mockReturnValue({
+        (createPagesServerClient as jest.Mock).mockReturnValue({
             from: jest.fn().mockReturnValue(mockBuilder),
         });
 
@@ -106,7 +106,7 @@ describe('/api/playlists', () => {
             }))
         };
 
-        (createClient as jest.Mock).mockReturnValue({
+        (createPagesServerClient as jest.Mock).mockReturnValue({
             from: jest.fn().mockReturnValue(mockBuilder),
         });
 
@@ -134,7 +134,7 @@ describe('/api/playlists', () => {
             }))
         };
 
-        (createClient as jest.Mock).mockReturnValue({
+        (createPagesServerClient as jest.Mock).mockReturnValue({
             from: jest.fn().mockReturnValue(mockBuilder),
         });
 

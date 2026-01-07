@@ -8,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-        const userId = await getUserIdFromRequest(req);
+        const userId = await getUserIdFromRequest(req, res);
 
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { JamService } from '@/services/jam-service';
-import { supabase } from '@/lib/supabase';
-import { createClient } from '@supabase/supabase-js';
+import { createPagesServerClient } from '@/utils/supabase/server';
+import { getUserIdFromRequest } from '@/utils/auth';
 import { withRateLimit } from '@/middleware/rate-limit';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -10,23 +10,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     try {
-        let token = req.headers.authorization?.replace('Bearer ', '');
-
-        if (!token && req.body) {
-            try {
-                const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-                token = body.token;
-            } catch { }
-        }
-
-        if (!token) {
+        const userId = await getUserIdFromRequest(req, res);
+        if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-        if (authError || !user) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
+        const supabaseClient = createPagesServerClient(req, res);
 
         let jamId: string;
 
@@ -45,24 +34,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             return res.status(400).json({ error: 'Jam ID is required' });
         }
 
-        const supabaseClient = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                global: {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                },
-            }
-        );
-
-        await JamService.leaveJam(jamId, user.id, supabaseClient);
-
-        // If the user leaving is the host, the jam should have been ended by the client
-        // But as a fallback, we could check if the jam has no active participants
-        // However, for now we will rely on the explicit endJam call or the cleanup job
-
+        await JamService.leaveJam(jamId, userId, supabaseClient);
 
         return res.status(200).json({ success: true });
     } catch (error) {

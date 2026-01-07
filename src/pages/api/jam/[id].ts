@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { JamService } from '@/services/jam-service';
-import { createClient } from '@supabase/supabase-js';
+import { createPagesServerClient } from '@/utils/supabase/server';
+import { getUserIdFromRequest } from '@/utils/auth';
 import { withRateLimit } from '@/middleware/rate-limit';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -10,27 +11,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         return res.status(400).json({ error: 'Invalid jam ID' });
     }
 
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    if (!token) {
+    const userId = await getUserIdFromRequest(req, res);
+    if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            global: {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            },
-        }
-    );
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
+    const supabase = createPagesServerClient(req, res);
 
     try {
         if (req.method === 'GET') {
@@ -48,7 +34,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
         if (req.method === 'PUT') {
             const { current_track_id, current_position, is_playing, queue } = req.body;
-            await JamService.updateJamState(id, user.id, {
+            await JamService.updateJamState(id, userId, {
                 current_track_id,
                 current_position,
                 is_playing,
@@ -59,7 +45,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         }
 
         if (req.method === 'DELETE') {
-            await JamService.endJam(id, user.id, supabase);
+            await JamService.endJam(id, userId, supabase);
             return res.status(200).json({ success: true });
         }
 
@@ -74,6 +60,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 }
 
 export default withRateLimit(handler, {
-    interval: 60 * 1000, 
-    maxRequests: 120 
+    interval: 60 * 1000,
+    maxRequests: 120
 });

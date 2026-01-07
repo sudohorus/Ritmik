@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
+import { createPagesServerClient } from '@/utils/supabase/server';
 import { PlaylistService } from '@/services/playlist-service';
+import { getUserIdFromRequest } from '@/utils/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'POST') {
@@ -32,24 +33,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({ error: 'Invalid Turnstile token' });
         }
 
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-        const supabase = createClient(supabaseUrl, supabaseKey, {
-            global: {
-                headers: req.headers.authorization ? {
-                    Authorization: req.headers.authorization
-                } : undefined
-            }
-        });
-
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-        if (authError || !user) {
+        const userId = await getUserIdFromRequest(req, res);
+        if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const playlist = await PlaylistService.createPlaylist(user.id, playlistData, supabase);
+        const supabase = createPagesServerClient(req, res);
+
+        const playlist = await PlaylistService.createPlaylist(userId, playlistData, supabase);
 
         return res.status(200).json(playlist);
 

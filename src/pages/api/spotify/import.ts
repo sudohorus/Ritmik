@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { SpotifyService } from '@/services/spotify-service';
 import axios from 'axios';
 import type { SpotifyConnection, ImportProgress } from '@/types/spotify';
@@ -28,8 +28,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (!userId) {
             return res.status(401).json({ error: 'Invalid or expired token' });
         }
-
-        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
         const { data: targetPlaylist, error: playlistError } = await supabaseAdmin
             .from('playlists')

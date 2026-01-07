@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { JamService } from '@/services/jam-service';
-import { createClient } from '@supabase/supabase-js';
+import { createPagesServerClient } from '@/utils/supabase/server';
+import { getUserIdFromRequest } from '@/utils/auth';
 import { withRateLimit } from '@/middleware/rate-limit';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -9,27 +10,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     try {
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        if (!token) {
+        const userId = await getUserIdFromRequest(req, res);
+        if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                global: {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                },
-            }
-        );
-
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
+        const supabase = createPagesServerClient(req, res);
 
         const { name } = req.body;
         if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -40,7 +26,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             return res.status(400).json({ error: 'Name too long' });
         }
 
-        const jam = await JamService.createJam(user.id, { name: name.trim() }, supabase);
+        const jam = await JamService.createJam(userId, { name: name.trim() }, supabase);
 
         return res.status(201).json({ jam, serverTime: Date.now() });
     } catch (error: any) {

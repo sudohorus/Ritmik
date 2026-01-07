@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import youtubesearchapi from 'youtube-search-api';
 import { validateImportToken } from '@/utils/import-tokens';
 import type { YoutubeImportProgress } from '@/types/youtube';
@@ -56,8 +56,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (!userId) {
             return res.status(401).json({ error: 'Invalid or expired token' });
         }
-
-        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
         const { data: targetPlaylist, error: playlistError } = await supabaseAdmin
             .from('playlists')

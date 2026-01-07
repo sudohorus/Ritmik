@@ -14,13 +14,46 @@ import Player from "@/components/Player/Player";
 import AmbientBackground from "@/components/Layout/AmbientBackground";
 import OnboardingModal from "@/components/Onboarding/OnboardingModal";
 import DecorationManager from "@/components/Managers/DecorationManager";
+import { usePlayer } from "@/contexts/PlayerContext";
+import { TrackService } from "@/services/track-service";
+import { showToast } from "@/lib/toast";
 
 function AppContent({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const { user, refreshUser } = useAuth();
+  const { playTrack } = usePlayer();
   const [isNavigating, setIsNavigating] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const hidePlayer = router.pathname === '/login' || router.pathname === '/signup';
+
+  useEffect(() => {
+    const playParam = router.query.play;
+    if (playParam && typeof playParam === 'string') {
+      const fetchAndPlay = async () => {
+        try {
+          const { play, ...rest } = router.query;
+          router.replace({
+            pathname: router.pathname,
+            query: rest,
+          }, undefined, { shallow: true });
+
+          const response = await TrackService.search(playParam);
+          const track = response.data?.[0];
+
+          if (track && track.videoId === playParam) {
+            playTrack(track);
+          } else if (track) {
+            playTrack(track);
+          } else {
+            showToast.error("Track not found");
+          }
+        } catch (error) {
+          showToast.error("Failed to play track");
+        }
+      };
+      fetchAndPlay();
+    }
+  }, [router.query.play, playTrack, router]);
 
   useEffect(() => {
     const handleRouteChangeStart = (url: string) => {

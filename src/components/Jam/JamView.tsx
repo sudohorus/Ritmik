@@ -1,6 +1,7 @@
 import { useJam } from '@/contexts/JamContext';
 import { formatJamLink } from '@/utils/jam-utils';
 import { showToast } from '@/lib/toast';
+import UserHoverCard from '@/components/User/UserHoverCard';
 
 export function JamView() {
     const { currentJam, participants, isHost, leaveJam, endJam } = useJam();
@@ -80,10 +81,10 @@ export function JamView() {
 
                 <div className="flex flex-wrap gap-2">
                     {participants.map((participant) => (
-                        <div
+                        <UserHoverCard
                             key={participant.id}
+                            username={participant.user?.username || ''}
                             className="relative group"
-                            title={participant.user?.display_name || participant.user?.username}
                         >
                             <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 overflow-hidden">
                                 {participant.user?.avatar_url ? (
@@ -105,7 +106,7 @@ export function JamView() {
                                     </svg>
                                 </div>
                             )}
-                        </div>
+                        </UserHoverCard>
                     ))}
                 </div>
             </div>

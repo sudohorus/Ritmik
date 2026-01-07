@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePublicPlaylists } from '@/hooks/playlists/usePublicPlaylists';
 import Navbar from '@/components/Navbar';
 import Loading from '@/components/Loading';
+import UserHoverCard from '@/components/User/UserHoverCard';
 import { useMemo, useState } from 'react';
 
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
@@ -207,16 +208,18 @@ export default function ExplorePage() {
                     {ownerUsername && (
                       <p className="text-xs text-zinc-500 mb-2">
                         by{' '}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            router.push(`/u/${ownerUsername}`);
-                          }}
-                          className="hover:text-zinc-400 transition-colors hover:underline text-left"
-                        >
-                          {owner.display_name || ownerUsername}
-                        </button>
+                        <UserHoverCard username={ownerUsername}>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              router.push(`/u/${ownerUsername}`);
+                            }}
+                            className="hover:text-zinc-400 transition-colors hover:underline text-left"
+                          >
+                            {owner.display_name || ownerUsername}
+                          </button>
+                        </UserHoverCard>
                       </p>
                     )}
                     {playlist.description && (

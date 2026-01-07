@@ -106,6 +106,7 @@ export default function FocusModal({
 
     if (!title || !videoId) {
       setLoadingLyrics(false);
+      setLyricsNotFound(true);
       return;
     }
 
@@ -200,17 +201,14 @@ export default function FocusModal({
           safetyTimeoutId = null;
         }
 
-        if (error.name === 'AbortError' || cancelled) {
+        if (cancelled || !mountedRef.current) {
           return;
         }
-
-
-        if (!cancelled && mountedRef.current) {
-          cachedVideoIdRef.current = videoId;
-          cachedLyricsRef.current = null;
-          setLyrics(null);
-          setLyricsNotFound(true);
-        }
+        
+        cachedVideoIdRef.current = videoId;
+        cachedLyricsRef.current = null;
+        setLyrics(null);
+        setLyricsNotFound(true);
       } finally {
         if (timeoutId) {
           clearTimeout(timeoutId);
