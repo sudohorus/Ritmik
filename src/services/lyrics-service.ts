@@ -45,7 +45,7 @@ async function fetchLyricsFromAPI(artist: string, title: string): Promise<{ plai
           artist_name: artist,
           track_name: title,
         },
-        timeout: 10000,
+        timeout: 30000,
         headers: {
           'User-Agent': 'Ritmik/1.0',
         }
