@@ -2,7 +2,6 @@ import handler from '@/pages/api/playlists/create';
 import { createClient } from '@supabase/supabase-js';
 import { PlaylistService } from '@/services/playlist-service';
 
-// Mock dependencies
 jest.mock('@supabase/supabase-js', () => ({
     createClient: jest.fn(),
 }));
@@ -13,10 +12,19 @@ jest.mock('@/services/playlist-service', () => ({
     },
 }));
 
-// Mock global fetch
+jest.mock('@/utils/auth', () => ({
+    getUserIdFromRequest: jest.fn(),
+}));
+
+jest.mock('@/utils/supabase/server', () => ({
+    createPagesServerClient: jest.fn(),
+}));
+
+import { getUserIdFromRequest } from '@/utils/auth';
+import { createPagesServerClient } from '@/utils/supabase/server';  
+
 global.fetch = jest.fn();
 
-// Manual mock helper
 const createMocks = (method: string, body: any = {}, headers: any = {}) => {
     const req = {
         method,
@@ -77,9 +85,7 @@ describe('/api/playlists/create', () => {
             json: jest.fn().mockResolvedValue({ success: true }),
         });
 
-        const mockGetUser = jest.fn().mockResolvedValue({ data: { user: null }, error: 'Auth error' });
-        const mockAuth = { getUser: mockGetUser };
-        (createClient as jest.Mock).mockReturnValue({ auth: mockAuth });
+        (getUserIdFromRequest as jest.Mock).mockResolvedValue(null);
 
         const { req, res } = createMocks('POST', { token: 'valid-token', name: 'My Playlist' });
 
@@ -94,11 +100,10 @@ describe('/api/playlists/create', () => {
             json: jest.fn().mockResolvedValue({ success: true }),
         });
 
-        const mockUser = { id: 'user-123' };
-        const mockGetUser = jest.fn().mockResolvedValue({ data: { user: mockUser }, error: null });
-        const mockAuth = { getUser: mockGetUser };
-        const mockSupabase = { auth: mockAuth };
-        (createClient as jest.Mock).mockReturnValue(mockSupabase);
+        (getUserIdFromRequest as jest.Mock).mockResolvedValue('user-123');
+
+        const mockSupabase = { auth: {} };
+        (createPagesServerClient as jest.Mock).mockReturnValue(mockSupabase);
 
         const mockPlaylist = { id: 'pl-1', name: 'My Playlist' };
         (PlaylistService.createPlaylist as jest.Mock).mockResolvedValue(mockPlaylist);

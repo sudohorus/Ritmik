@@ -1,7 +1,6 @@
 import handler from '@/pages/api/user/delete-account';
 import { NextApiRequest, NextApiResponse } from 'next';
 
-// Mock dependencies with a factory that exposes the internal mocks
 jest.mock('@supabase/supabase-js', () => {
     const mockGetUser = jest.fn();
     const mockDeleteUser = jest.fn();
@@ -23,11 +22,15 @@ jest.mock('@supabase/supabase-js', () => {
     };
 });
 
-// Access the exposed mocks
 const { __mocks } = require('@supabase/supabase-js');
 const { mockGetUser, mockDeleteUser } = __mocks;
 
-// Manual mock helper
+jest.mock('@/utils/auth', () => ({
+    getUserIdFromRequest: jest.fn(),
+}));
+
+import { getUserIdFromRequest } from '@/utils/auth';
+
 const createMocks = (method: string, headers: any = {}) => {
     const req = {
         method,
@@ -45,7 +48,7 @@ const createMocks = (method: string, headers: any = {}) => {
 describe('/api/user/delete-account', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        // Reset default implementations if needed, though mockResolvedValue overrides them
+        
     });
 
     it('returns 405 for non-DELETE requests', async () => {
@@ -58,27 +61,29 @@ describe('/api/user/delete-account', () => {
     });
 
     it('returns 401 if authorization header is missing', async () => {
+        (getUserIdFromRequest as jest.Mock).mockResolvedValue(null);
         const { req, res } = createMocks('DELETE');
 
         await handler(req, res);
 
         expect(res.status).toHaveBeenCalledWith(401);
-        expect(res.json).toHaveBeenCalledWith({ error: 'Missing authorization header' });
+        expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
     });
 
     it('returns 401 if token is invalid', async () => {
-        mockGetUser.mockResolvedValue({ data: { user: null }, error: 'Invalid token' });
+        (getUserIdFromRequest as jest.Mock).mockResolvedValue(null);
+        // mockGetUser.mockResolvedValue({ data: { user: null }, error: 'Invalid token' }); // No longer needed as we mock the util
 
         const { req, res } = createMocks('DELETE', { authorization: 'Bearer invalid-token' });
 
         await handler(req, res);
 
         expect(res.status).toHaveBeenCalledWith(401);
-        expect(res.json).toHaveBeenCalledWith({ error: 'Invalid token' });
+        expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
     });
 
     it('returns 500 if deletion fails', async () => {
-        mockGetUser.mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null });
+        (getUserIdFromRequest as jest.Mock).mockResolvedValue('user-123');
         mockDeleteUser.mockResolvedValue({ error: 'Delete failed' });
 
         const { req, res } = createMocks('DELETE', { authorization: 'Bearer valid-token' });
@@ -90,7 +95,7 @@ describe('/api/user/delete-account', () => {
     });
 
     it('returns 200 if deletion is successful', async () => {
-        mockGetUser.mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null });
+        (getUserIdFromRequest as jest.Mock).mockResolvedValue('user-123');
         mockDeleteUser.mockResolvedValue({ error: null });
 
         const { req, res } = createMocks('DELETE', { authorization: 'Bearer valid-token' });

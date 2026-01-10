@@ -11,7 +11,8 @@ const rules: Record<string, EligibilityChecker> = {
     },
 
     'Bizarre Listener': async (userId, supabase) => {
-        const { data: { user }, error } = await supabase.auth.getUser();
+        const { data: { user }, error } = await supabase.auth.admin.getUserById(userId);
+
         if (error || !user || !user.created_at) {
             const { data: profile } = await supabase
                 .from('profiles')

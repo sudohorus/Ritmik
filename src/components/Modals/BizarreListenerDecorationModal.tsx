@@ -48,7 +48,7 @@ export default function BizarreListenerDecorationModal({ user, onClose }: Bizarr
         id: 'preview_bizarre',
         name: 'Bizarre Listener',
         description: 'For the true OGs.',
-        image_url: '/decorations/bizarre-listener.png',
+        image_url: '/decorations/bizarre.png',
         type: 'static' as const,
         is_free: true,
         created_at: new Date().toISOString()
