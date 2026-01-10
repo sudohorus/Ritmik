@@ -79,7 +79,7 @@ export default function LandingPage() {
           <div className="flex flex-col items-center">
             <h1 className="text-5xl md:text-7xl font-bold leading-tight mb-8">
               Music, without the{" "}
-              <span className={`relative inline-block transition-colors duration-75 ${isChaos ? 'text-red-500' : ''}`}>
+              <span className={`relative transition-colors duration-75 ${isChaos ? 'text-red-500' : ''}`}>
                 {glitchText}
               </span>.
             </h1>
